@@ -1,14 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Loader } from "@/components/shared/Loader";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useUsers } from "@/hooks/useUserSearch";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { getImageUrl } from "@/lib/utils";
 import { profileFullName } from "@/types/profile.types";
 
 /**
@@ -19,11 +18,10 @@ import { profileFullName } from "@/types/profile.types";
 export function RightSidebar() {
   const t = useTranslations("feed");
   const tNav = useTranslations("nav");
+  const tFooter = useTranslations("footer");
   const { user } = useAuth();
   const { data: profile, isPending } = useMyProfile();
   const { data: suggestions } = useUsers({ pageNumber: 1, pageSize: 5 });
-
-  const avatar = getImageUrl(profile?.image);
 
   return (
     <aside className="hidden w-[320px] shrink-0 pt-9 pl-16 xl:block">
@@ -32,17 +30,7 @@ export function RightSidebar() {
       ) : profile ? (
         <div className="mb-6 flex items-center gap-3">
           <Link href={ROUTES.myProfile}>
-            {avatar ? (
-              <Image
-                src={avatar}
-                alt=""
-                width={56}
-                height={56}
-                className="size-14 rounded-full object-cover"
-              />
-            ) : (
-              <span className="bg-ig-elevated block size-14 rounded-full" />
-            )}
+            <UserAvatar src={profile.image} size={56} />
           </Link>
           <div className="min-w-0 flex-1">
             <Link
@@ -69,45 +57,31 @@ export function RightSidebar() {
       <ul className="space-y-3">
         {suggestions
           ?.filter((candidate) => candidate.id !== user?.userId)
-          .map((candidate) => {
-            const candidateAvatar = getImageUrl(candidate.avatar);
-
-            return (
-              <li key={candidate.id} className="flex items-center gap-3">
-                <Link href={ROUTES.profile(candidate.id)}>
-                  {candidateAvatar ? (
-                    <Image
-                      src={candidateAvatar}
-                      alt=""
-                      width={44}
-                      height={44}
-                      className="size-11 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="bg-ig-elevated block size-11 rounded-full" />
-                  )}
+          .map((candidate) => (
+            <li key={candidate.id} className="flex items-center gap-3">
+              <Link href={ROUTES.profile(candidate.id)}>
+                <UserAvatar src={candidate.avatar} size={44} />
+              </Link>
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={ROUTES.profile(candidate.id)}
+                  className="text-ig-text block truncate text-sm font-semibold"
+                >
+                  {candidate.userName}
                 </Link>
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={ROUTES.profile(candidate.id)}
-                    className="text-ig-text block truncate text-sm font-semibold"
-                  >
-                    {candidate.userName}
-                  </Link>
-                  <p className="text-ig-text-secondary truncate text-xs">
-                    {t("followerCount", { count: candidate.subscribersCount })}
-                  </p>
-                </div>
-                <button type="button" className="text-ig-primary text-xs font-semibold">
-                  {tNav("follow")}
-                </button>
-              </li>
-            );
-          })}
+                <p className="text-ig-text-secondary truncate text-xs">
+                  {t("followerCount", { count: candidate.subscribersCount })}
+                </p>
+              </div>
+              <button type="button" className="text-ig-primary text-xs font-semibold">
+                {tNav("follow")}
+              </button>
+            </li>
+          ))}
       </ul>
 
-      <p className="text-ig-text-secondary mt-6 text-xs">
-        © {new Date().getFullYear()} INSTAGRAM FROM META
+      <p className="text-ig-text-secondary mt-6 text-xs uppercase">
+        {tFooter("copyright", { year: new Date().getFullYear() })}
       </p>
     </aside>
   );

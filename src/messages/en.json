@@ -46,6 +46,21 @@
     "continue": "Continue",
     "submit": "Submit"
   },
+  "footer": {
+    "meta": "Meta",
+    "about": "About",
+    "blog": "Blog",
+    "jobs": "Jobs",
+    "help": "Help",
+    "api": "API",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "locations": "Locations",
+    "instagramLite": "Instagram Lite",
+    "metaAi": "Meta AI",
+    "threads": "Threads",
+    "copyright": "© {year} Instagram from Meta"
+  },
   "nav": {
     "primary": "Primary navigation",
     "home": "Home",

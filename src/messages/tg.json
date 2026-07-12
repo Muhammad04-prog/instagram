@@ -46,6 +46,21 @@
     "continue": "Идома",
     "submit": "Фиристодан"
   },
+  "footer": {
+    "meta": "Meta",
+    "about": "Маълумот",
+    "blog": "Блог",
+    "jobs": "Ҷойҳои кор",
+    "help": "Кӯмак",
+    "api": "API",
+    "privacy": "Махфият",
+    "terms": "Шартҳо",
+    "locations": "Ҷойҳо",
+    "instagramLite": "Instagram Lite",
+    "metaAi": "Meta AI",
+    "threads": "Threads",
+    "copyright": "© {year} Instagram from Meta"
+  },
   "nav": {
     "primary": "Навигатсияи асосӣ",
     "home": "Асосӣ",

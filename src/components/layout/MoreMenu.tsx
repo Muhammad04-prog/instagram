@@ -4,6 +4,7 @@ import { Activity, Bookmark, ChevronLeft, Moon, Settings, TriangleAlert } from "
 import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { MoreIcon } from "@/components/icons";
+import { SidebarLabel } from "@/components/layout/SidebarLabel";
 import { ThemeSwitcher } from "@/components/settings/ThemeSwitcher";
 import {
   DropdownMenu,
@@ -15,14 +16,13 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 /**
  * Sidebar "More" menu (docs/screenshots/img46): Settings / Your activity /
  * Saved / Switch appearance / Report a problem — then Switch accounts, Log out.
  * "Switch appearance" opens the theme sub-view in place, as IG does.
  */
-export function MoreMenu({ collapsed }: { collapsed: boolean }) {
+export function MoreMenu({ wide }: { wide: boolean }) {
   const t = useTranslations("nav");
   const tSettings = useTranslations("settings");
   const { logout } = useAuth();
@@ -33,13 +33,11 @@ export function MoreMenu({ collapsed }: { collapsed: boolean }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className={cn(
-            "hover:bg-ig-elevated flex w-full items-center gap-4 rounded-lg p-3 transition-colors",
-            collapsed && "justify-center",
-          )}
+          className="hover:bg-ig-elevated text-ig-text flex w-full items-center gap-4 rounded-lg p-3 transition-colors"
         >
           <MoreIcon className="text-ig-text size-6 shrink-0" />
-          {!collapsed && <span className="text-ig-text text-base font-bold">{t("more")}</span>}
+          {/* Regular weight — IG only bolds the active entry. */}
+          <SidebarLabel wide={wide}>{t("more")}</SidebarLabel>
         </button>
       </DropdownMenuTrigger>
 

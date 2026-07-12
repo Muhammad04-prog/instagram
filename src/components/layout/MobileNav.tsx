@@ -1,13 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { CompassIcon, CreateIcon, HomeIcon, ReelsIcon } from "@/components/icons";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useMyProfile } from "@/hooks/useProfile";
 import { Link, usePathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { cn, getImageUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 /**
  * Mobile bottom tabs — 48px (ТЗ §5). No screenshot exists for mobile
@@ -18,7 +18,6 @@ export function MobileNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const { data: profile } = useMyProfile();
-  const avatar = getImageUrl(profile?.image);
 
   return (
     <nav
@@ -42,19 +41,13 @@ export function MobileNav() {
         {() => <CreateIcon />}
       </Tab>
       <Tab href={ROUTES.myProfile} label={t("profile")} active={pathname.startsWith("/profile")}>
-        {(active) =>
-          avatar ? (
-            <Image
-              src={avatar}
-              alt=""
-              width={24}
-              height={24}
-              className={cn("size-6 rounded-full object-cover", active && "ring-ig-text ring-2")}
-            />
-          ) : (
-            <span className="bg-ig-elevated size-6 rounded-full" />
-          )
-        }
+        {(active) => (
+          <UserAvatar
+            src={profile?.image}
+            size={24}
+            className={cn(active && "ring-ig-text ring-2")}
+          />
+        )}
       </Tab>
     </nav>
   );

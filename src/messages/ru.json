@@ -46,6 +46,21 @@
     "continue": "Продолжить",
     "submit": "Отправить"
   },
+  "footer": {
+    "meta": "Meta",
+    "about": "Информация",
+    "blog": "Блог",
+    "jobs": "Вакансии",
+    "help": "Помощь",
+    "api": "API",
+    "privacy": "Конфиденциальность",
+    "terms": "Условия",
+    "locations": "Места",
+    "instagramLite": "Instagram Lite",
+    "metaAi": "Meta AI",
+    "threads": "Threads",
+    "copyright": "© {year} Instagram from Meta"
+  },
   "nav": {
     "primary": "Основная навигация",
     "home": "Главная",

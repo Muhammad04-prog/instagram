@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ContentArea } from "@/components/layout/ContentArea";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Navbar } from "@/components/layout/Navbar";
 import { NotificationsPanel } from "@/components/layout/NotificationsPanel";
@@ -20,9 +21,7 @@ export default function MainLayout({ children, modal }: { children: ReactNode; m
       <SearchPanel />
       <NotificationsPanel />
 
-      <div className="pt-navbar pb-mobilenav md:pl-sidebar-collapsed xl:pl-sidebar md:pt-0 md:pb-0">
-        {children}
-      </div>
+      <ContentArea>{children}</ContentArea>
 
       {modal}
       <MobileNav />

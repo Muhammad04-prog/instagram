@@ -1,16 +1,15 @@
 "use client";
 
 import { X } from "lucide-react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/shared/Loader";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Separator } from "@/components/ui/separator";
 import { useUsers } from "@/hooks/useUserSearch";
 import { Link } from "@/i18n/navigation";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/constants";
-import { ROUTES } from "@/lib/constants";
-import { cn, getImageUrl } from "@/lib/utils";
+import { ROUTES, SEARCH_DEBOUNCE_MS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/ui.store";
 
 /**
@@ -90,17 +89,7 @@ export function SearchPanel() {
                   onClick={closePanel}
                   className="hover:bg-ig-elevated flex items-center gap-3 rounded-lg px-4 py-2"
                 >
-                  {getImageUrl(user.avatar) ? (
-                    <Image
-                      src={getImageUrl(user.avatar) as string}
-                      alt=""
-                      width={44}
-                      height={44}
-                      className="size-11 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="bg-ig-elevated size-11 rounded-full" />
-                  )}
+                  <UserAvatar src={user.avatar} size={44} />
                   <span className="min-w-0">
                     <span className="text-ig-text block truncate text-sm font-semibold">
                       {user.userName}
