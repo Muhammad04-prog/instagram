@@ -68,5 +68,23 @@
     "ru": "Русский",
     "tg": "Тоҷикӣ",
     "en": "English"
+  },
+  "ForgotPassword": {
+    "title": "Forgot password?",
+    "subtitle": "Enter your email and we'll send you a link to restore your password.",
+    "emailPlaceholder": "Email",
+    "submit": "Send",
+    "successMessage": "If an account exists with this email, we sent the password recovery instructions.",
+    "backToLogin": "Back to login",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "ResetPassword": {
+    "title": "Reset password",
+    "emailLabel": "Email",
+    "passwordPlaceholder": "New password",
+    "confirmPasswordPlaceholder": "Confirm password",
+    "submit": "Save password",
+    "successMessage": "Password changed successfully. Log in to account.",
+    "errorGeneric": "Something went wrong. Please try again."
   }
 }

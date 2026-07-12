@@ -1,5 +1,10 @@
 import axios from 'axios';
-import type { LoginFormValues, RegisterFormValues } from '@/lib/validators/auth.schema';
+import type { 
+  LoginFormValues, 
+  RegisterFormValues,
+  ForgotPasswordFormValues,
+  ResetPasswordFormValues
+} from '@/lib/validators/auth.schema';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
 
@@ -46,4 +51,21 @@ export const accountService = {
     const res = await api.post<RegisterResponse>('/api/account/register', payload);
     return res.data;
   },
+
+  /** Forgot password link request. */
+  async forgotPassword(email: string) {
+    return api.delete('/api/Account/ForgotPassword', { params: { Email: email } });
+  },
+
+  /** Reset password with token. */
+  async resetPassword(data: ResetPasswordFormValues) {
+    return api.delete('/api/Account/ResetPassword', {
+      params: {
+        Token: data.token,
+        Email: data.email,
+        Password: data.password,
+        ConfirmPassword: data.confirmPassword,
+      },
+    });
+  }
 };

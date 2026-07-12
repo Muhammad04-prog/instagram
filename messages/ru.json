@@ -68,5 +68,23 @@
     "ru": "Русский",
     "tg": "Тоҷикӣ",
     "en": "English"
+  },
+  "ForgotPassword": {
+    "title": "Забыли пароль?",
+    "subtitle": "Введите ваш email, и мы отправим ссылку для восстановления пароля.",
+    "emailPlaceholder": "Email",
+    "submit": "Отправить",
+    "successMessage": "Если аккаунт с таким email существует, мы отправили инструкции по восстановлению пароля.",
+    "backToLogin": "Вернуться к входу",
+    "errorGeneric": "Произошла ошибка. Попробуйте еще раз."
+  },
+  "ResetPassword": {
+    "title": "Восстановление пароля",
+    "emailLabel": "Email",
+    "passwordPlaceholder": "Новый пароль",
+    "confirmPasswordPlaceholder": "Подтвердите пароль",
+    "submit": "Сохранить пароль",
+    "successMessage": "Пароль изменен. Войти в аккаунт.",
+    "errorGeneric": "Произошла ошибка. Попробуйте еще раз."
   }
 }
