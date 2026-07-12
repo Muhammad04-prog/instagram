@@ -150,14 +150,31 @@
 
 ## Фаза 6 — Stories (8 endpoints) (3 дня)
 
-- [ ] `services/story.service.ts` (8) + `hooks/useStories.ts` + `store/story.store.ts`
-- [ ] `StoryAvatarList` + `StoryRing` (градиент = непросмотренная, серое = просмотренная)
-- [ ] `StoryViewer` (full-screen): прогресс-бары 5 сек, тап/свайп, пауза на hold, ESC
-- [ ] `add-story-view` при показе слайда, `LikeStory` (сердце)
-- [ ] `StoryUploadForm` (`AddStories` multipart + опционально `PostId`)
-- [ ] `StoryViewersSheet` (`viewerDto`: viewCount / viewLike) — только для своих
-- [ ] `DeleteStory`
+- [x] `services/story.service.ts` (8) + `hooks/useStories.ts` + `store/story.store.ts`
+- [x] `StoryAvatarList` + `StoryRing` (градиент = непросмотренная, серое = просмотренная)
+- [x] `StoryViewer` (full-screen): прогресс-бары 5 сек, тап/свайп, пауза на hold, ←/→, Space, ESC
+- [x] `add-story-view` при показе слайда, `LikeStory` (сердце)
+- [x] `StoryUploadDialog` (`AddStories` multipart + опционально `PostId`)
+- [x] `StoryViewersSheet` (`viewerDto`: viewCount / viewLike) — только для своих
+- [x] `DeleteStory`
+- [x] Роуты `stories/[userId]` + `@modal/(.)stories/[userId]` (intercepting, как у поста)
 - ✅ Готово: 8 endpoints
+
+> Заметки Фазы 6:
+>
+> - ⚠️ **`get-stories` — голый массив, сгруппированный по авторам** (не `GetStoryDto[]` из Swagger),
+>   и в нём есть авторы с пустым `stories: []` (включая меня) — их фильтруем.
+> - ⚠️ **API не знает, видел ли Я историю.** `add-story-view` пишет просмотр, но обратно этого не
+>   отдаёт никто (`viewerDto` — только агрегат). Поэтому серое кольцо хранится в браузере
+>   (Zustand + localStorage, `store/story.store.ts`). В другом браузере кольца снова цветные.
+> - ⚠️ **`viewerDto` — не список зрителей, а два счётчика** (viewCount / viewLike). `StoryViewersSheet`
+>   честно показывает цифры и подпись, что списка в API нет — лиц не выдумываем.
+> - ⚠️ **`LikeStory` — toggle и отдаёт строку** `"Liked"` / `"Disliked"`, а `likedCount` в списке
+>   всегда 0 (баг сервера), поэтому количество лайков берём из `viewerDto.viewLike`.
+> - ⚠️ Файлы старых историй на сервере **404** → во вьюере вместо чёрного экрана честный текст.
+> - Проверено вживую: история загружена → появилась в рейле; просмотр всех историй автора → кольцо
+>   стало серым; лайк → `viewLike` 1; удаление → история ушла из рейла, «Ваша история» снова с «+».
+> - `build` / `lint` / `typecheck` — зелёные.
 
 ## Фаза 7 — Reels + Explore (2 дня)
 

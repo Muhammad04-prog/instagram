@@ -13,7 +13,9 @@
     "seeAll": "See all",
     "language": "Language",
     "theme": "Theme",
-    "submit": "Submit"
+    "submit": "Submit",
+    "previous": "Previous",
+    "next": "Next"
   },
   "auth": {
     "login": "Log in",
@@ -125,9 +127,21 @@
   },
   "story": {
     "yourStory": "Your story",
-    "addStory": "Add story",
+    "addStory": "Add to story",
     "viewers": "Viewers",
-    "deleteStory": "Delete story"
+    "deleteStory": "Delete story",
+    "title": "Story",
+    "share": "Share",
+    "pickStoryImage": "Choose a photo for your story",
+    "selectFile": "Select from computer",
+    "storyAdded": "Story added",
+    "viewCount": "Views",
+    "viewLike": "Likes",
+    "viewersOnlyCounts": "The API only reports totals — it has no list of who viewed the story.",
+    "likeStory": "Like story",
+    "deleteStoryConfirm": "This story will be removed for everyone.",
+    "noStories": "No stories yet",
+    "mediaMissing": "This story's file is no longer on the server."
   },
   "reels": {
     "title": "Reels"

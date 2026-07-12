@@ -27,14 +27,14 @@
 
 ## Story — `services/story.service.ts` (8)
 
-- [ ] `getStories()` → `GET /Story/get-stories` → `StoryAvatarList`
-- [ ] `getUserStories(userId)` → `GET /Story/get-user-stories/{userId}` → `StoryViewer`
-- [ ] `getMyStories()` → `GET /Story/get-my-stories` → «Ваша история»
-- [ ] `getStoryById(id)` → `GET /Story/GetStoryById?id` → deep-link
-- [ ] `addStory(image, postId?)` → `POST /Story/AddStories?PostId` multipart (Image) → `StoryUploadForm`
-- [ ] `likeStory(storyId)` → `POST /Story/LikeStory?storyId` → сердце во вьюере
-- [ ] `addStoryView(storyId)` → `POST /Story/add-story-view?StoryId` → авто при показе
-- [ ] `deleteStory(id)` → `DELETE /Story/DeleteStory?id` → «…»
+- [x] `getStories()` → `GET /Story/get-stories` → `StoryAvatarList` (⚠️ голый массив, сгруппирован по авторам)
+- [x] `getUserStories(userId)` → `GET /Story/get-user-stories/{userId}` → `StoryViewer`
+- [x] `getMyStories()` → `GET /Story/get-my-stories` → «Ваша история»
+- [x] `getStoryById(id)` → `GET /Story/GetStoryById?id` → `StoryViewersSheet` (единственный источник `viewerDto`)
+- [x] `addStory(image, postId?)` → `POST /Story/AddStories?PostId` multipart (Image) → `StoryUploadDialog`
+- [x] `likeStory(storyId)` → `POST /Story/LikeStory?storyId` → сердце во вьюере (**toggle**, отдаёт "Liked"/"Disliked")
+- [x] `addStoryView(storyId)` → `POST /Story/add-story-view?StoryId` → авто при показе слайда (1 раз)
+- [x] `deleteStory(id)` → `DELETE /Story/DeleteStory?id` → корзина в своей истории + ConfirmDialog
 
 ## Chat — `services/chat.service.ts` (6)
 

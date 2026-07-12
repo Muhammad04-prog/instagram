@@ -155,6 +155,74 @@
 
 ---
 
+## Story (8 endpoint — Фазаи 6)
+
+### `GET /Story/get-stories` — **бе конверт**, гурӯҳбандӣ аз рӯи муаллиф
+
+Swagger `GetStoryDto[]` ваъда медиҳад — дар амал **массиви холиси гурӯҳҳо**:
+
+```jsonc
+[
+  {
+    "userId": "5f7b27e0-…",
+    "userName": "ph4c1783888720",
+    "userImage": "065da838-….png",
+    "stories": [
+      {
+        "id": 598,
+        "fileName": "1f196554-….png",
+        "postId": null,
+        "createAt": "…",
+        "liked": false,
+        "likedCount": 0,
+      },
+    ],
+  },
+]
+```
+
+⚠️ Дар рӯйхат **ҳамаи** корбарон меоянд — ҳатто онҳое, ки `stories: []` доранд (ва худи ман).
+Дар UI гурӯҳҳои холӣ филтр мешаванд, «Ваша история» аввал меистад.
+⚠️ **Ҳеҷ майдони «ман дидаам» нест** → ҳалқаи хокистарӣ дар client (Zustand + localStorage,
+`store/story.store.ts`) нигоҳ дошта мешавад.
+
+### `GET /Story/get-user-stories/{userId}` · `get-my-stories`
+
+Як гурӯҳ (`{userId, userName, userImage, stories[]}`) — бо конверт.
+
+### `GET /Story/GetStoryById?id=` — сохтори ДИГАР
+
+```jsonc
+{
+  "id": 598,
+  "fileName": "…",
+  "postId": null,
+  "createAt": "…",
+  "userId": "5f7b27e0-…",
+  "userAvatar": null,
+  "viewerDto": { "userName": "ph4c…", "name": "Phase", "viewCount": 1, "viewLike": 1 },
+}
+```
+
+⚠️ `viewerDto` — **рӯйхати тамошобинон НЕСТ**, балки ду ҳисобкунак (viewCount / viewLike)-и
+худи сторис. Барои ҳамин `StoryViewersSheet` рақамҳоро нишон медиҳад, на чеҳраҳоро.
+
+### `POST /Story/AddStories` — multipart `Image` + `?PostId=` (ихтиёрӣ)
+
+Ҷавоб: `{ data: null, errors: ["success"], statusCode: 200 }` — id-и сторисро **намедиҳад**.
+
+### `POST /Story/LikeStory?storyId=` — **TOGGLE, сатр**
+
+`data: "Liked"` → `data: "Disliked"`. На boolean!
+
+### `POST /Story/add-story-view?StoryId=`
+
+`{ data: { id, viewUserId, storyId } }`. Такрор → `id: 0` (дубора ҳисоб намешавад) ✅
+
+### `DELETE /Story/DeleteStory?id=` → `data: true`
+
+---
+
 ## Gender enum
 
 | write (int) | read (string) |

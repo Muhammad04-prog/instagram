@@ -13,7 +13,9 @@
     "seeAll": "Все",
     "language": "Язык",
     "theme": "Тема",
-    "submit": "Отправить"
+    "submit": "Отправить",
+    "previous": "Назад",
+    "next": "Далее"
   },
   "auth": {
     "login": "Войти",
@@ -125,9 +127,21 @@
   },
   "story": {
     "yourStory": "Ваша история",
-    "addStory": "Добавить историю",
-    "viewers": "Зрители",
-    "deleteStory": "Удалить историю"
+    "addStory": "Добавить в историю",
+    "viewers": "Просмотры",
+    "deleteStory": "Удалить историю",
+    "title": "История",
+    "share": "Поделиться",
+    "pickStoryImage": "Выберите фото для истории",
+    "selectFile": "Выбрать на компьютере",
+    "storyAdded": "История добавлена",
+    "viewCount": "Просмотров",
+    "viewLike": "Отметок «Нравится»",
+    "viewersOnlyCounts": "API отдаёт только счётчики — списка тех, кто посмотрел, в нём нет.",
+    "likeStory": "Нравится",
+    "deleteStoryConfirm": "История будет удалена для всех.",
+    "noStories": "Историй пока нет",
+    "mediaMissing": "Файла этой истории больше нет на сервере."
   },
   "reels": {
     "title": "Reels"

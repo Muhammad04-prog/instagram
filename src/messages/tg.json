@@ -13,7 +13,9 @@
     "seeAll": "Ҳама",
     "language": "Забон",
     "theme": "Мавзӯъ",
-    "submit": "Фиристодан"
+    "submit": "Фиристодан",
+    "previous": "Қаблӣ",
+    "next": "Оянда"
   },
   "auth": {
     "login": "Ворид шудан",
@@ -125,9 +127,21 @@
   },
   "story": {
     "yourStory": "Ҳикояи шумо",
-    "addStory": "Илова кардани ҳикоя",
+    "addStory": "Илова ба ҳикоя",
     "viewers": "Тамошобинон",
-    "deleteStory": "Нест кардани ҳикоя"
+    "deleteStory": "Нест кардани ҳикоя",
+    "title": "Ҳикоя",
+    "share": "Мубодила",
+    "pickStoryImage": "Барои ҳикоя акс интихоб кунед",
+    "selectFile": "Аз компютер интихоб кунед",
+    "storyAdded": "Ҳикоя илова шуд",
+    "viewCount": "Дидашуда",
+    "viewLike": "Писандҳо",
+    "viewersOnlyCounts": "API танҳо ҳисобҳоро медиҳад — рӯйхати тамошобинон надорад.",
+    "likeStory": "Писанд",
+    "deleteStoryConfirm": "Ҳикоя барои ҳама нест мешавад.",
+    "noStories": "Ҳанӯз ҳикоя нест",
+    "mediaMissing": "Файли ин ҳикоя дигар дар сервер нест."
   },
   "reels": {
     "title": "Reels"
