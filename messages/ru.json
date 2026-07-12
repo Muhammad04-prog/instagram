@@ -1,0 +1,69 @@
+{
+  "Auth": {
+    "back": "Назад",
+    "metaInfinity": "Meta ∞"
+  },
+  "Login": {
+    "title": "Войти в Instagram",
+    "usernamePlaceholder": "Имя пользователя, номер мобильного телефона или электронный адрес",
+    "passwordPlaceholder": "Пароль",
+    "submit": "Войти",
+    "forgotPassword": "Забыли пароль?",
+    "facebookButton": "Войти через Facebook",
+    "createAccount": "Создать новый аккаунт",
+    "errorInvalid": "Неверные учётные данные. Попробуйте ещё раз."
+  },
+  "Register": {
+    "metaLabel": "Meta",
+    "title": "Зарегистрируйтесь в Instagram",
+    "subtitle": "Зарегистрируйтесь, чтобы смотреть фото и видео ваших друзей.",
+    "emailPhoneLabel": "Мобильный телефон или электронный адрес",
+    "emailPhonePlaceholder": "Мобильный телефон или электронный адрес",
+    "notificationHelper": "Вы можете получать от нас уведомления.",
+    "learnMore": "Подробнее...",
+    "passwordLabel": "Пароль",
+    "birthdateLabel": "Дата рождения",
+    "birthdateInfo": "Ваш день рождения",
+    "day": "День",
+    "month": "Месяц",
+    "year": "Год",
+    "months": {
+      "1": "Январь",
+      "2": "Февраль",
+      "3": "Март",
+      "4": "Апрель",
+      "5": "Май",
+      "6": "Июнь",
+      "7": "Июль",
+      "8": "Август",
+      "9": "Сентябрь",
+      "10": "Октябрь",
+      "11": "Ноябрь",
+      "12": "Декабрь"
+    },
+    "fullNameLabel": "Название",
+    "fullNamePlaceholder": "Имя и фамилия",
+    "usernameLabel": "Имя пользователя",
+    "usernamePlaceholder": "Имя пользователя",
+    "legalUpload": "Люди, которые пользуются нашим сервисом, могли загрузить вашу контактную информацию в Instagram.",
+    "legalLearnMore": "Подробнее",
+    "legalAgreement": "Нажимая «Отправить», вы принимаете наши",
+    "legalTerms": "Пользовательское соглашение",
+    "legalPrivacy": "Политику конфиденциальности",
+    "legalCookies": "Политику в отношении файлов cookie",
+    "legalAnd": "и",
+    "legalComma": ",",
+    "legalDot": ".",
+    "legalAds": "Вы можете получать от нас уведомления по SMS, которые можно отключить в любое время.",
+    "submit": "Отправить",
+    "alreadyHaveAccount": "У меня уже есть аккаунт",
+    "errorGeneric": "Произошла ошибка. Попробуйте ещё раз.",
+    "footerLinks": "Meta · Информация · Блог · Вакансии · Помощь · API · Конфиденциальность · Условия · Места · Instagram Lite",
+    "copyright": "© {year} Instagram from Meta"
+  },
+  "LocaleSwitcher": {
+    "ru": "Русский",
+    "tg": "Тоҷикӣ",
+    "en": "English"
+  }
+}

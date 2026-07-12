@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────
+   DESIGN SYSTEM — Instagram dark-theme token set
+   All ig-* colors are referenced in components instead of raw hex.
+   Font: Tailwind's default font-sans (system-ui / Helvetica stack).
+   ───────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ── Color palette ── */
+  --color-ig-bg:               #000000; /* page background (feed, auth, all screens) */
+  --color-ig-surface:          #121212; /* card / panel / modal surface              */
+  --color-ig-surface-hover:    #1a1a1a; /* surface on hover                          */
+  --color-ig-border:           #262626; /* input border, card border, divider        */
+  --color-ig-text-muted:       #a8a8a8; /* caption, placeholder, timestamp           */
+  --color-ig-text-secondary:   #737373; /* secondary label, focused border           */
+  --color-ig-blue:             #0095f6; /* primary CTA (Follow, Send, Save)          */
+  --color-ig-blue-muted:       #0d5ba9; /* login button — darker than ig-blue        */
+  --color-ig-blue-hover:       #1877c9; /* primary CTA hover state                   */
+  --color-ig-link:             #4599e0; /* inline text links (privacy policy etc.)   */
+  --color-ig-red:              #ed4956; /* active like/heart, error state            */
+  --color-ig-separator:        #363636; /* hr / section separator                    */
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BASE LAYER — global defaults
+   ───────────────────────────────────────────────────────────────── */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-ig-bg);
+    color: #ffffff;
+    font-family: var(--font-sans, system-ui, -apple-system, Helvetica Neue, Arial, sans-serif);
+    min-height: 100dvh;
+  }
+
+  /* Remove default focus ring — components define their own */
+  :focus-visible {
+    outline: 2px solid var(--color-ig-blue);
+    outline-offset: 2px;
+  }
+
+  /* Thin scrollbar — dark themed */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-ig-border);
+    border-radius: 9999px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   COMPONENT LAYER — shared utility classes
+   Use these in every component instead of one-off Tailwind classes.
+   ───────────────────────────────────────────────────────────────── */
+
+@layer components {
+
+  /* ── Text field ─────────────────────────────────────────────── */
+  /* Usage: <input className="ig-input w-full" />                  */
+  .ig-input {
+    background-color: transparent;
+    border: 1px solid var(--color-ig-border);
+    border-radius: 0.125rem; /* rounded-sm */
+    padding: 0.5rem 0.75rem; /* py-2 px-3  */
+    font-size: 0.875rem;     /* text-sm    */
+    color: #ffffff;
+    width: 100%;
+    transition: border-color 150ms ease;
+
+    &::placeholder {
+      color: var(--color-ig-text-muted);
+    }
+
+    &:focus {
+      border-color: var(--color-ig-text-secondary);
+      outline: none;
+    }
+
+    /* native <select> needs an explicit background so OS defaults don't bleed through */
+    &[data-type="select"],
+    &:is(select) {
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    option {
+      background-color: #121212;
+      color: #ffffff;
+    }
+  }
+
+
+  /* ── Primary button ─────────────────────────────────────────── */
+  /* Usage: <button className="ig-btn-primary w-full">Follow</button> */
+  .ig-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    background-color: var(--color-ig-blue);
+    color: #ffffff;
+    border-radius: 0.5rem; /* rounded-lg */
+    font-weight: 600;      /* font-semibold */
+    font-size: 0.875rem;   /* text-sm */
+    padding: 0.5rem 1rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-ig-blue-hover);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  /* ── Outlined button ────────────────────────────────────────── */
+  /* Usage: <button className="ig-btn-outline">Unfollow</button>   */
+  .ig-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    background-color: transparent;
+    border: 1px solid var(--color-ig-border);
+    color: var(--color-ig-blue);
+    border-radius: 0.5rem; /* rounded-lg */
+    font-weight: 600;      /* font-semibold */
+    font-size: 0.875rem;   /* text-sm */
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-ig-surface-hover);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  /* ── Muted (blue-muted) button — login screen ───────────────── */
+  /* Usage: <button className="ig-btn-muted">Войти</button>        */
+  .ig-btn-muted {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    background-color: var(--color-ig-blue-muted);
+    color: #ffffff;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-ig-blue);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  /* ── Separator ──────────────────────────────────────────────── */
+  /* Usage: <div className="ig-separator" />                       */
+  .ig-separator {
+    border: none;
+    border-top: 1px solid var(--color-ig-separator);
+    width: 100%;
+  }
+
+  /* ── Surface card ───────────────────────────────────────────── */
+  /* Usage: <div className="ig-card">...</div>                     */
+  .ig-card {
+    background-color: var(--color-ig-surface);
+    border: 1px solid var(--color-ig-border);
+    border-radius: 0.75rem;
+  }
+}

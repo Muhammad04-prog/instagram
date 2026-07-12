@@ -1,0 +1,69 @@
+{
+  "Auth": {
+    "back": "Back",
+    "metaInfinity": "Meta ∞"
+  },
+  "Login": {
+    "title": "Log in to Instagram",
+    "usernamePlaceholder": "Username, mobile number, or email",
+    "passwordPlaceholder": "Password",
+    "submit": "Log in",
+    "forgotPassword": "Forgot password?",
+    "facebookButton": "Log in with Facebook",
+    "createAccount": "Create new account",
+    "errorInvalid": "Invalid credentials. Please try again."
+  },
+  "Register": {
+    "metaLabel": "Meta",
+    "title": "Sign up for Instagram",
+    "subtitle": "Sign up to see photos and videos from your friends.",
+    "emailPhoneLabel": "Mobile number or email",
+    "emailPhonePlaceholder": "Mobile number or email",
+    "notificationHelper": "You may receive SMS notifications from us.",
+    "learnMore": "Learn more...",
+    "passwordLabel": "Password",
+    "birthdateLabel": "Date of birth",
+    "birthdateInfo": "Your date of birth",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "months": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
+    "fullNameLabel": "Full name",
+    "fullNamePlaceholder": "Full name",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Username",
+    "legalUpload": "People who use our service may have uploaded your contact info to Instagram.",
+    "legalLearnMore": "Learn more",
+    "legalAgreement": "By tapping Next, you agree to our",
+    "legalTerms": "Terms",
+    "legalPrivacy": "Privacy Policy",
+    "legalCookies": "Cookies Policy",
+    "legalAnd": "and",
+    "legalComma": ",",
+    "legalDot": ".",
+    "legalAds": "You may receive SMS notifications from us that you can opt out of at any time.",
+    "submit": "Next",
+    "alreadyHaveAccount": "I already have an account",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "footerLinks": "Meta · About · Blog · Jobs · Help · API · Privacy · Terms · Locations · Instagram Lite",
+    "copyright": "© {year} Instagram from Meta"
+  },
+  "LocaleSwitcher": {
+    "ru": "Русский",
+    "tg": "Тоҷикӣ",
+    "en": "English"
+  }
+}

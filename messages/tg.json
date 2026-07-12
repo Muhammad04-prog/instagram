@@ -1,0 +1,69 @@
+{
+  "Auth": {
+    "back": "Бозгашт",
+    "metaInfinity": "Meta ∞"
+  },
+  "Login": {
+    "title": "Ба Instagram ворид шавед",
+    "usernamePlaceholder": "Номи корбар, рақами телефон ё почтаи электронӣ",
+    "passwordPlaceholder": "Парол",
+    "submit": "Ворид шавед",
+    "forgotPassword": "Паролро фаромӯш кардед?",
+    "facebookButton": "Тавассути Facebook ворид шавед",
+    "createAccount": "Аккаунти нав созед",
+    "errorInvalid": "Маълумоти нодуруст. Дубора кӯшиш кунед."
+  },
+  "Register": {
+    "metaLabel": "Meta",
+    "title": "Дар Instagram сабти ном кунед",
+    "subtitle": "Барои дидани аксҳо ва видеоҳои дӯстонатон сабти ном кунед.",
+    "emailPhoneLabel": "Рақами мобилӣ ё почтаи электронӣ",
+    "emailPhonePlaceholder": "Рақами мобилӣ ё почтаи электронӣ",
+    "notificationHelper": "Шумо метавонед аз мо огоҳинома гиред.",
+    "learnMore": "Бештар донед...",
+    "passwordLabel": "Парол",
+    "birthdateLabel": "Санаи таваллуд",
+    "birthdateInfo": "Санаи таваллуди шумо",
+    "day": "Рӯз",
+    "month": "Моҳ",
+    "year": "Сол",
+    "months": {
+      "1": "Январ",
+      "2": "Феврал",
+      "3": "Март",
+      "4": "Апрел",
+      "5": "Май",
+      "6": "Июн",
+      "7": "Июл",
+      "8": "Август",
+      "9": "Сентябр",
+      "10": "Октябр",
+      "11": "Ноябр",
+      "12": "Декабр"
+    },
+    "fullNameLabel": "Ном",
+    "fullNamePlaceholder": "Ном ва насаб",
+    "usernameLabel": "Номи корбар",
+    "usernamePlaceholder": "Номи корбар",
+    "legalUpload": "Одамоне, ки аз хидмати мо истифода мебаранд, метавонанд маълумоти тамоси шуморо ба Instagram боргузорӣ карда бошанд.",
+    "legalLearnMore": "Бештар",
+    "legalAgreement": "Бо пахш кардани «Фиристед», шумо бо",
+    "legalTerms": "Шартномаи корбар",
+    "legalPrivacy": "Сиёсати махфият",
+    "legalCookies": "Сиёсати кукиҳо",
+    "legalAnd": "ва",
+    "legalComma": ",",
+    "legalDot": ".",
+    "legalAds": "Шумо метавонед аз мо паёмҳои SMS гиред, ки метавонед онро дар ҳар вақт бекор кунед.",
+    "submit": "Фиристед",
+    "alreadyHaveAccount": "Ман аллакай аккаунт дорам",
+    "errorGeneric": "Хатое рӯй дод. Дубора кӯшиш кунед.",
+    "footerLinks": "Meta · Дар бораи · Блог · Ҷойҳои кор · Кӯмак · API · Махфият · Шартҳо · Ҷойҳо · Instagram Lite",
+    "copyright": "© {year} Instagram аз Meta"
+  },
+  "LocaleSwitcher": {
+    "ru": "Русский",
+    "tg": "Тоҷикӣ",
+    "en": "English"
+  }
+}
