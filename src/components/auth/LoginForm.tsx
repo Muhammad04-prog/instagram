@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { Eye, EyeOff, ChevronLeft } from 'lucide-react';
 
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 import { loginSchema, type LoginFormValues } from '@/lib/validators/auth.schema';
 import { accountService } from '@/services/account.service';
 import { useAuthStore } from '@/store/auth.store';
@@ -118,12 +118,12 @@ export default function LoginForm() {
 
       {/* ── Forgot password ─────────────────────────────────────── */}
       <div className="mt-4 text-center">
-        <a
+        <Link
           href="/forgot-password"
           className="text-ig-link text-xs hover:underline"
         >
           {t('forgotPassword')}
-        </a>
+        </Link>
       </div>
 
       {/* ── Divider ─────────────────────────────────────────────── */}
@@ -148,13 +148,12 @@ export default function LoginForm() {
 
       {/* ── Create account ──────────────────────────────────────── */}
       <div className="mt-4 text-center border border-ig-border rounded-lg py-3">
-        <button
-          type="button"
-          onClick={() => router.push('/register')}
+        <Link
+          href="/register"
           className="text-ig-blue text-sm font-semibold hover:text-ig-blue-hover transition-colors"
         >
           {t('createAccount')}
-        </button>
+        </Link>
       </div>
     </div>
   );
