@@ -10,11 +10,14 @@ export function UserAvatar({
   alt = "",
   size = 24,
   className,
+  priority = false,
 }: {
   src: string | null | undefined;
   alt?: string;
   size?: number;
   className?: string;
+  /** For avatars that are visible on first paint (sidebar, profile header). */
+  priority?: boolean;
 }) {
   const url = getImageUrl(src);
 
@@ -41,6 +44,7 @@ export function UserAvatar({
       alt={alt}
       width={size}
       height={size}
+      priority={priority}
       style={{ width: size, height: size }}
       className={cn("shrink-0 rounded-full object-cover", className)}
     />

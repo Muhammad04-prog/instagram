@@ -12,7 +12,7 @@
 
 ## Post — `services/post.service.ts` (12)
 
-- [ ] `getPosts(params)` → `GET /Post/get-posts?UserId&Title&Content&PageNumber&PageSize` → `explore`, `PostGrid`
+- [ ] `getPosts(params)` → `GET /Post/get-posts?UserId&Title&Content&PageNumber&PageSize` → `explore`, `PostGrid` — _чтение уже подключено в Фазе 4 (сетка профиля); галочку ставим, когда весь тег Post будет готов (Фаза 5)_
 - [ ] `getReels(params)` → `GET /Post/get-reels?PageNumber&PageSize` → `reels`, `ReelCard`
 - [ ] `getPostById(id)` → `GET /Post/get-post-by-id?id` → `post/[postId]`, модалка
 - [ ] `getMyPosts()` → `GET /Post/get-my-posts` → `profile/me`
@@ -47,10 +47,10 @@
 
 ## FollowingRelationShip — `services/followingRelationShip.service.ts` (4)
 
-- [ ] `getSubscribers(userId)` → `GET /FollowingRelationShip/get-subscribers?UserId` → `FollowersList`
-- [ ] `getSubscriptions(userId)` → `GET /FollowingRelationShip/get-subscriptions?UserId` → `FollowingList`
-- [ ] `follow(followingUserId)` → `POST /FollowingRelationShip/add-following-relation-ship?followingUserId` → `FollowButton`
-- [ ] `unfollow(followingUserId)` → `DELETE /FollowingRelationShip/delete-following-relation-ship?followingUserId` → `FollowButton`
+- [x] `getSubscribers(userId)` → `GET /FollowingRelationShip/get-subscribers?UserId` → `FollowDialog` (таб «Подписчики»)
+- [x] `getSubscriptions(userId)` → `GET /FollowingRelationShip/get-subscriptions?UserId` → `FollowDialog` (таб «Подписки»)
+- [x] `follow(followingUserId)` → `POST /FollowingRelationShip/add-following-relation-ship?followingUserId` → `FollowButton` (optimistic)
+- [x] `unfollow(followingUserId)` → `DELETE /FollowingRelationShip/delete-following-relation-ship?followingUserId` → `FollowButton` (+ ConfirmDialog)
 
 ## User — `services/user.service.ts` (10)
 
@@ -67,13 +67,13 @@
 
 ## UserProfile — `services/userProfile.service.ts` (7)
 
-- [ ] `getMyProfile()` → `GET /UserProfile/get-my-profile`
-- [ ] `getUserProfileById(id)` → `GET /UserProfile/get-user-profile-by-id?id`
-- [ ] `getIsFollow(followingUserId)` → `GET /UserProfile/get-is-follow-user-profile-by-id?followingUserId`
-- [ ] `updateProfile(dto)` → `PUT /UserProfile/update-user-profile` (json: about, gender 0|1)
-- [ ] `updateAvatar(file)` → `PUT /UserProfile/update-user-image-profile` multipart (imageFile)
-- [ ] `deleteAvatar()` → `DELETE /UserProfile/delete-user-image-profile`
-- [ ] `getPostFavorites(params)` → `GET /UserProfile/get-post-favorites?PageNumber&PageSize` → `profile/favorites`
+- [x] `getMyProfile()` → `GET /UserProfile/get-my-profile` → `profile/me`, Sidebar, RightSidebar
+- [x] `getProfileById(id)` → `GET /UserProfile/get-user-profile-by-id?id` (fallback; профиль обычно берём из get-is-follow)
+- [x] `getIsFollowProfile(followingUserId)` → `GET /UserProfile/get-is-follow-user-profile-by-id?followingUserId` → `profile/[userId]` + `FollowButton` (отдаёт **профиль + isSubscriber**)
+- [x] `updateProfile(dto)` → `PUT /UserProfile/update-user-profile` (json: about, gender **0=Female / 1=Male**) → `profile/edit`
+- [x] `updateImage(file)` → `PUT /UserProfile/update-user-image-profile` multipart (imageFile) → `AvatarUploader`
+- [x] `deleteImage()` → `DELETE /UserProfile/delete-user-image-profile` → `AvatarUploader` («Удалить текущее фото», работает) — ⚠️ в ConfirmDialog красное предупреждение: баг сервера ломает login до загрузки нового фото (`docs/BACKEND_BUGS.md` #1)
+- [x] `getFavorites(params)` → `GET /UserProfile/get-post-favorites?PageNumber&PageSize` → `profile/favorites` (infinite scroll)
 
 ## Location — `services/location.service.ts` (5)
 

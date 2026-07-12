@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { FollowButton } from "@/components/profile/FollowButton";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,12 +13,11 @@ import { profileFullName } from "@/types/profile.types";
 
 /**
  * Feed's right column, ≥1264px only (docs/screenshots/img10): my profile row +
- * "Suggested for you" from /User/get-users. The Follow button is wired in
- * Phase 4 together with followingRelationShip.service.
+ * "Suggested for you" from /User/get-users, each with the shared optimistic
+ * FollowButton.
  */
 export function RightSidebar() {
   const t = useTranslations("feed");
-  const tNav = useTranslations("nav");
   const tFooter = useTranslations("footer");
   const { user } = useAuth();
   const { data: profile, isPending } = useMyProfile();
@@ -73,9 +73,7 @@ export function RightSidebar() {
                   {t("followerCount", { count: candidate.subscribersCount })}
                 </p>
               </div>
-              <button type="button" className="text-ig-primary text-xs font-semibold">
-                {tNav("follow")}
-              </button>
+              <FollowButton userId={candidate.id} userName={candidate.userName} variant="link" />
             </li>
           ))}
       </ul>

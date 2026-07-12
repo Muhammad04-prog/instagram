@@ -138,6 +138,7 @@ export function Sidebar() {
             <UserAvatar
               src={profile?.image}
               size={24}
+              priority
               className={cn(active && "ring-ig-text ring-2 ring-offset-1")}
             />
           )}

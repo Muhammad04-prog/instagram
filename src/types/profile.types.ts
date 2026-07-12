@@ -1,10 +1,15 @@
 /**
- * Shape confirmed against the live API (GET /UserProfile/get-my-profile).
- * Note: it carries NO id — the current user's id comes from the JWT claims
- * (SessionUser.userId). Gender is a string ("Male" | "Female"), not the 0|1
- * enum ТЗ §3.7 describes.
+ * Shapes confirmed against the live API, not Swagger (see docs/API_REAL_DTO.md).
+ *
+ * `get-my-profile` carries NO id — the current user's id comes from the JWT
+ * claims (SessionUser.userId). Gender is READ as a string ("Male" | "Female")
+ * but WRITTEN as the enum ordinal (0 = Female, 1 = Male); sending the string
+ * to update-user-profile answers 400.
  */
 export type Gender = "Male" | "Female";
+
+/** Wire values of Domain.Enums.Gender — verified by round-tripping the API. */
+export const GENDER_VALUE: Record<Gender, 0 | 1> = { Female: 0, Male: 1 };
 
 export interface UserProfile {
   userName: string;
@@ -22,17 +27,32 @@ export interface UserProfile {
   dateUpdated: string;
 }
 
-export interface UpdateProfileDto {
-  about: string;
-  gender: Gender;
+/**
+ * `get-is-follow-user-profile-by-id` does not answer a bare boolean: it returns
+ * the whole profile plus `isSubscriber`, so a single call feeds both the header
+ * and the follow button.
+ */
+export interface FollowableUserProfile extends UserProfile {
+  isSubscriber: boolean;
 }
 
-export interface Subscriber {
+/** PUT /UserProfile/update-user-profile — the API accepts these two fields only. */
+export interface UpdateProfileDto {
+  about: string;
+  gender: 0 | 1;
+}
+
+/** Item of get-subscribers / get-subscriptions. Note the lowercase `fullname`. */
+export interface UserShortInfo {
   userId: string;
   userName: string;
-  fullName: string | null;
-  userImage: string | null;
-  isFollowing?: boolean;
+  userPhoto: string | null;
+  fullname: string | null;
+}
+
+export interface FollowRelation {
+  id: number;
+  userShortInfo: UserShortInfo;
 }
 
 /** Convenience: the profile has firstName/lastName, the UI wants one string. */

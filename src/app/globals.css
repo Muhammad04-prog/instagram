@@ -15,6 +15,10 @@
   --ig-text-secondary: #737373;
   --ig-border: #dbdbdb;
   --ig-separator: #efefef;
+  /* Grey action buttons (Edit profile, Following…) — `elevated` is #fff in light
+     and would render them invisible. */
+  --ig-button-secondary: #efefef;
+  --ig-button-secondary-hover: #dbdbdb;
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
   --ig-danger: #ed4956;
@@ -96,6 +100,8 @@
   --ig-text-secondary: #a8a8a8;
   --ig-border: #262626;
   --ig-separator: #363636;
+  --ig-button-secondary: #363636;
+  --ig-button-secondary-hover: #262626;
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
   --ig-danger: #ed4956;
@@ -149,6 +155,8 @@
   --color-ig-text-secondary: var(--ig-text-secondary);
   --color-ig-border: var(--ig-border);
   --color-ig-separator: var(--ig-separator);
+  --color-ig-button-secondary: var(--ig-button-secondary);
+  --color-ig-button-secondary-hover: var(--ig-button-secondary-hover);
   --color-ig-primary: var(--ig-primary);
   --color-ig-primary-hover: var(--ig-primary-hover);
   --color-ig-danger: var(--ig-danger);

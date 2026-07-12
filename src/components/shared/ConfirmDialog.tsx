@@ -24,6 +24,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   destructive = true,
+  warnDescription = false,
   onConfirm,
 }: {
   open?: boolean;
@@ -34,6 +35,8 @@ export function ConfirmDialog({
   confirmLabel: string;
   cancelLabel?: string;
   destructive?: boolean;
+  /** Renders the description in the danger colour — for irreversible side effects. */
+  warnDescription?: boolean;
   onConfirm: () => void;
 }) {
   const t = useTranslations("common");
@@ -48,7 +51,12 @@ export function ConfirmDialog({
         <div className="px-6 pt-8 pb-6 text-center">
           <DialogTitle className="text-ig-text text-xl font-normal">{title}</DialogTitle>
           {description ? (
-            <DialogDescription className="text-ig-text-secondary mt-2 text-sm">
+            <DialogDescription
+              className={cn(
+                "mt-2 text-sm",
+                warnDescription ? "text-ig-danger font-medium" : "text-ig-text-secondary",
+              )}
+            >
               {description}
             </DialogDescription>
           ) : null}

@@ -9,6 +9,7 @@ export const queryKeys = {
     list: (params: GetPostsParams) => [...queryKeys.posts.all, "list", params] as const,
     feed: (params: GetFollowingPostsParams) => [...queryKeys.posts.all, "feed", params] as const,
     reels: () => [...queryKeys.posts.all, "reels"] as const,
+    byUser: (userId: string) => [...queryKeys.posts.all, "by-user", userId] as const,
     mine: () => [...queryKeys.posts.all, "mine"] as const,
     detail: (postId: number) => [...queryKeys.posts.all, "detail", postId] as const,
   },

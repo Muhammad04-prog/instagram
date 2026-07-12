@@ -90,13 +90,34 @@
 
 ## Фаза 4 — Профиль (7 + 4 endpoints) (3–4 дня)
 
-- [ ] `services/userProfile.service.ts` (7) + `followingRelationShip.service.ts` (4)
-- [ ] `profile/me`, `profile/[userId]` — `ProfileHeader`, `ProfileStats`, `ProfileTabs`
-- [ ] `PostGrid` (3 колонки, hover = лайки/комменты)
-- [ ] `FollowButton` (optimistic + `get-is-follow-user-profile-by-id`), `FollowDialog` (Followers / Following)
-- [ ] `profile/edit` (`update-user-profile`: about, gender) + `AvatarUploader` (upload / delete image)
-- [ ] `profile/favorites` (`get-post-favorites`, infinite scroll)
+- [x] `services/userProfile.service.ts` (7) + `followingRelationShip.service.ts` (4)
+- [x] `profile/me`, `profile/[userId]` — `ProfileHeader`, `ProfileStats`, `ProfileTabs`
+- [x] `PostGrid` (3 колонки, hover = лайки/комменты)
+- [x] `FollowButton` (optimistic + `get-is-follow-user-profile-by-id`), `FollowDialog` (Followers / Following)
+- [x] `profile/edit` (`update-user-profile`: about, gender) + `AvatarUploader` (upload / delete image)
+- [x] `profile/favorites` (`get-post-favorites`, infinite scroll)
 - ✅ Готово: 11 endpoints
+
+> Заметки Фазы 4:
+>
+> - 🔴 **`delete-user-image-profile` ломает аккаунт**: image → `null`, после чего `login` этого юзера
+>   отвечает 500 «Value cannot be null» (проверено на 3 аккаунтах; лечится загрузкой нового фото со
+>   старым токеном). Кнопка «Удалить текущее фото» **работает** (11/11 endpoint'ов закрыты), но в
+>   ConfirmDialog выводится красное предупреждение об этом. Подробности: `docs/BACKEND_BUGS.md`.
+> - DTO сняты с живого API (`docs/API_REAL_DTO.md`): `get-is-follow-user-profile-by-id` отдаёт **весь профиль
+>   - `isSubscriber`** (не boolean) → один запрос кормит и header, и `FollowButton`;
+>     `get-subscribers/subscriptions` → `[{ id, userShortInfo: { userId, userName, userPhoto, fullname } }]`.
+> - ⚠️ **`gender` асимметричен**: читается строкой (`"Male"`), пишется числом (`0` = Female, `1` = Male);
+>   строка на запись → 400. `update-user-profile` принимает **только** `about` + `gender`, поэтому в
+>   `profile/edit` нет полей «Сайт» / occupation (в API их нет), а не потому что забыли.
+> - `Post` DTO из ТЗ неверен: `images` — массив **строк** (и может быть `.mp4`), счётчик — `postView`.
+>   Типы исправлены. Таб «Reels» профиля считается из `get-posts` (у `get-reels` нет фильтра по UserId).
+> - Порядок табов взят с img35: сетка → **Сохранённое** → Репосты → Отмеченные (иконки без подписей).
+> - Добавлен токен `--ig-button-secondary` — в light `--ig-elevated` = `#fff`, серые кнопки были невидимы.
+> - `Post/get-posts` подключён досрочно (только чтение) — иначе сетка профиля пустая; остальные 11
+>   endpoint'ов тега Post остаются на Фазу 5, в API_MAP они всё ещё `[ ]`.
+> - Проверено в браузере (Playwright, dark + light + /ru): follow/unfollow оптимистичен и совпадает с
+>   сервером — 29 → 28 → 29 (после reload тоже 29). `build` / `lint` / `typecheck` — зелёные.
 
 ## Фаза 5 — Посты и лента (12 endpoints) (5–6 дней)
 

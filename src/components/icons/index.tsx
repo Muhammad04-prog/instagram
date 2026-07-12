@@ -186,3 +186,76 @@ export function DotsIcon({ ...props }: IconProps) {
     </svg>
   );
 }
+
+/* ── Profile tabs (docs/screenshots/img35, img36, img38) ─────────────────── */
+
+export function GridIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect {...stroke} x="3" y="3" width="18" height="18" rx="1" strokeWidth={1.5} />
+      <path {...stroke} strokeWidth={1.5} d="M9 3v18M15 3v18M3 9h18M3 15h18" />
+    </svg>
+  );
+}
+
+/** The "reposts" tab — two arrows chasing each other (IG's repost glyph). */
+export function RepostIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        {...stroke}
+        strokeWidth={1.5}
+        d="M17 2.5 20.5 6 17 9.5M20.5 6H7a3.5 3.5 0 0 0-3.5 3.5V11M7 21.5 3.5 18 7 14.5M3.5 18H17a3.5 3.5 0 0 0 3.5-3.5V13"
+      />
+    </svg>
+  );
+}
+
+export function TaggedIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect {...stroke} x="3" y="3" width="18" height="18" rx="3" strokeWidth={1.5} />
+      <circle {...stroke} cx="12" cy="10" r="2.6" strokeWidth={1.5} />
+      <path {...stroke} strokeWidth={1.5} d="M6.5 19a5.6 5.6 0 0 1 11 0" />
+    </svg>
+  );
+}
+
+export function SettingsIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle {...stroke} cx="12" cy="12" r="3" strokeWidth={1.5} />
+      <path
+        {...stroke}
+        strokeWidth={1.5}
+        d="M12 2.5 13.4 5a7.6 7.6 0 0 1 1.9.8l2.6-.8 1.6 2.8-1.9 1.9c.1.4.1.9 0 1.4l1.9 1.9-1.6 2.8-2.6-.8c-.6.4-1.2.6-1.9.8L12 21.5 10.6 19a7.6 7.6 0 0 1-1.9-.8l-2.6.8-1.6-2.8 1.9-1.9a5.9 5.9 0 0 1 0-1.4L4.5 11l1.6-2.8 2.6.8c.6-.4 1.2-.6 1.9-.8L12 2.5Z"
+      />
+    </svg>
+  );
+}
+
+/* ── Grid-tile badges ────────────────────────────────────────────────────── */
+
+/** Stacked squares — the tile holds more than one image. */
+export function CarouselIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        fill="currentColor"
+        d="M19 2H9a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3Zm-4.5 18H7a3 3 0 0 1-3-3V9.5a1 1 0 1 0-2 0V17a5 5 0 0 0 5 5h7.5a1 1 0 0 0 0-2Z"
+      />
+    </svg>
+  );
+}
+
+/** Play triangle in a rounded frame — the tile is a video / reel. */
+export function ClipIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        fill="currentColor"
+        d="M20 3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-9.5 13V8l6 4-6 4Z"
+      />
+    </svg>
+  );
+}
