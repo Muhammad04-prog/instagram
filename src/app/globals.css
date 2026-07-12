@@ -1,82 +1,205 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------------------------------------------
+   Instagram design tokens — LIGHT (docs/TZ.md §5)
+   --------------------------------------------------------------- */
 :root {
-  --font-geist-sans: "Geist", sans-serif;
-  --font-geist-mono: "Geist Mono", monospace;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --ig-bg: #ffffff;
+  --ig-bg-secondary: #fafafa;
+  --ig-elevated: #ffffff;
+  --ig-text: #000000;
+  --ig-text-secondary: #737373;
+  --ig-border: #dbdbdb;
+  --ig-separator: #efefef;
+  --ig-primary: #0095f6;
+  --ig-primary-hover: #1877f2;
+  --ig-danger: #ed4956;
+  --ig-badge: #ff3040;
+  --ig-story-gradient: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
+
+  /* Layout sizes (docs/TZ.md §5) */
+  --ig-feed-width: 470px;
+  --ig-sidebar-width: 244px;
+  --ig-sidebar-collapsed: 73px;
+  --ig-navbar-height: 44px;
+  --ig-mobilenav-height: 48px;
+
+  /* Radii: buttons 8px, inputs 3px */
+  --radius: 0.5rem;
+  --ig-radius-input: 3px;
+
+  /* Auth screens use Meta's design system, not the in-app IG palette.
+     Dark values sampled from docs/screenshots/img4,img6,img7; light derived
+     from docs/TZ.md §5 (no light auth screenshots exist). */
+  --auth-bg: #ffffff;
+  --auth-promo-bg: #fafafa;
+  --auth-input-bg: #ffffff;
+  --auth-input-border: #c7c7c7;
+  --auth-input-border-focus: #262626;
+  --auth-primary: #0064e0;
+  --auth-primary-hover: #0055c4;
+  --auth-primary-disabled: #a8cbf5;
+  --auth-divider: #dbdbdb;
+
+  /* Fonts: IG system stack for UI, Grand Hotel for the wordmark (docs/TZ.md §5) */
+  --font-system: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-logo: "Grand Hotel", cursive;
+
+  /* shadcn/ui tokens → mapped onto the IG palette */
+  --background: var(--ig-bg);
+  --foreground: var(--ig-text);
+  --card: var(--ig-elevated);
+  --card-foreground: var(--ig-text);
+  --popover: var(--ig-elevated);
+  --popover-foreground: var(--ig-text);
+  --primary: var(--ig-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--ig-bg-secondary);
+  --secondary-foreground: var(--ig-text);
+  --muted: var(--ig-bg-secondary);
+  --muted-foreground: var(--ig-text-secondary);
+  --accent: var(--ig-separator);
+  --accent-foreground: var(--ig-text);
+  --destructive: var(--ig-danger);
+  --border: var(--ig-border);
+  --input: var(--ig-border);
+  --ring: var(--ig-primary);
+  --sidebar: var(--ig-bg);
+  --sidebar-foreground: var(--ig-text);
+  --sidebar-primary: var(--ig-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--ig-separator);
+  --sidebar-accent-foreground: var(--ig-text);
+  --sidebar-border: var(--ig-border);
+  --sidebar-ring: var(--ig-primary);
+}
+
+/* ---------------------------------------------------------------
+   Instagram design tokens — DARK (docs/TZ.md §5 + docs/screenshots/)
+   --------------------------------------------------------------- */
+.dark {
+  --ig-bg: #000000;
+  --ig-bg-secondary: #121212;
+  --ig-elevated: #262626;
+  --ig-text: #f5f5f5;
+  --ig-text-secondary: #a8a8a8;
+  --ig-border: #262626;
+  --ig-separator: #363636;
+  --ig-primary: #0095f6;
+  --ig-primary-hover: #1877f2;
+  --ig-danger: #ed4956;
+  --ig-badge: #ff3040;
+
+  /* Auth (sampled from docs/screenshots/img4, img6, img7) */
+  --auth-bg: #1f1f22;
+  --auth-promo-bg: #0c1014;
+  --auth-input-bg: #2b2c2f;
+  --auth-input-border: #50545b;
+  --auth-input-border-focus: #aaafb5;
+  --auth-primary: #0064e0;
+  --auth-primary-hover: #0a6ff0;
+  --auth-primary-disabled: #133b6e;
+  --auth-divider: #494d53;
+
+  --background: var(--ig-bg);
+  --foreground: var(--ig-text);
+  --card: var(--ig-elevated);
+  --card-foreground: var(--ig-text);
+  --popover: var(--ig-elevated);
+  --popover-foreground: var(--ig-text);
+  --primary: var(--ig-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--ig-elevated);
+  --secondary-foreground: var(--ig-text);
+  --muted: var(--ig-bg-secondary);
+  --muted-foreground: var(--ig-text-secondary);
+  --accent: var(--ig-elevated);
+  --accent-foreground: var(--ig-text);
+  --destructive: var(--ig-danger);
+  --border: var(--ig-border);
+  --input: var(--ig-separator);
+  --ring: var(--ig-primary);
+  --sidebar: var(--ig-bg);
+  --sidebar-foreground: var(--ig-text);
+  --sidebar-primary: var(--ig-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--ig-elevated);
+  --sidebar-accent-foreground: var(--ig-text);
+  --sidebar-border: var(--ig-border);
+  --sidebar-ring: var(--ig-primary);
 }
 
 @theme inline {
+  /* IG semantic colors — usable as bg-ig-bg, text-ig-secondary, border-ig, … */
+  --color-ig-bg: var(--ig-bg);
+  --color-ig-bg-secondary: var(--ig-bg-secondary);
+  --color-ig-elevated: var(--ig-elevated);
+  --color-ig-text: var(--ig-text);
+  --color-ig-text-secondary: var(--ig-text-secondary);
+  --color-ig-border: var(--ig-border);
+  --color-ig-separator: var(--ig-separator);
+  --color-ig-primary: var(--ig-primary);
+  --color-ig-primary-hover: var(--ig-primary-hover);
+  --color-ig-danger: var(--ig-danger);
+  --color-ig-badge: var(--ig-badge);
+
+  --color-auth-bg: var(--auth-bg);
+  --color-auth-promo-bg: var(--auth-promo-bg);
+  --color-auth-input-bg: var(--auth-input-bg);
+  --color-auth-input-border: var(--auth-input-border);
+  --color-auth-input-border-focus: var(--auth-input-border-focus);
+  --color-auth-primary: var(--auth-primary);
+  --color-auth-primary-hover: var(--auth-primary-hover);
+  --color-auth-primary-disabled: var(--auth-primary-disabled);
+  --color-auth-divider: var(--auth-divider);
+
+  --spacing-feed: var(--ig-feed-width);
+  --spacing-sidebar: var(--ig-sidebar-width);
+  --spacing-sidebar-collapsed: var(--ig-sidebar-collapsed);
+  --spacing-navbar: var(--ig-navbar-height);
+  --spacing-mobilenav: var(--ig-mobilenav-height);
+
+  --font-sans: var(--font-system);
+  --font-logo: var(--font-logo);
+
+  /* shadcn/ui token bridge */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -86,52 +209,28 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-ig-bg text-ig-text;
+    font-family: var(--font-system);
   }
-  html {
-    @apply font-sans;
+}
+
+@utility story-ring {
+  background: var(--ig-story-gradient);
+}
+
+/* Auth inputs use the 3px radius IG uses on its login forms. */
+@utility input-auth {
+  border-radius: var(--ig-radius-input);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }

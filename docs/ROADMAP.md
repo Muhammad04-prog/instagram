@@ -24,34 +24,67 @@
 
 ## Фаза 1 — Дизайн-система и каркас (1–2 дня)
 
-- [ ] `globals.css`: все CSS-переменные IG (light + dark) + Tailwind `@theme`
-- [ ] `ThemeProvider` (next-themes: light / dark / system), `suppressHydrationWarning`
-- [ ] i18n: `i18n/routing.ts`, `request.ts`, `navigation.ts`, `messages/{en,ru,tg}.json`, `middleware.ts`
-- [ ] `app/layout.tsx` + `app/[locale]/layout.tsx` + Providers (Query, Theme, Auth, Toaster)
-- [ ] `lib/axios.ts` (Bearer, unwrap `Response<T>`, 401 → logout), `lib/constants.ts`, `lib/utils.ts`, `lib/query-keys.ts`
-- [ ] `types/*` — все DTO из Swagger
-- [ ] `shared/`: Loader, EmptyState, ErrorState, ConfirmDialog, Modal
-- [ ] `loading.tsx` / `error.tsx` / `not-found.tsx` / `global-error.tsx`
-- [ ] IG-иконки (SVG): home, search, explore, reels, message, heart, create, more, bookmark, comment, share
+- [x] `globals.css`: все CSS-переменные IG (light + dark) + Tailwind `@theme` (+ размеры, `--font-system`, `--font-logo`, утилиты `story-ring` / `input-auth` / `scrollbar-none`)
+- [x] `ThemeProvider` (next-themes: light / dark / system), `suppressHydrationWarning`
+- [x] i18n: `i18n/routing.ts`, `request.ts`, `navigation.ts`, `messages/{en,ru,tg}.json`, **`src/proxy.ts`** (Next 16 вместо `middleware.ts`)
+- [x] `app/layout.tsx` + `app/[locale]/layout.tsx` + Providers (Query, Theme, Tooltip, Toaster) — _AuthProvider → Фаза 2_
+- [x] `lib/axios.ts` (Bearer, unwrap `Response<T>`, 401 → logout), `lib/constants.ts`, `lib/utils.ts`, `lib/query-keys.ts`
+- [x] `types/*` — все DTO (response, auth, post, story, chat, user, profile, location)
+- [x] `shared/`: Loader, EmptyState, ErrorState, ConfirmDialog, Modal
+- [x] `loading.tsx` / `error.tsx` / `not-found.tsx` / `global-error.tsx`
+- [x] IG-иконки (SVG): home, search, explore, reels, message, heart, create, more, bookmark, comment, share (+ dots, глиф и wordmark логотипа)
+
+> Заметки Фазы 1:
+>
+> - Палитра light взята из `docs/TZ.md §5` — light-скриншотов (img48–img52) в `docs/screenshots/` нет, там по-прежнему img1–img47 (все dark).
+> - Токены IG — единственный источник; токены shadcn (`--background`, `--primary`, …) **отображены на них**, поэтому компоненты shadcn автоматически в стиле IG.
+> - `localePrefix: "as-needed"` → `/` = en, `/en` → 307 на `/`, `/ru` и `/tg` с префиксом. Проверено на dev-сервере.
+> - Анти-«мигание» темы: inline-скрипт next-themes присутствует в HTML, `suppressHydrationWarning` на `<html>`.
+> - `timeAgo()` не добавлял: относительное время делаем через `useFormatter()` next-intl (ТЗ §6), чтобы не дублировать логику.
+> - `npm run build` / `lint` / `typecheck` — зелёные; `/`, `/ru`, `/tg`, 404 проверены curl'ом.
 
 ## Фаза 2 — Auth (5 endpoints) (2–3 дня)
 
-- [ ] `services/account.service.ts` — register, login, forgotPassword(DELETE), resetPassword(DELETE), changePassword(PUT)
-- [ ] `lib/validators/auth.schema.ts` (Zod: userName, fullName, email, password + confirm)
-- [ ] `(auth)/layout.tsx` — как на instagram.com/accounts/login (карточка + фрейм телефона справа на desktop)
-- [ ] `LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm`
-- [ ] `store/auth.store.ts` + `hooks/useAuth.ts` + `/api/auth/session/route.ts` (httpOnly cookie)
-- [ ] `middleware.ts` — guard: гость → `/login`, авторизован → `/`
-- [ ] `settings/change-password` + `ChangePasswordForm`
-- ✅ Готово: регистрация → логин → защищённые роуты работают
+- [x] `services/account.service.ts` — register, login, forgotPassword(DELETE), resetPassword(DELETE), changePassword(PUT)
+- [x] `lib/validators/auth.schema.ts` (Zod: userName, fullName, email, password + confirm) — схемы как фабрики, сообщения через next-intl
+- [x] `(auth)/layout.tsx` — **по скриншотам** (img7: сплит промо+форма; img4/5, img6: одна колонка), а не «карточка + фрейм телефона» (это старый дизайн IG)
+- [x] `LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm` (+ `AuthInput`, `AuthButton`, `AuthPromo`, `AuthFooter`)
+- [x] `store/auth.store.ts` + `hooks/useAuth.ts` + `/api/auth/session/route.ts` (httpOnly cookie) + `AuthProvider`
+- [x] **`src/proxy.ts`** (Next 16, не `middleware.ts`) — guard: гость → `/login`, авторизован → `/`
+- [x] `settings/change-password` + `ChangePasswordForm`
+- ✅ Готово: 5 endpoints (Account) — см. `docs/API_MAP.md`
+
+> Заметки Фазы 2:
+>
+> - DTO сверены со **Swagger** (`/swagger/v1/swagger.json`), не на глаз: `RegisterDto` = ровно 5 полей (userName, fullName, email, password, confirmPassword). Блок «Дата рождения» из img4 **не делаем** (нет в API), вместо него — «Подтвердите пароль» (обязателен в API).
+> - Кнопка «Войти через Facebook» и экран «Продолжить как…» (img1/img2/img8) **не делаем** — в Swagger нет OAuth/сессионных endpoint'ов.
+> - **Палитра auth ≠ палитра приложения.** Значения сняты пиксельно со скриншотов: фон `#1F1F22`, промо `#0C1014`, кнопка `#0064E0` (Meta-синий, а не IG `#0095F6`), disabled `#133B6E`, бордер инпута `#50545B` → focus `#AAAFB5`, фон инпута в регистрации `#2B2C2F`. Токены `--auth-*` в `globals.css`.
+> - Light-тема для auth выведена из ТЗ §5 — light-скриншотов auth нет.
+> - Коллаж телефонов на промо-панели (img7) — ассет Meta, его у нас нет: панель собрана из логотипа и заголовка.
+> - **Безопасность (переделано):** токен **никогда** не попадает в клиентский JS. Все запросы идут через Route Handler `src/app/api/proxy/[...path]/route.ts`, который читает httpOnly-cookie и ставит `Authorization: Bearer …` **на сервере**. `lib/axios.ts` baseURL = `/api/proxy`. Тело запроса стримится (`duplex: "half"`), поэтому multipart (add-post, send-message, avatar) проходит с сохранением boundary. `GET /api/auth/session` возвращает **только claims** (userId, userName, email), без токена.
+> - Guard — в `src/proxy.ts` (Next 16); `middleware.ts` в проекте нет. Его matcher исключает `/api`, поэтому прокси-роут не попадает под редиректы.
+> - ⚠️ **`errors` ≠ признак ошибки!** `update-user-image-profile` отвечает `{errors:["success"], statusCode:200}`. Интерцептор теперь считает ошибкой только `statusCode >= 400`.
+> - ⚠️ **DTO профиля из ТЗ не совпадает с реальным API** (обнаружено при e2e-проверке). Реально `get-my-profile` возвращает: `userName, image, dateUpdated, gender ("Male" — строка, а не 0|1!), postCount, subscribersCount, subscriptionsCount, firstName, lastName, locationId, dob, occupation, about`. Нет `id`, `fullName`, `posts`. → `types/profile.types.ts` править в Фазе 4.
+> - Проверено e2e на dev (curl + cookie-jar): register → login → httpOnly-cookie → `get-my-profile` 200 → multipart-загрузка аватара 200 (файл реально сохранён). `/` без токена → 307 `/login`; без cookie прокси отдаёт 401.
 
 ## Фаза 3 — Layout приложения (2 дня)
 
-- [ ] `Sidebar` (244px / collapsed 73px, авто-collapse на chat+explore), `Navbar` (mobile top), `MobileNav` (bottom tabs)
-- [ ] `SearchPanel` (выезжающая панель как в IG), `NotificationsPanel`
-- [ ] `RightSidebar` (профиль + «Рекомендации» через `/User/get-users`)
-- [ ] Адаптив: 3 брейкпоинта (<768 / 768–1264 / >1264)
-- [ ] `@modal` slot + `default.tsx` (заготовка под intercepting routes)
+- [x] `Sidebar` (244px / collapsed 73px, авто-collapse на `/chat` + `/explore` и при открытой панели), `Navbar` (mobile top, 44px), `MobileNav` (bottom tabs, 48px)
+- [x] `SearchPanel` (выезжающая панель как в IG, debounce 400ms → `/User/get-users`), `NotificationsPanel`
+- [x] `RightSidebar` (профиль через `/UserProfile/get-my-profile` + «Рекомендации» через `/User/get-users`)
+- [x] Адаптив: 3 брейкпоинта (<768 / 768–1264 / >1264)
+- [x] `@modal` slot + `default.tsx` (заготовка под intercepting routes Фазы 5)
+- [x] `ThemeSwitcher` (Light / Dark / System) — в меню «Ещё», как в IG (img46)
+
+> Заметки Фазы 3:
+>
+> - Иконки и порядок сняты с увеличенного кропа сайдбара (img10): логотип → **Home (залитая = активная)** → Reels → бумажный самолётик (Сообщения) → Лупа → Сердце с красной точкой → Плюс → аватар; внизу — гамбургер «Ещё» и сетка «Другие продукты».
+> - ⚠️ **В сайдбаре нет иконки Explore (компаса)** — в новом дизайне IG её убрали. Поэтому `/explore` доступен из `MobileNav` (мобильный таббар скриншотов не имеет, INDEX §2) и будет доступен из панели поиска. Десктопный сайдбар оставлен ровно как на скриншоте.
+> - ⚠️ **Развёрнутый сайдбар 244px на скриншотах есть только частично** (img46/img47 — там видны подписи «Главная», «Ещё», «Другие продукты»). Остальное собрано по этим подписям.
+> - ⚠️ **`NotificationsPanel` без данных:** в Swagger **нет ни одного endpoint'а уведомлений** (все 57 расписаны по другим тегам). Панель свёрстана по img26–img28, но показывает empty state. Экраны img26–img28 (лайки/подписки) реализовать нечем.
+> - DTO взяты из **живого API**, не из ТЗ: `get-users` → `{id, avatar, fullName, subscribersCount, userName}`; `get-my-profile` → без `id` (id текущего юзера берём из claims JWT). `types/{user,profile}.types.ts` исправлены.
+> - Кнопки «Подписаться» в RightSidebar и «Переключиться» пока не подключены — follow приходит в Фазе 4.
+> - Проверено на dev с реальной сессией: `/` 200, сайдбар/рекомендации рендерятся, `/ru` переведён. `build` / `lint` / `typecheck` — зелёные.
 
 ## Фаза 4 — Профиль (7 + 4 endpoints) (3–4 дня)
 

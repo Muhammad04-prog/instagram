@@ -1,0 +1,188 @@
+import type { SVGProps } from "react";
+
+type IconProps = SVGProps<SVGSVGElement> & {
+  /** Filled variant — active tab, liked heart, saved bookmark. */
+  filled?: boolean;
+};
+
+const base = {
+  xmlns: "http://www.w3.org/2000/svg",
+  viewBox: "0 0 24 24",
+  width: 24,
+  height: 24,
+  "aria-hidden": true,
+} as const;
+
+/** Instagram uses 1.5–2px strokes on a 24px grid, joins rounded. */
+const stroke = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
+
+export function HomeIcon({ filled, ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005Z"
+      />
+    </svg>
+  );
+}
+
+export function SearchIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle {...stroke} cx="10.5" cy="10.5" r="8.5" />
+      <line {...stroke} x1="16.7" y1="16.7" x2="22" y2="22" />
+    </svg>
+  );
+}
+
+export function ExploreIcon({ filled, ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle {...stroke} cx="12" cy="12" r="10" />
+      <polygon
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        points="13.941 13.941 10.059 10.059 6.5 17.5 13.941 13.941"
+      />
+      <polygon
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        points="10.059 10.059 13.941 13.941 17.5 6.5 10.059 10.059"
+      />
+    </svg>
+  );
+}
+
+export function ReelsIcon({ filled, ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect {...stroke} x="2" y="2" width="20" height="20" rx="5" />
+      <line {...stroke} x1="2.5" y1="7.5" x2="21.5" y2="7.5" />
+      <line {...stroke} x1="7.5" y1="2.2" x2="10.5" y2="7.5" />
+      <line {...stroke} x1="14" y1="2.2" x2="17" y2="7.5" />
+      <path {...stroke} fill={filled ? "currentColor" : "none"} d="M10 11.5v5.5l5-2.75L10 11.5Z" />
+    </svg>
+  );
+}
+
+export function MessageIcon({ filled, ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        d="M22 3 2 10.2l7.4 2.8L12.2 21 22 3Z"
+      />
+      <line {...stroke} x1="9.4" y1="13" x2="22" y2="3" />
+    </svg>
+  );
+}
+
+export function HeartIcon({ filled, ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.113 1.763s.274-.588 1.113-1.763a4.21 4.21 0 0 1 3.683-1.941Z"
+      />
+    </svg>
+  );
+}
+
+export function CommentIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path {...stroke} d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" strokeWidth={1.8} />
+    </svg>
+  );
+}
+
+export function ShareIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <line {...stroke} x1="22" y1="3" x2="9.2" y2="10.4" />
+      <polygon {...stroke} points="11.7 20.8 22 3 2 3 9.2 10.4 11.7 20.8" />
+    </svg>
+  );
+}
+
+export function BookmarkIcon({ filled, ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <polygon
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        points="20 21 12 13.44 4 21 4 3 20 3 20 21"
+      />
+    </svg>
+  );
+}
+
+export function CreateIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect {...stroke} x="2" y="2" width="20" height="20" rx="5" />
+      <line {...stroke} x1="12" y1="7" x2="12" y2="17" />
+      <line {...stroke} x1="7" y1="12" x2="17" y2="12" />
+    </svg>
+  );
+}
+
+export function MoreIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <line {...stroke} x1="3" y1="6" x2="21" y2="6" />
+      <line {...stroke} x1="3" y1="12" x2="21" y2="12" />
+      <line {...stroke} x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+/** "Другие продукты" — the 3-square grid at the very bottom of the sidebar. */
+export function AppsIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect {...stroke} x="8.5" y="2.5" width="7" height="7" rx="1.5" />
+      <rect {...stroke} x="2" y="13.5" width="7" height="7" rx="1.5" />
+      <rect {...stroke} x="15" y="13.5" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+/** Explore compass — absent from the desktop sidebar, used in MobileNav. */
+export function CompassIcon({ filled, ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle {...stroke} cx="12" cy="12" r="10" />
+      <polygon
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        points="13.941 13.941 10.059 10.059 6.5 17.5 13.941 13.941"
+      />
+      <polygon
+        {...stroke}
+        fill={filled ? "currentColor" : "none"}
+        points="10.059 10.059 13.941 13.941 17.5 6.5 10.059 10.059"
+      />
+    </svg>
+  );
+}
+
+export function DotsIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="5" cy="12" r="1.6" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+      <circle cx="19" cy="12" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}

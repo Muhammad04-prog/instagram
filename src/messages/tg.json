@@ -1,0 +1,163 @@
+{
+  "common": {
+    "appName": "Instagram",
+    "loading": "Боркунӣ…",
+    "retry": "Такрор кунед",
+    "cancel": "Бекор кардан",
+    "confirm": "Тасдиқ",
+    "delete": "Нест кардан",
+    "save": "Нигоҳ доштан",
+    "close": "Пӯшидан",
+    "search": "Ҷустуҷӯ",
+    "more": "Бештар",
+    "seeAll": "Ҳама",
+    "language": "Забон",
+    "theme": "Мавзӯъ"
+  },
+  "auth": {
+    "login": "Ворид шудан",
+    "logout": "Баромадан",
+    "register": "Бақайдгирӣ",
+    "loginTitle": "Ба Instagram ворид шавед",
+    "registerTitle": "Дар Instagram сабти ном кунед",
+    "registerSubtitle": "Сабти ном кунед, то акс ва видеои дӯстонатонро бинед.",
+    "registerTerms": "Бо зеркунии «Фиристодан» шумо ба сохтани ҳисоб ва ба Шартномаи корбар, Сиёсати махфият ва Сиёсати cookie-и Instagram розӣ мешавед.",
+    "promoHeadline": "Бубинед, ки <highlight>дӯстони наздики</highlight> шумо кадом лаҳзаҳоро мубодила карданд.",
+    "userName": "Номи корбар",
+    "fullName": "Ном ва насаб",
+    "fullNamePlaceholder": "Ном ва насаб",
+    "email": "Почтаи электронӣ",
+    "emailPlaceholder": "Суроғаи почтаи электронӣ",
+    "password": "Рамз",
+    "newPassword": "Рамзи нав",
+    "confirmPassword": "Рамзро тасдиқ кунед",
+    "forgotPassword": "Рамзро фаромӯш кардед?",
+    "findAccount": "Ҷустуҷӯи ҳисоб",
+    "findAccountSubtitle": "Почтаи электрониеро, ки бо ҳисобатон алоқаманд аст, ворид кунед.",
+    "resetPassword": "Барқарорсозии рамз",
+    "resetPasswordSubtitle": "Барои ҳисобатон рамзи нав интихоб кунед.",
+    "resetLinkSent": "Мо ба шумо пайванди барқарорсозии рамз фиристодем.",
+    "passwordChanged": "Рамз иваз шуд.",
+    "changePassword": "Иваз кардани рамз",
+    "oldPassword": "Рамзи кӯҳна",
+    "haveAccount": "Ман аллакай ҳисоб дорам",
+    "noAccount": "Ҳисоб надоред?",
+    "createAccount": "Ҳисоби нав созед",
+    "continue": "Идома",
+    "submit": "Фиристодан"
+  },
+  "nav": {
+    "primary": "Навигатсияи асосӣ",
+    "home": "Асосӣ",
+    "search": "Ҷустуҷӯ",
+    "explore": "Ҷолиб",
+    "reels": "Reels",
+    "messages": "Паёмҳо",
+    "notifications": "Огоҳиномаҳо",
+    "create": "Сохтан",
+    "profile": "Профил",
+    "more": "Бештар",
+    "otherProducts": "Маҳсулоти дигар",
+    "yourActivity": "Амалҳои шумо",
+    "saved": "Нигоҳдошташуда",
+    "reportProblem": "Дар бораи мушкил хабар диҳед",
+    "switchAccounts": "Иваз кардани ҳисоб",
+    "logout": "Баромадан",
+    "follow": "Обуна шудан"
+  },
+  "notifications": {
+    "title": "Огоҳиномаҳо",
+    "empty": "Амалҳо бо нашрияҳои шумо",
+    "emptyDescription": "Вақте касе нашрияи шуморо писандад ё шарҳ диҳад, инро дар ин ҷо мебинед."
+  },
+  "feed": {
+    "title": "Лента",
+    "suggestions": "Тавсияҳо барои шумо",
+    "seeAllSuggestions": "Ҳама",
+    "switch": "Иваз кардан",
+    "followerCount": "{count, plural, one {# обунашаванда} other {# обунашаванда}}",
+    "empty": "Ҳанӯз нашрия нест",
+    "emptyDescription": "Ба одамон обуна шавед, то нашрияҳои онҳоро бинед."
+  },
+  "post": {
+    "like": "Писанд",
+    "comment": "Шарҳ",
+    "share": "Мубодила",
+    "save": "Нигоҳ доштан",
+    "addComment": "Шарҳ илова кунед…",
+    "publish": "Нашр кардан",
+    "viewAllComments": "Ҳамаи {count} шарҳро бинед",
+    "likes": "{count, plural, one {# писанд} other {# писанд}}",
+    "createPost": "Сохтани нашрия",
+    "deletePost": "Нест кардани нашрия",
+    "deletePostConfirm": "Дар ҳақиқат ин нашрияро нест кардан мехоҳед?"
+  },
+  "story": {
+    "yourStory": "Ҳикояи шумо",
+    "addStory": "Илова кардани ҳикоя",
+    "viewers": "Тамошобинон",
+    "deleteStory": "Нест кардани ҳикоя"
+  },
+  "reels": {
+    "title": "Reels"
+  },
+  "chat": {
+    "title": "Паёмҳо",
+    "empty": "Паёмҳои шумо",
+    "emptyDescription": "Ба дӯст ё гурӯҳ акс ва паёми шахсӣ фиристед.",
+    "sendMessage": "Паём фиристодан",
+    "newMessage": "Паёми нав",
+    "typeMessage": "Паём нависед…",
+    "deleteMessage": "Нест кардани паём",
+    "deleteChat": "Нест кардани чат"
+  },
+  "profile": {
+    "posts": "нашрия",
+    "followers": "обунашаванда",
+    "following": "обуна",
+    "editProfile": "Таҳрири профил",
+    "follow": "Обуна шудан",
+    "unfollow": "Бекор кардани обуна",
+    "unfollowConfirm": "Обунаро ба @{userName} бекор мекунед?",
+    "message": "Паём фиристодан",
+    "saved": "Нигоҳдошташуда",
+    "tagged": "Қайдҳо",
+    "about": "Дар бораи ман",
+    "gender": "Ҷинс",
+    "male": "Мард",
+    "female": "Зан",
+    "changePhoto": "Акси нав",
+    "removePhoto": "Акси ҷориро нест кунед",
+    "noPosts": "Ҳанӯз нашрия нест"
+  },
+  "settings": {
+    "title": "Танзимот",
+    "appearance": "Иваз кардани реҷа",
+    "light": "Равшан",
+    "dark": "Торик",
+    "system": "Мисли система",
+    "deleteAccount": "Нест кардани ҳисоб",
+    "deleteAccountConfirm": "Ҳисоб абадӣ нест карда мешавад. Ин амалро бекор кардан мумкин нест."
+  },
+  "search": {
+    "placeholder": "Ҷустуҷӯ",
+    "recent": "Охирин",
+    "clearAll": "Ҳамаро тоза кардан",
+    "noResults": "Ҳеҷ чиз ёфт нашуд"
+  },
+  "errors": {
+    "title": "Хатогӣ рӯй дод",
+    "description": "Хатои ногаҳонӣ рӯй дод. Бори дигар кӯшиш кунед.",
+    "notFound": "Саҳифа ёфт нашуд",
+    "notFoundDescription": "Эҳтимол пайванд нодуруст аст ё саҳифа нест карда шудааст.",
+    "backHome": "Бозгашт ба Instagram",
+    "network": "Хатои шабака. Пайвастшавиро санҷед."
+  },
+  "validation": {
+    "required": "Ин майдон ҳатмист",
+    "email": "Почтаи дурустро ворид кунед",
+    "minLength": "Ҳадди ақал {count} аломат",
+    "maxLength": "Ҳадди аксар {count} аломат",
+    "passwordMismatch": "Рамзҳо мувофиқат намекунанд"
+  }
+}

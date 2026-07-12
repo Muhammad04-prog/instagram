@@ -4,11 +4,11 @@
 
 ## Account — `services/account.service.ts` (5)
 
-- [ ] `register(dto)` → `POST /Account/register` (json: userName, fullName, email, password, confirmPassword) → `RegisterForm`
-- [ ] `login(dto)` → `POST /Account/login` (json: userName, password) → `LoginForm`
-- [ ] `forgotPassword(email)` → `DELETE /Account/ForgotPassword?Email=` → `ForgotPasswordForm`
-- [ ] `resetPassword(p)` → `DELETE /Account/ResetPassword?Token=&Email=&Password=&ConfirmPassword=` → `ResetPasswordForm`
-- [ ] `changePassword(p)` → `PUT /Account/ChangePassword?OldPassword=&Password=&ConfirmPassword=` → `ChangePasswordForm`
+- [x] `register(dto)` → `POST /Account/register` (json: userName, fullName, email, password, confirmPassword) → `RegisterForm`
+- [x] `login(dto)` → `POST /Account/login` (json: userName, password) → `LoginForm`
+- [x] `forgotPassword(email)` → `DELETE /Account/ForgotPassword?Email=` → `ForgotPasswordForm`
+- [x] `resetPassword(p)` → `DELETE /Account/ResetPassword?Token=&Email=&Password=&ConfirmPassword=` → `ResetPasswordForm`
+- [x] `changePassword(p)` → `PUT /Account/ChangePassword?OldPassword=&Password=&ConfirmPassword=` → `ChangePasswordForm`
 
 ## Post — `services/post.service.ts` (12)
 

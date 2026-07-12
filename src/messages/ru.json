@@ -1,0 +1,163 @@
+{
+  "common": {
+    "appName": "Instagram",
+    "loading": "Загрузка…",
+    "retry": "Повторить",
+    "cancel": "Отмена",
+    "confirm": "Подтвердить",
+    "delete": "Удалить",
+    "save": "Сохранить",
+    "close": "Закрыть",
+    "search": "Поиск",
+    "more": "Ещё",
+    "seeAll": "Все",
+    "language": "Язык",
+    "theme": "Тема"
+  },
+  "auth": {
+    "login": "Войти",
+    "logout": "Выйти",
+    "register": "Зарегистрироваться",
+    "loginTitle": "Войти в Instagram",
+    "registerTitle": "Зарегистрируйтесь в Instagram",
+    "registerSubtitle": "Зарегистрируйтесь, чтобы смотреть фото и видео ваших друзей.",
+    "registerTerms": "Нажимая Отправить, вы соглашаетесь создать аккаунт и принимаете Пользовательское соглашение, Политику конфиденциальности и Политику в отношении файлов cookie Instagram.",
+    "promoHeadline": "Посмотрите, какими моментами из жизни поделились ваши <highlight>близкие друзья</highlight>.",
+    "userName": "Имя пользователя",
+    "fullName": "Имя и фамилия",
+    "fullNamePlaceholder": "Имя и фамилия",
+    "email": "Электронный адрес",
+    "emailPlaceholder": "Электронный адрес",
+    "password": "Пароль",
+    "newPassword": "Новый пароль",
+    "confirmPassword": "Подтвердите пароль",
+    "forgotPassword": "Забыли пароль?",
+    "findAccount": "Поиск аккаунта",
+    "findAccountSubtitle": "Введите электронный адрес, привязанный к вашему аккаунту.",
+    "resetPassword": "Сбросить пароль",
+    "resetPasswordSubtitle": "Выберите новый пароль для вашего аккаунта.",
+    "resetLinkSent": "Мы отправили вам ссылку для сброса пароля.",
+    "passwordChanged": "Пароль изменён.",
+    "changePassword": "Смена пароля",
+    "oldPassword": "Старый пароль",
+    "haveAccount": "У меня уже есть аккаунт",
+    "noAccount": "У вас ещё нет аккаунта?",
+    "createAccount": "Создать новый аккаунт",
+    "continue": "Продолжить",
+    "submit": "Отправить"
+  },
+  "nav": {
+    "primary": "Основная навигация",
+    "home": "Главная",
+    "search": "Поиск",
+    "explore": "Интересное",
+    "reels": "Reels",
+    "messages": "Сообщения",
+    "notifications": "Уведомления",
+    "create": "Создать",
+    "profile": "Профиль",
+    "more": "Ещё",
+    "otherProducts": "Другие продукты",
+    "yourActivity": "Ваши действия",
+    "saved": "Сохранённое",
+    "reportProblem": "Сообщить о проблеме",
+    "switchAccounts": "Переключение между аккаунтами",
+    "logout": "Выйти",
+    "follow": "Подписаться"
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "empty": "Действия с вашими публикациями",
+    "emptyDescription": "Когда кто-то поставит отметку «Нравится» или прокомментирует вашу публикацию, вы увидите это здесь."
+  },
+  "feed": {
+    "title": "Лента",
+    "suggestions": "Рекомендации для вас",
+    "seeAllSuggestions": "Все",
+    "switch": "Переключиться",
+    "followerCount": "{count, plural, one {# подписчик} few {# подписчика} many {# подписчиков} other {# подписчиков}}",
+    "empty": "Публикаций пока нет",
+    "emptyDescription": "Подпишитесь на людей, чтобы видеть их публикации."
+  },
+  "post": {
+    "like": "Нравится",
+    "comment": "Комментировать",
+    "share": "Поделиться",
+    "save": "Сохранить",
+    "addComment": "Добавьте комментарий…",
+    "publish": "Опубликовать",
+    "viewAllComments": "Посмотреть все комментарии ({count})",
+    "likes": "{count, plural, one {# отметка «Нравится»} few {# отметки «Нравится»} many {# отметок «Нравится»} other {# отметок «Нравится»}}",
+    "createPost": "Создание публикации",
+    "deletePost": "Удалить публикацию",
+    "deletePostConfirm": "Вы уверены, что хотите удалить эту публикацию?"
+  },
+  "story": {
+    "yourStory": "Ваша история",
+    "addStory": "Добавить историю",
+    "viewers": "Зрители",
+    "deleteStory": "Удалить историю"
+  },
+  "reels": {
+    "title": "Reels"
+  },
+  "chat": {
+    "title": "Сообщения",
+    "empty": "Ваши сообщения",
+    "emptyDescription": "Отправляйте личные фото и сообщения другу или группе.",
+    "sendMessage": "Отправить сообщение",
+    "newMessage": "Новое сообщение",
+    "typeMessage": "Напишите сообщение…",
+    "deleteMessage": "Удалить сообщение",
+    "deleteChat": "Удалить чат"
+  },
+  "profile": {
+    "posts": "публикаций",
+    "followers": "подписчиков",
+    "following": "подписок",
+    "editProfile": "Редактировать профиль",
+    "follow": "Подписаться",
+    "unfollow": "Отменить подписку",
+    "unfollowConfirm": "Отменить подписку на @{userName}?",
+    "message": "Отправить сообщение",
+    "saved": "Сохранённое",
+    "tagged": "Отметки",
+    "about": "О себе",
+    "gender": "Пол",
+    "male": "Мужской",
+    "female": "Женский",
+    "changePhoto": "Новое фото",
+    "removePhoto": "Удалить текущее фото",
+    "noPosts": "Публикаций пока нет"
+  },
+  "settings": {
+    "title": "Настройки",
+    "appearance": "Переключить режим",
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "system": "Как в системе",
+    "deleteAccount": "Удалить аккаунт",
+    "deleteAccountConfirm": "Аккаунт будет удалён навсегда. Это действие нельзя отменить."
+  },
+  "search": {
+    "placeholder": "Поиск",
+    "recent": "Недавние",
+    "clearAll": "Очистить все",
+    "noResults": "Ничего не найдено"
+  },
+  "errors": {
+    "title": "Что-то пошло не так",
+    "description": "Произошла непредвиденная ошибка. Попробуйте ещё раз.",
+    "notFound": "Страница не найдена",
+    "notFoundDescription": "Возможно, ссылка неверна или страница была удалена.",
+    "backHome": "Вернуться в Instagram",
+    "network": "Ошибка сети. Проверьте подключение."
+  },
+  "validation": {
+    "required": "Обязательное поле",
+    "email": "Введите корректный email",
+    "minLength": "Минимум {count} символов",
+    "maxLength": "Максимум {count} символов",
+    "passwordMismatch": "Пароли не совпадают"
+  }
+}

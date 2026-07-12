@@ -1,8 +1,10 @@
 import { getRequestConfig } from "next-intl/server";
+import { hasLocale } from "next-intl";
+import { routing } from "@/i18n/routing";
 
-// Stub for Phase 0 — full routing (en / ru / tg) is set up in Phase 1.
-export default getRequestConfig(async () => {
-  const locale = "en";
+export default getRequestConfig(async ({ requestLocale }) => {
+  const requested = await requestLocale;
+  const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
 
   return {
     locale,
