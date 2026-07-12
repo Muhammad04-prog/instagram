@@ -1,38 +1,21 @@
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 /* ─────────────────────────────────────────────────────────────────
-   Custom gradient camera icon — not Meta's actual logo.
-   Visually inspired (rounded square + camera glyph), not copied.
+   AppIcon using user-uploaded Instagram logo image.
    ───────────────────────────────────────────────────────────────── */
 function AppIcon({ size = 56 }: { size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 96 96"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="App icon"
-    >
-      <defs>
-        <linearGradient id="ig-icon-grad" x1="0" y1="96" x2="96" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#f9a825" />
-          <stop offset="28%"  stopColor="#e91e63" />
-          <stop offset="65%"  stopColor="#9c27b0" />
-          <stop offset="100%" stopColor="#3949ab" />
-        </linearGradient>
-      </defs>
-      {/* Rounded square background */}
-      <rect width="96" height="96" rx="22" fill="url(#ig-icon-grad)" />
-      {/* Camera body */}
-      <rect x="18" y="32" width="60" height="38" rx="8" stroke="white" strokeWidth="4" fill="none" />
-      {/* Viewfinder bump */}
-      <path d="M36 32v-6a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v6" stroke="white" strokeWidth="4" fill="none" />
-      {/* Lens ring */}
-      <circle cx="48" cy="51" r="11" stroke="white" strokeWidth="4" fill="none" />
-      {/* Flash dot */}
-      <circle cx="69" cy="40" r="3" fill="white" />
-    </svg>
+    <div className="overflow-hidden rounded-2xl select-none" style={{ width: size, height: size }}>
+      <Image
+        src="/instagram-logo-2.jpg"
+        alt="Instagram"
+        width={size}
+        height={size}
+        className="object-cover"
+        priority
+      />
+    </div>
   );
 }
 
