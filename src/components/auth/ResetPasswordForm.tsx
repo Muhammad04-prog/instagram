@@ -5,14 +5,17 @@ import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { resetPasswordSchema, type ResetPasswordFormValues } from '@/lib/validators/auth.schema';
 import { accountService } from '@/services/account.service';
+import { getErrorMessage } from '@/lib/utils';
 
 export default function ResetPasswordForm() {
   const t = useTranslations('ResetPassword');
   const tAuth = useTranslations('Auth');
+  const tErrors = useTranslations('AuthErrors');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -53,8 +56,8 @@ export default function ResetPasswordForm() {
     try {
       await accountService.resetPassword(data);
       setSuccess(true);
-    } catch {
-      setServerError(t('errorGeneric'));
+    } catch (error) {
+      setServerError(getErrorMessage(error, tErrors));
     }
   }
 
@@ -77,16 +80,29 @@ export default function ResetPasswordForm() {
 
   return (
     <div className="flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
-        <Link
-          href="/login"
-          className="text-white p-1 rounded hover:bg-white/10 transition-colors"
-          aria-label={tAuth('back')}
-        >
-          <ChevronLeft size={20} />
-        </Link>
-        <h1 className="text-white font-semibold text-base leading-tight">
+      {/* Header with logo */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="flex items-center w-full mb-2">
+          <Link
+            href="/login"
+            className="text-white p-1 rounded hover:bg-white/10 transition-colors"
+            aria-label={tAuth('back')}
+          >
+            <ChevronLeft size={20} />
+          </Link>
+        </div>
+        <div className="w-12 h-12 mb-3 overflow-hidden select-none pointer-events-none" onContextMenu={(e) => e.preventDefault()}>
+          <Image
+            src="/insta.png"
+            alt="Instagram"
+            width={48}
+            height={48}
+            className="object-contain select-none pointer-events-none"
+            priority
+            draggable={false}
+          />
+        </div>
+        <h1 className="text-white font-semibold text-base leading-tight mt-1">
           {t('title')}
         </h1>
       </div>
@@ -160,7 +176,7 @@ export default function ResetPasswordForm() {
         </div>
 
         {serverError && (
-          <p className="text-red-400 text-xs text-center">{serverError}</p>
+          <p className="text-ig-red text-sm text-center">{serverError}</p>
         )}
 
         <button
@@ -168,7 +184,7 @@ export default function ResetPasswordForm() {
           disabled={!isValid || isSubmitting}
           className="ig-btn-primary w-full mt-1"
         >
-          {isSubmitting ? '...' : t('submit')}
+          {isSubmitting ? tAuth('loading') : t('submit')}
         </button>
       </form>
     </div>

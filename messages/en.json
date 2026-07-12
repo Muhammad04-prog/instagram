@@ -2,6 +2,7 @@
   "Auth": {
     "back": "Back",
     "metaInfinity": "Meta ∞",
+    "loading": "Loading...",
     "leftPanel": {
       "heading": "See the moments shared by your <accent>close friends</accent>."
     }
@@ -86,5 +87,9 @@
     "submit": "Save password",
     "successMessage": "Password changed successfully. Log in to account.",
     "errorGeneric": "Something went wrong. Please try again."
+  },
+  "AuthErrors": {
+    "network": "Failed to connect to the server. Please check your connection and try again.",
+    "generic": "Something went wrong. Please try again."
   }
 }

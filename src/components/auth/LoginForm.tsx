@@ -4,16 +4,19 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Eye, EyeOff, ChevronLeft } from 'lucide-react';
 
 import { useRouter, Link } from '@/i18n/navigation';
 import { loginSchema, type LoginFormValues } from '@/lib/validators/auth.schema';
 import { accountService } from '@/services/account.service';
 import { useAuthStore } from '@/store/auth.store';
+import { getErrorMessage } from '@/lib/utils';
 
 export default function LoginForm() {
   const t = useTranslations('Login');
   const tAuth = useTranslations('Auth');
+  const tErrors = useTranslations('AuthErrors');
   const router = useRouter();
   const setToken = useAuthStore((s) => s.setToken);
 
@@ -39,26 +42,43 @@ export default function LoginForm() {
     setServerError(null);
     try {
       const res = await accountService.login(data);
-      setToken(res.token);
-      router.push('/');
-    } catch {
-      setServerError(t('errorInvalid'));
+      if (res.data) {
+        setToken(res.data);
+        router.push('/');
+      } else {
+        setServerError(tErrors('generic'));
+      }
+    } catch (error) {
+      setServerError(getErrorMessage(error, tErrors));
     }
   }
 
   return (
     <div className="flex flex-col gap-0">
-      {/* ── Back + heading ──────────────────────────────────────── */}
-      <div className="flex items-center gap-2 mb-6">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="text-white p-1 rounded hover:bg-white/10 transition-colors"
-          aria-label={tAuth('back')}
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <h1 className="text-white font-semibold text-base leading-tight">
+      {/* ── Back + heading with logo ───────────────────────────── */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="flex items-center w-full mb-2">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="text-white p-1 rounded hover:bg-white/10 transition-colors"
+            aria-label={tAuth('back')}
+          >
+            <ChevronLeft size={20} />
+          </button>
+        </div>
+        <div className="w-12 h-12 mb-3 overflow-hidden select-none pointer-events-none" onContextMenu={(e) => e.preventDefault()}>
+          <Image
+            src="/insta.png"
+            alt="Instagram"
+            width={48}
+            height={48}
+            className="object-contain select-none pointer-events-none"
+            priority
+            draggable={false}
+          />
+        </div>
+        <h1 className="text-white font-semibold text-base leading-tight mt-1">
           {t('title')}
         </h1>
       </div>
@@ -103,7 +123,7 @@ export default function LoginForm() {
 
         {/* Server error */}
         {serverError && (
-          <p className="text-red-400 text-xs text-center mt-1">{serverError}</p>
+          <p className="text-ig-red text-sm text-center mt-1">{serverError}</p>
         )}
 
         {/* Submit */}
@@ -112,7 +132,7 @@ export default function LoginForm() {
           disabled={!isFormFilled || isSubmitting}
           className="ig-btn-muted w-full mt-2"
         >
-          {isSubmitting ? '...' : t('submit')}
+          {isSubmitting ? tAuth('loading') : t('submit')}
         </button>
       </form>
 

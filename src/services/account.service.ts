@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '@/lib/axios';
 import type { 
   LoginFormValues, 
   RegisterFormValues,
@@ -6,60 +6,47 @@ import type {
   ResetPasswordFormValues
 } from '@/lib/validators/auth.schema';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-
-const api = axios.create({
-  baseURL: API_BASE,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-// ── Attach JWT from localStorage on every request ────────────────────────────
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('ig_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 // ── Types returned by the server ─────────────────────────────────────────────
-export interface LoginResponse {
-  token: string;
-}
-
-export interface RegisterResponse {
-  message?: string;
+export interface ResponseEnvelope<T> {
+  data: T;
+  errors: string[];
+  statusCode: number;
 }
 
 // ── Account service ───────────────────────────────────────────────────────────
 export const accountService = {
   /** Authenticate and return a JWT token. */
-  async login(data: LoginFormValues): Promise<LoginResponse> {
-    const res = await api.post<LoginResponse>('/api/account/login', data);
+  async login(data: LoginFormValues): Promise<ResponseEnvelope<string>> {
+    const payload = {
+      userName: data.userNameOrEmail,
+      password: data.password,
+    };
+    const res = await api.post<ResponseEnvelope<string>>('/Account/login', payload);
     return res.data;
   },
 
   /** Register a new account. confirmPassword is derived from password. */
-  async register(data: RegisterFormValues): Promise<RegisterResponse> {
+  async register(data: RegisterFormValues): Promise<ResponseEnvelope<string>> {
     const payload = {
+      userName: data.userName,
+      fullName: data.fullName,
       email: data.email,
       password: data.password,
-      confirmPassword: data.password,   // matches backend DTO; not shown in UI
-      fullName: data.fullName,
-      userName: data.userName,
+      confirmPassword: data.password, // Hidden in UI, derived from password
     };
-    const res = await api.post<RegisterResponse>('/api/account/register', payload);
+    const res = await api.post<ResponseEnvelope<string>>('/Account/register', payload);
     return res.data;
   },
 
   /** Forgot password link request. */
-  async forgotPassword(email: string) {
-    return api.delete('/api/Account/ForgotPassword', { params: { Email: email } });
+  async forgotPassword(email: string): Promise<ResponseEnvelope<string>> {
+    const res = await api.delete<ResponseEnvelope<string>>('/Account/ForgotPassword', { params: { Email: email } });
+    return res.data;
   },
 
   /** Reset password with token. */
-  async resetPassword(data: ResetPasswordFormValues) {
-    return api.delete('/api/Account/ResetPassword', {
+  async resetPassword(data: ResetPasswordFormValues): Promise<ResponseEnvelope<string>> {
+    const res = await api.delete<ResponseEnvelope<string>>('/Account/ResetPassword', {
       params: {
         Token: data.token,
         Email: data.email,
@@ -67,5 +54,6 @@ export const accountService = {
         ConfirmPassword: data.confirmPassword,
       },
     });
+    return res.data;
   }
 };

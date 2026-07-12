@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { ChevronLeft, Eye, EyeOff, Info, ChevronDown } from 'lucide-react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { registerSchema, type RegisterFormValues } from '@/lib/validators/auth.schema';
 import { accountService } from '@/services/account.service';
+import { getErrorMessage } from '@/lib/utils';
 
 // ── Month keys used for translations ────────────────────────────────────────
 const MONTH_KEYS = ['1','2','3','4','5','6','7','8','9','10','11','12'] as const;
@@ -23,6 +25,7 @@ export default function RegisterForm({ locale }: { locale: string }) {
   const t  = useTranslations('Register');
   const tA = useTranslations('Auth');
   const tL = useTranslations('LocaleSwitcher');
+  const tErrors = useTranslations('AuthErrors');
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -59,8 +62,8 @@ export default function RegisterForm({ locale }: { locale: string }) {
     try {
       await accountService.register(data);
       router.push('/login');
-    } catch {
-      setServerError(t('errorGeneric'));
+    } catch (error) {
+      setServerError(getErrorMessage(error, tErrors));
     }
   }
 
@@ -84,11 +87,22 @@ export default function RegisterForm({ locale }: { locale: string }) {
       </div>
 
       {/* ── Heading + subtext ────────────────────────────────────── */}
-      <div className="text-center mb-5">
-        <h1 className="text-white font-semibold text-base leading-snug">
+      <div className="flex flex-col items-center mb-5">
+        <div className="w-12 h-12 mb-3 overflow-hidden select-none pointer-events-none" onContextMenu={(e) => e.preventDefault()}>
+          <Image
+            src="/insta.png"
+            alt="Instagram"
+            width={48}
+            height={48}
+            className="object-contain select-none pointer-events-none"
+            priority
+            draggable={false}
+          />
+        </div>
+        <h1 className="text-white font-semibold text-base leading-snug text-center mt-1">
           {t('title')}
         </h1>
-        <p className="text-ig-text-muted text-xs mt-1 leading-relaxed">
+        <p className="text-ig-text-muted text-xs mt-1 leading-relaxed text-center">
           {t('subtitle')}
         </p>
       </div>
@@ -253,7 +267,7 @@ export default function RegisterForm({ locale }: { locale: string }) {
 
         {/* Server error */}
         {serverError && (
-          <p className="text-red-400 text-xs text-center">{serverError}</p>
+          <p className="text-ig-red text-sm text-center">{serverError}</p>
         )}
 
         {/* Submit */}
@@ -262,7 +276,7 @@ export default function RegisterForm({ locale }: { locale: string }) {
           disabled={!isValid || isSubmitting}
           className="ig-btn-primary w-full mt-1"
         >
-          {isSubmitting ? '...' : t('submit')}
+          {isSubmitting ? tA('loading') : t('submit')}
         </button>
       </form>
 
