@@ -106,7 +106,22 @@
     "likes": "{count, plural, one {# like} other {# likes}}",
     "createPost": "Create new post",
     "deletePost": "Delete post",
-    "deletePostConfirm": "Are you sure you want to delete this post?"
+    "deletePostConfirm": "Are you sure you want to delete this post? This cannot be undone.",
+    "title": "Post",
+    "more": "more",
+    "goToPost": "Go to post",
+    "noComments": "No comments yet",
+    "noCommentsDescription": "Start the conversation.",
+    "published": "Post shared",
+    "next": "Next",
+    "dropMedia": "Drag photos and videos here",
+    "selectFromComputer": "Select from computer",
+    "captionPlaceholder": "Write a caption…",
+    "aspectSquare": "1:1",
+    "aspectPortrait": "4:5",
+    "zoom": "Zoom",
+    "discardTitle": "Discard post?",
+    "discardDescription": "If you leave, your edits won't be saved."
   },
   "story": {
     "yourStory": "Your story",

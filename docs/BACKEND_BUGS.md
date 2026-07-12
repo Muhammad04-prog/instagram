@@ -96,6 +96,39 @@ Swagger response-schema надорад. Дар амал он **тамоми пр
 
 ---
 
+## 6. `comments[]` ҳамеша бе ном меояд 🟡
+
+Дар ҳама endpoint-ҳои Post (`get-posts`, `get-post-by-id`, `get-following-post`) майдонҳои
+`comments[].userName` ва `comments[].userImage` **`null`**-анд, гарчанде `userId` ҳаст.
+
+**Ҳалли мо:** `useProfileLite(userId)` — номи муаллифи шарҳ аз
+`get-user-profile-by-id` гирифта, дар TanStack Query кэш карда мешавад (як дархост ба ҳар корбар).
+
+---
+
+## 7. `get-my-posts` бе конверт ҷавоб медиҳад 🟡
+
+Ҳама endpoint-ҳои дигар `{ data, errors, statusCode }` медиҳанд, вале `get-my-posts`
+**массиви холис** мебарорад. Интерсептори `lib/axios.ts` unwrap-ро танҳо ҳангоми мавҷуд будани
+калиди `data` мекунад, бинобар ин ҳарду ҳолат кор мекунад.
+
+---
+
+## 8. `get-following-post` бе `UserId` хомӯшона холӣ медиҳад 🟡
+
+`GET /Post/get-following-post?PageNumber=1&PageSize=5` (бе `UserId`) → `data: []`, `statusCode: 200`
+— на хато, балки **лентаи холӣ**, гарчанде корбар обуна дорад. Бо `UserId=<id-и ман>` → 16 пост.
+Хатари калон: касе метавонад фикр кунад, ки лента вайрон аст. `useFeed()` ҳатман `userId`-ро мефиристад.
+
+---
+
+## 9. `like-post` ва `add-post-favorite` toggle-анд 🟢
+
+`data` = ҳолати **НАВ** (true/false), на «муваффақият». Барои ҳамин optimistic UI ҳолатро
+худаш инверс мекунад ва танҳо ҳангоми хато rollback мешавад.
+
+---
+
 ## 5. `get-post-favorites` пагинатсияро дар сатҳи боло медиҳад 🟢
 
 `{ pageNumber, pageSize, totalPage, totalRecord, data: [...] }` — вале `totalRecord`

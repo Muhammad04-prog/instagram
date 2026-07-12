@@ -37,6 +37,21 @@ export function useUserProfile(userId: string) {
   });
 }
 
+/**
+ * Author of a comment. The Post DTO ships `comments[]` with `userName` and
+ * `userImage` set to null (a backend quirk — see docs/BACKEND_BUGS.md), so the
+ * name has to be resolved from the profile endpoint. Cached per user, shared by
+ * every comment they wrote.
+ */
+export function useProfileLite(userId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.profile.lite(userId),
+    queryFn: () => userProfileService.getProfileById(userId),
+    enabled: enabled && Boolean(userId),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   const t = useTranslations("errors");

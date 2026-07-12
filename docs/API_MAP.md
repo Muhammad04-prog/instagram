@@ -12,18 +12,18 @@
 
 ## Post — `services/post.service.ts` (12)
 
-- [ ] `getPosts(params)` → `GET /Post/get-posts?UserId&Title&Content&PageNumber&PageSize` → `explore`, `PostGrid` — _чтение уже подключено в Фазе 4 (сетка профиля); галочку ставим, когда весь тег Post будет готов (Фаза 5)_
-- [ ] `getReels(params)` → `GET /Post/get-reels?PageNumber&PageSize` → `reels`, `ReelCard`
-- [ ] `getPostById(id)` → `GET /Post/get-post-by-id?id` → `post/[postId]`, модалка
-- [ ] `getMyPosts()` → `GET /Post/get-my-posts` → `profile/me`
-- [ ] `getFollowingPosts(params)` → `GET /Post/get-following-post?UserId&PageNumber&PageSize` → **feed `/`**
-- [ ] `addPost(form)` → `POST /Post/add-post` multipart (Title, Content, Images[]) → `PostForm`
-- [ ] `deletePost(id)` → `DELETE /Post/delete-post?id` → меню «…»
-- [ ] `likePost(postId)` → `POST /Post/like-post?postId` → `LikeButton` (optimistic)
-- [ ] `viewPost(postId)` → `POST /Post/view-post?postId` → IntersectionObserver
-- [ ] `addComment(dto)` → `POST /Post/add-comment` (json: postId, comment) → `PostComments`
-- [ ] `deleteComment(commentId)` → `DELETE /Post/delete-comment?commentId` → `CommentItem`
-- [ ] `addPostFavorite(dto)` → `POST /Post/add-post-favorite` (json: postId) → `SaveButton`
+- [x] `getPosts(params)` → `GET /Post/get-posts?UserId&Title&Content&PageNumber&PageSize` → `PostGrid` профиля (explore — Фаза 7)
+- [x] `getReels(params)` → `GET /Post/get-reels?PageNumber&PageSize` → сервис готов; экран `/reels` — Фаза 7
+- [x] `getPostById(id)` → `GET /Post/get-post-by-id?id` → `post/[postId]` + `@modal/(.)post/[postId]`
+- [x] `getMyPosts()` → `GET /Post/get-my-posts` (⚠️ отдаёт **голый массив**, без конверта)
+- [x] `getFollowingPosts(params)` → `GET /Post/get-following-post?UserId&PageNumber&PageSize` → **feed `/`** (⚠️ без `UserId` молча отдаёт пусто)
+- [x] `addPost(form)` → `POST /Post/add-post` multipart (Title, Content, Images[]) → `post/create` (возвращает новый postId)
+- [x] `deletePost(id)` → `DELETE /Post/delete-post?id` → меню «…» в `PostHeader` + ConfirmDialog
+- [x] `likePost(postId)` → `POST /Post/like-post?postId` → `PostActions` (optimistic, **toggle**) + double-tap
+- [x] `viewPost(postId)` → `POST /Post/view-post?postId` → IntersectionObserver (50%, 1 раз на пост)
+- [x] `addComment(dto)` → `POST /Post/add-comment` (json: postId, comment) → `CommentForm`
+- [x] `deleteComment(commentId)` → `DELETE /Post/delete-comment?commentId` → `CommentItem` (только свои)
+- [x] `addPostFavorite(dto)` → `POST /Post/add-post-favorite` (json: postId) → `PostActions` (**toggle**, optimistic)
 
 ## Story — `services/story.service.ts` (8)
 

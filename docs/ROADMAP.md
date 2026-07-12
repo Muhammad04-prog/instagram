@@ -121,16 +121,32 @@
 
 ## Фаза 5 — Посты и лента (12 endpoints) (5–6 дней)
 
-- [ ] `services/post.service.ts` (12) + `hooks/usePosts.ts`, `useComments.ts`, `useFavorites.ts`
-- [ ] `PostCard` = Header + `PostCarousel` (embla, точки) + `PostActions` + caption + комментарии
-- [ ] `LikeButton` (optimistic, double-tap heart animation), `SaveButton` (`add-post-favorite`)
-- [ ] `view-post` через IntersectionObserver (50% видимости, 1 раз на пост)
-- [ ] `PostComments` (`add-comment` / `delete-comment`)
-- [ ] Feed `/` — `get-following-post` + infinite scroll + skeleton
-- [ ] `post/create` — степпер: файлы → кроп (1:1 / 4:5) → caption + `LocationSelect` → `add-post` (multipart, Images[])
-- [ ] `post/[postId]` (страница) + `@modal/(.)post/[postId]` (модалка над лентой)
-- [ ] `delete-post` (меню «…»)
+- [x] `services/post.service.ts` (12) + `hooks/usePosts.ts`, `useComments.ts` (favorites живут в `useProfile.ts`)
+- [x] `PostCard` = Header + `PostCarousel` (embla, точки) + `PostActions` + caption + комментарии
+- [x] Лайк (optimistic, double-tap heart animation через framer-motion), сохранение (`add-post-favorite`)
+- [x] `view-post` через IntersectionObserver (50% видимости, 1 раз на пост)
+- [x] `PostComments` (`add-comment` / `delete-comment`)
+- [x] Feed `/` — `get-following-post` + infinite scroll + skeleton
+- [x] `post/create` — степпер: файлы → кроп (1:1 / 4:5) → caption → `add-post` (multipart, Images[]) — _без `LocationSelect`: в `add-post` нет поля локации_
+- [x] `post/[postId]` (страница) + `@modal/(.)post/[postId]` (модалка над лентой)
+- [x] `delete-post` (меню «…»)
 - ✅ Готово: 12 endpoints
+
+> Заметки Фазы 5:
+>
+> - ⚠️ **`get-following-post` без `UserId` молча отдаёт пустую ленту** (200, `data: []`), хотя подписки есть.
+>   С `UserId` — 16 постов. `useFeed()` всегда шлёт id из JWT-claims. Легко принять за «лента сломана».
+> - ⚠️ **`like-post` и `add-post-favorite` — TOGGLE**, а не «поставить»: `data` = новое состояние.
+>   Optimistic UI инвертирует состояние сам, откат только при ошибке.
+> - ⚠️ **`get-my-posts` отвечает голым массивом** без конверта `{data,errors,statusCode}` — интерцептор
+>   это переживает (unwrap только при наличии ключа `data`).
+> - ⚠️ **`comments[].userName` / `userImage` всегда `null`** → имя автора комментария подтягивается через
+>   `useProfileLite(userId)` (кэш на пользователя). См. `docs/BACKEND_BUGS.md` #6.
+> - `add-post` не имеет поля локации, соавторов и фильтров → шаги img31/img32 и «Добавить место» (img33)
+>   не делались: подделывать нечего.
+> - Проверено вживую в браузере: лайк 1 → 0 (оптимистично) и после reload 0; комментарий сохранился;
+>   пост реально создан через UI (кроп → подпись → «Поделиться» → появился в сетке профиля).
+> - `build` / `lint` / `typecheck` — зелёные.
 
 ## Фаза 6 — Stories (8 endpoints) (3 дня)
 

@@ -106,7 +106,20 @@
 
 ---
 
-## Post (қисман — Фазаи 4 танҳо `get-posts`-ро истифода мебарад)
+## Post (12 endpoint — ҳама дар Фазаи 5 санҷида шуданд)
+
+### Хулосаи муҳим
+
+| Endpoint             | Нозукӣ                                                                      |
+| -------------------- | --------------------------------------------------------------------------- |
+| `get-my-posts`       | **Бе конверт!** массиви холис бармегардонад (на `{data,errors,statusCode}`) |
+| `get-following-post` | `UserId` **ҳатмист** — бе он `data: []` бе ҳеҷ хато (тахмин: 0 пост)        |
+| `like-post`          | **TOGGLE**, `data` = ҳолати НАВ (true = лайк шуд, false = лайк гирифта шуд) |
+| `add-post-favorite`  | **TOGGLE** ҳам, `data` = ҳолати нав                                         |
+| `add-post`           | multipart: `Title`, `Content`, `Images[]` → `data` = **postId**-и нав       |
+| `view-post`          | якхела (idempotent): 2 бор занг → `postView` ҳамон 1 мемонад                |
+| `comments[]`         | `userName` ва `userImage` **ҳамеша `null`** → ном аз профил гирифта мешавад |
+| `add-post`           | майдони **location НЕСТ** → «Добавить место» (img33) сохта нашуд            |
 
 ### `GET /Post/get-posts?UserId=&Title=&Content=&PageNumber=&PageSize=`
 
