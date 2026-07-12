@@ -1,7 +1,10 @@
 {
   "Auth": {
     "back": "Back",
-    "metaInfinity": "Meta ∞"
+    "metaInfinity": "Meta ∞",
+    "leftPanel": {
+      "heading": "See the moments shared by your <accent>close friends</accent>."
+    }
   },
   "Login": {
     "title": "Log in to Instagram",

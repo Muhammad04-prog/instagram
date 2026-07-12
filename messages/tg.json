@@ -1,7 +1,10 @@
 {
   "Auth": {
     "back": "Бозгашт",
-    "metaInfinity": "Meta ∞"
+    "metaInfinity": "Meta ∞",
+    "leftPanel": {
+      "heading": "Лаҳзаҳоеро, ки <accent>дӯстони наздики</accent> шумо мубодила кардаанд, бубинед."
+    }
   },
   "Login": {
     "title": "Ба Instagram ворид шавед",

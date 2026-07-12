@@ -1,67 +1,27 @@
-import Image from 'next/image';
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 /* ─────────────────────────────────────────────────────────────────
-   AppIcon using user-uploaded Instagram logo image.
+   AppIcon using smooth vector SVG gradient and camera proportions.
    ───────────────────────────────────────────────────────────────── */
-function AppIcon({ size = 56 }: { size?: number }) {
+function AppIcon({ size = 96 }: { size?: number }) {
   return (
-    <div className="overflow-hidden rounded-2xl select-none" style={{ width: size, height: size }}>
-      <Image
-        src="/instagram-logo-2.jpg"
-        alt="Instagram"
-        width={size}
-        height={size}
-        className="object-cover"
-        priority
-      />
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   Phone mockup placeholder — pure CSS/SVG, no real photos.
-   ───────────────────────────────────────────────────────────────── */
-function PhoneMockup() {
-  return (
-    <div className="relative w-[220px] h-[400px] mt-8 hidden xl:block">
-      {/* Phone frame */}
-      <div className="absolute inset-0 rounded-[2.5rem] border-[3px] border-zinc-600 bg-zinc-900 overflow-hidden shadow-2xl">
-        {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-zinc-900 rounded-b-2xl z-10" />
-        {/* Simulated feed content */}
-        <div className="mt-8 px-2 space-y-3">
-          {/* Story row */}
-          <div className="flex gap-2 px-1 pt-1">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-pink-500 bg-zinc-800" />
-            ))}
-          </div>
-          <div className="h-px bg-zinc-800" />
-          {/* Post placeholder 1 */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 px-1">
-              <div className="w-7 h-7 rounded-full bg-zinc-700" />
-              <div className="h-2 w-20 rounded bg-zinc-700" />
-            </div>
-            <div className="h-36 rounded bg-gradient-to-br from-zinc-700 to-zinc-800" />
-            <div className="flex gap-3 px-1">
-              <div className="h-2 w-5 rounded bg-zinc-700" />
-              <div className="h-2 w-5 rounded bg-zinc-700" />
-              <div className="h-2 w-5 rounded bg-zinc-700" />
-            </div>
-          </div>
-          {/* Post placeholder 2 */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 px-1">
-              <div className="w-7 h-7 rounded-full bg-zinc-700" />
-              <div className="h-2 w-16 rounded bg-zinc-700" />
-            </div>
-            <div className="h-32 rounded bg-gradient-to-br from-purple-900/50 to-zinc-800" />
-          </div>
-        </div>
-      </div>
-    </div>
+    <svg width={size} height={size} viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="igGradient" x1="0" y1="96" x2="96" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#feda75" />
+          <stop offset="0.25" stopColor="#fa7e1e" />
+          <stop offset="0.5" stopColor="#d62976" />
+          <stop offset="0.75" stopColor="#962fbf" />
+          <stop offset="1" stopColor="#4f5bd5" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="92" height="92" rx="24" fill="url(#igGradient)" />
+      <rect x="26" y="30" width="44" height="38" rx="10" stroke="white" strokeWidth="4" fill="none" />
+      <path d="M36 30 L40 24 H56 L60 30" stroke="white" strokeWidth="4" fill="none" strokeLinejoin="round" />
+      <circle cx="48" cy="49" r="11" stroke="white" strokeWidth="4" fill="none" />
+      <circle cx="62" cy="38" r="2.5" fill="white" />
+    </svg>
   );
 }
 
@@ -69,13 +29,19 @@ function PhoneMockup() {
    Auth layout — two-column desktop, form-only on mobile
    ───────────────────────────────────────────────────────────────── */
 export default function AuthLayout({ children }: { children: ReactNode }) {
+  const t = useTranslations('Auth');
+
   return (
     <div className="min-h-screen bg-black flex">
       {/* ── LEFT PANEL (desktop only) ──────────────────────────── */}
-      <div className="hidden md:flex flex-1 items-center justify-center bg-black">
-        <div className="flex flex-col items-center gap-0">
-          <AppIcon size={80} />
-          <PhoneMockup />
+      <div className="hidden md:flex flex-col flex-1 items-center justify-center gap-6 bg-black px-8">
+        <h2 className="text-white text-3xl font-light text-center max-w-sm leading-snug">
+          {t.rich('leftPanel.heading', {
+            accent: (chunks) => <span className="text-ig-blue font-normal">{chunks}</span>
+          })}
+        </h2>
+        <div className="mt-4">
+          <AppIcon size={96} />
         </div>
       </div>
 
