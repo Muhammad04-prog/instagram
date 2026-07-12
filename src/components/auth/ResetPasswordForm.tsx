@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { resetPasswordSchema, type ResetPasswordFormValues } from '@/lib/validators/auth.schema';
@@ -80,29 +79,16 @@ export default function ResetPasswordForm() {
 
   return (
     <div className="flex flex-col">
-      {/* Header with logo */}
-      <div className="flex flex-col items-center mb-6">
-        <div className="flex items-center w-full mb-2">
-          <Link
-            href="/login"
-            className="text-white p-1 rounded hover:bg-white/10 transition-colors"
-            aria-label={tAuth('back')}
-          >
-            <ChevronLeft size={20} />
-          </Link>
-        </div>
-        <div className="w-12 h-12 mb-3 overflow-hidden select-none pointer-events-none" onContextMenu={(e) => e.preventDefault()}>
-          <Image
-            src="/insta.png"
-            alt="Instagram"
-            width={48}
-            height={48}
-            className="object-contain select-none pointer-events-none"
-            priority
-            draggable={false}
-          />
-        </div>
-        <h1 className="text-white font-semibold text-base leading-tight mt-1">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-6">
+        <Link
+          href="/login"
+          className="text-white p-1 rounded hover:bg-white/10 transition-colors"
+          aria-label={tAuth('back')}
+        >
+          <ChevronLeft size={20} />
+        </Link>
+        <h1 className="text-white font-semibold text-base leading-tight">
           {t('title')}
         </h1>
       </div>

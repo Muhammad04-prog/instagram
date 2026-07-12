@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { ChevronLeft, Eye, EyeOff, Info, ChevronDown } from 'lucide-react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { registerSchema, type RegisterFormValues } from '@/lib/validators/auth.schema';
@@ -87,22 +86,11 @@ export default function RegisterForm({ locale }: { locale: string }) {
       </div>
 
       {/* ── Heading + subtext ────────────────────────────────────── */}
-      <div className="flex flex-col items-center mb-5">
-        <div className="w-12 h-12 mb-3 overflow-hidden select-none pointer-events-none" onContextMenu={(e) => e.preventDefault()}>
-          <Image
-            src="/insta.png"
-            alt="Instagram"
-            width={48}
-            height={48}
-            className="object-contain select-none pointer-events-none"
-            priority
-            draggable={false}
-          />
-        </div>
-        <h1 className="text-white font-semibold text-base leading-snug text-center mt-1">
+      <div className="text-center mb-5">
+        <h1 className="text-white font-semibold text-base leading-snug">
           {t('title')}
         </h1>
-        <p className="text-ig-text-muted text-xs mt-1 leading-relaxed text-center">
+        <p className="text-ig-text-muted text-xs mt-1 leading-relaxed">
           {t('subtitle')}
         </p>
       </div>
