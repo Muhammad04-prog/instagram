@@ -314,7 +314,7 @@ export default function RegisterForm({ locale }: { locale: string }) {
 
         {/* Copyright */}
         <p className="text-ig-text-secondary text-[10px]">
-          {t('copyright').replace('{year}', String(year))}
+          {t('copyright', { year: String(year) })}
         </p>
       </div>
     </div>
