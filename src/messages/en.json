@@ -123,7 +123,10 @@
     "aspectPortrait": "4:5",
     "zoom": "Zoom",
     "discardTitle": "Discard post?",
-    "discardDescription": "If you leave, your edits won't be saved."
+    "discardDescription": "If you leave, your edits won't be saved.",
+    "shareToStory": "Share to story",
+    "mute": "Mute",
+    "unmute": "Unmute"
   },
   "story": {
     "yourStory": "Your story",
@@ -144,7 +147,9 @@
     "mediaMissing": "This story's file is no longer on the server."
   },
   "reels": {
-    "title": "Reels"
+    "title": "Reels",
+    "empty": "No reels yet",
+    "emptyDescription": "Video posts will show up here."
   },
   "chat": {
     "title": "Messages",
@@ -233,5 +238,9 @@
     "minLength": "Must be at least {count} characters",
     "maxLength": "Must be at most {count} characters",
     "passwordMismatch": "Passwords do not match"
+  },
+  "explore": {
+    "title": "Explore",
+    "empty": "Nothing to explore yet"
   }
 }

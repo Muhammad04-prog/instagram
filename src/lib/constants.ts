@@ -14,6 +14,8 @@ export const ACCESS_TOKEN_COOKIE = "access_token";
 
 export const PAGE_SIZE = 12;
 export const FEED_PAGE_SIZE = 5;
+export const EXPLORE_PAGE_SIZE = 24;
+export const REELS_PAGE_SIZE = 5;
 export const SEARCH_DEBOUNCE_MS = 400;
 
 export const ROUTES = {

@@ -4,6 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DotsIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { StoryUploadDialog } from "@/components/story/StoryUploadDialog";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ export function PostHeader({
   const format = useFormatter();
   const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [shareStoryOpen, setShareStoryOpen] = useState(false);
   const remove = useDeletePost();
 
   const isMine = post.userId === user?.userId;
@@ -70,6 +72,10 @@ export function PostHeader({
           <DropdownMenuItem asChild>
             <Link href={ROUTES.post(post.postId)}>{t("goToPost")}</Link>
           </DropdownMenuItem>
+          {/* AddStories takes an optional PostId — that is IG's "share to story". */}
+          <DropdownMenuItem onSelect={() => setShareStoryOpen(true)}>
+            {t("shareToStory")}
+          </DropdownMenuItem>
           {isMine ? (
             <DropdownMenuItem
               onSelect={() => setConfirmOpen(true)}
@@ -80,6 +86,12 @@ export function PostHeader({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <StoryUploadDialog
+        open={shareStoryOpen}
+        onOpenChange={setShareStoryOpen}
+        postId={post.postId}
+      />
 
       <ConfirmDialog
         open={confirmOpen}

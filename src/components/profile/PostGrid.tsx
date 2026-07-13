@@ -37,9 +37,10 @@ function PostGridItem({ post }: { post: Post }) {
       >
         {url ? (
           video ? (
-            // Videos have no poster frame from the API — the tag itself renders one.
+            // The API stores no poster; #t=0.1 makes the browser paint a first
+            // frame instead of leaving the tile black.
             <video
-              src={url}
+              src={`${url}#t=0.1`}
               muted
               playsInline
               preload="metadata"

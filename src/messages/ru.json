@@ -123,7 +123,10 @@
     "aspectPortrait": "4:5",
     "zoom": "Масштаб",
     "discardTitle": "Отменить публикацию?",
-    "discardDescription": "Если вы уйдёте, изменения не сохранятся."
+    "discardDescription": "Если вы уйдёте, изменения не сохранятся.",
+    "shareToStory": "Поделиться в сторис",
+    "mute": "Выключить звук",
+    "unmute": "Включить звук"
   },
   "story": {
     "yourStory": "Ваша история",
@@ -144,7 +147,9 @@
     "mediaMissing": "Файла этой истории больше нет на сервере."
   },
   "reels": {
-    "title": "Reels"
+    "title": "Reels",
+    "empty": "Пока нет Reels",
+    "emptyDescription": "Здесь появятся публикации с видео."
   },
   "chat": {
     "title": "Сообщения",
@@ -233,5 +238,9 @@
     "minLength": "Минимум {count} символов",
     "maxLength": "Максимум {count} символов",
     "passwordMismatch": "Пароли не совпадают"
+  },
+  "explore": {
+    "title": "Интересное",
+    "empty": "Пока нечего показать"
   }
 }

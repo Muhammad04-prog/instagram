@@ -12,7 +12,7 @@ import { useRef } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { type ApiError } from "@/lib/axios";
-import { FEED_PAGE_SIZE, PAGE_SIZE } from "@/lib/constants";
+import { EXPLORE_PAGE_SIZE, FEED_PAGE_SIZE, PAGE_SIZE, REELS_PAGE_SIZE } from "@/lib/constants";
 import { queryKeys } from "@/lib/query-keys";
 import { postService } from "@/services/post.service";
 import type { AddPostDto, Post } from "@/types/post.types";
@@ -45,6 +45,40 @@ export function useUserPosts(userId: string, enabled = true) {
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length < PAGE_SIZE ? undefined : allPages.length + 1,
     enabled: enabled && Boolean(userId),
+  });
+}
+
+/**
+ * /reels. The API hands back `images` as a single file name here (not an array),
+ * so each reel is normalised into a Post — that way the Phase-5 like / save /
+ * comment hooks work on it unchanged.
+ */
+export function useReels() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.posts.reels(),
+    queryFn: ({ pageParam }) =>
+      postService.getReels({ pageNumber: pageParam, pageSize: REELS_PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < REELS_PAGE_SIZE ? undefined : allPages.length + 1,
+    select: (data) => ({
+      ...data,
+      pages: data.pages.map((page) =>
+        page.map((reel): Post => ({ ...reel, images: [reel.images] })),
+      ),
+    }),
+  });
+}
+
+/** /explore — every post, newest first (docs/screenshots/img23). */
+export function useExplorePosts() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.posts.list({ pageSize: EXPLORE_PAGE_SIZE }),
+    queryFn: ({ pageParam }) =>
+      postService.getPosts({ pageNumber: pageParam, pageSize: EXPLORE_PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < EXPLORE_PAGE_SIZE ? undefined : allPages.length + 1,
   });
 }
 
