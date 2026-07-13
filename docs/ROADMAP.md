@@ -240,14 +240,45 @@
 
 ## Фаза 9 — Чат (6 endpoints) (3–4 дня)
 
-- [ ] `services/chat.service.ts` (6) + `store/chat.store.ts` + `hooks/useChat.ts`
-- [ ] `chat/layout.tsx` (список слева) + `ChatList` / `ChatListItem` (`get-chats`)
-- [ ] `chat/[chatId]` — `ChatWindow`, `MessageBubble` (свои/чужие), автоскролл, группировка по дате
-- [ ] `MessageInput` — текст + файл → `send-message` (**PUT multipart**), optimistic отправка
-- [ ] `create-chat` из профиля («Отправить сообщение») + `NewChatDialog`
-- [ ] `delete-message` (`massageId`), `delete-chat`
-- [ ] Realtime: SignalR-хаб, если есть; иначе `refetchInterval: 5000` на активный чат
-- ✅ Готово: 6 endpoints
+- [x] `services/chat.service.ts` (6) + `store/chat.store.ts` (черновики) + `hooks/useChat.ts`
+- [x] `chat/layout.tsx` → `ChatShell` (две колонки) + `ChatList` / `ChatListItem` (`get-chats`)
+- [x] `chat/[chatId]` — `ChatWindow`, `MessageBubble` (свои/чужие), автоскролл, группировка по дате
+- [x] `MessageInput` — текст + файл → `send-message` (**PUT multipart**), optimistic отправка
+- [x] `create-chat` из профиля («Отправить сообщение», `MessageUserButton`) + `NewChatDialog`
+- [x] `delete-message` (`massageId`), `delete-chat`
+- [x] Realtime: SignalR-хаба **нет** → `refetchInterval: 5000` (`CHAT_POLL_MS`)
+- ✅ Готово: 6 endpoints → **52/57**
+
+> Заметки Фазы 9:
+>
+> - ⚠️ **Swagger для Chat снова пуст** (`responses.200` нет ни у одного из 6). Все DTO — с живого API,
+>   на двух аккаунтах. Заготовка `types/chat.types.ts` из Фазы 1 была полностью неверна и переписана.
+> - ⚠️ **`get-chats` не отдаёт ни последнего сообщения, ни времени, ни unread** — только двух участников
+>   (`sendUser*` / `receiveUser*`). Собеседник = тот, чей id не мой (`getChatPeer`). Превью строки
+>   («вы отправили вложение · 2 мин») подтягивается из `get-chat-by-id` того же чата — это тот же
+>   кэш, который открывает окно, так что клик по чату не делает лишнего запроса.
+> - ⚠️ **`get-chat-by-id` отдаёт newest-first**, поле даты — `sendMassageDate` (**опечатка бэкенда**),
+>   как и `massageId` в `delete-message`. Обе оставлены как есть — это провод, а не наша ошибка.
+> - ✅ **`create-chat` идемпотентен**: повторный вызов с тем же собеседником возвращает существующий
+>   chatId (проверено: `NewChatDialog` и кнопка «Отправить сообщение» в профиле ведут в **один и тот же**
+>   чат 883, дубликатов не появляется).
+> - 🔴 **`delete-message` не проверяет владельца** — аккаунт A спокойно удаляет сообщение аккаунта B
+>   (200, `data: true`). Меню «…» рендерится **только на своих** сообщениях, но это лишь клиентская
+>   защита. `BACKEND_BUGS.md` #15.
+> - ⚠️ **Realtime нет:** `/chatHub`, `/chathub`, `/hub`, `/signalr` → 404. Поллинг 5 сек. Проверено:
+>   B отправил — A получил **без перезагрузки**. «Печатает…» и «Просмотрено» в API отсутствуют → не делали.
+> - ⚠️ **Unread-бейджа нет и не будет**: ни `isRead`, ни `unreadCount` в API нет (#16). Сортировка чатов
+>   по `chatId` (свежие сверху) — времени у чата тоже нет.
+> - ⚠️ `send-message` принимает **полностью пустое** сообщение (без текста и файла) → 200 (#17).
+>   В UI отправка при пустом вводе заблокирована.
+> - 🐛 **Мобильный фикс:** `h-dvh` внутри `ContentArea` (у неё `pt-navbar` + `pb-mobilenav`) выносил
+>   строку ввода за экран. Высота чата теперь
+>   `calc(100dvh - var(--ig-navbar-height) - var(--ig-mobilenav-height))`, на md — снова `h-dvh`.
+> - Проверено вживую на **двух аккаунтах** (Playwright, dark + light + /ru + мобильный 390px):
+>   отправка текста, приём через поллинг без reload, загрузка файла (картинка отрисовалась),
+>   удаление своего сообщения (у чужого меню «…» отсутствует), `delete-chat` (2 → 1 и после reload 1),
+>   `NewChatDialog` и кнопка из профиля → один и тот же чат.
+> - `build` / `lint` / `typecheck` — зелёные.
 
 ## Фаза 10 — Locations + Settings + полировка (2–3 дня)
 

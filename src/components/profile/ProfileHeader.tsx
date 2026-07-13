@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SettingsIcon } from "@/components/icons";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowDialog, type FollowTab } from "@/components/profile/FollowDialog";
+import { MessageUserButton } from "@/components/profile/MessageUserButton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -102,14 +103,7 @@ export function ProfileHeader({
         ) : (
           <>
             <FollowButton userId={userId} userName={profile.userName} className="flex-1" />
-            <button
-              type="button"
-              disabled
-              title={t("messageSoon")}
-              className="bg-ig-button-secondary text-ig-text flex-1 rounded-lg py-1.5 text-sm font-semibold disabled:opacity-50"
-            >
-              {t("message")}
-            </button>
+            <MessageUserButton userId={userId} />
           </>
         )}
       </div>

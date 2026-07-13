@@ -1,10 +1,14 @@
 import { setRequestLocale } from "next-intl/server";
+import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
 
-// Chat list + window land in Phase 9. Present now so the sidebar's
-// auto-collapse on /chat is exercisable.
+/** Nothing open: mobile shows only the list (ChatShell), desktop the empty pane. */
 export default async function ChatPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <main className="min-h-dvh" />;
+  return (
+    <div className="hidden flex-1 md:flex">
+      <ChatEmptyState />
+    </div>
+  );
 }

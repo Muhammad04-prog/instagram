@@ -38,12 +38,12 @@
 
 ## Chat — `services/chat.service.ts` (6)
 
-- [ ] `getChats()` → `GET /Chat/get-chats` → `ChatList`
-- [ ] `getChatById(chatId)` → `GET /Chat/get-chat-by-id?chatId` → `ChatWindow`
-- [ ] `createChat(receiverUserId)` → `POST /Chat/create-chat?receiverUserId` → `NewChatDialog`
-- [ ] `sendMessage(form)` → `PUT /Chat/send-message` multipart (ChatId, MessageText, File) → `MessageInput`
-- [ ] `deleteMessage(massageId)` → `DELETE /Chat/delete-message?massageId` → `MessageBubble`
-- [ ] `deleteChat(chatId)` → `DELETE /Chat/delete-chat?chatId` → `ChatListItem`
+- [x] `getChats()` → `GET /Chat/get-chats` → `ChatList`
+- [x] `getChatById(chatId)` → `GET /Chat/get-chat-by-id?chatId` → `ChatWindow`
+- [x] `createChat(receiverUserId)` → `POST /Chat/create-chat?receiverUserId` → `NewChatDialog`
+- [x] `sendMessage(form)` → `PUT /Chat/send-message` multipart (ChatId, MessageText, File) → `MessageInput`
+- [x] `deleteMessage(massageId)` → `DELETE /Chat/delete-message?massageId` → `MessageBubble`
+- [x] `deleteChat(chatId)` → `DELETE /Chat/delete-chat?chatId` → `ChatListItem`
 
 ## FollowingRelationShip — `services/followingRelationShip.service.ts` (4)
 

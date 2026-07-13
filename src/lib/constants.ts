@@ -19,6 +19,9 @@ export const REELS_PAGE_SIZE = 5;
 export const SEARCH_DEBOUNCE_MS = 400;
 export const SEARCH_PAGE_SIZE = 10;
 
+/** No realtime hub on the backend (/chatHub → 404), so chats poll instead. */
+export const CHAT_POLL_MS = 5000;
+
 export const ROUTES = {
   home: "/",
   login: "/login",
@@ -28,6 +31,7 @@ export const ROUTES = {
   reels: "/reels",
   explore: "/explore",
   chat: "/chat",
+  chatById: (chatId: number | string) => `/chat/${chatId}`,
   createPost: "/post/create",
   post: (postId: number | string) => `/post/${postId}`,
   stories: (userId: string) => `/stories/${userId}`,

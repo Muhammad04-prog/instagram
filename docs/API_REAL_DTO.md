@@ -313,3 +313,69 @@ Swagger `GetStoryDto[]` ваъда медиҳад — дар амал **масс
 🔴 **403 барои ҳама** — ҳатто барои нест кардани аккаунти ХУДӢ. → `BACKEND_BUGS.md` #13.
 
 ⚠️ Дар таърих `createdAt` нест → «Недавние»-и хронологӣ ғайриимкон. → `BACKEND_BUGS.md` #14.
+
+---
+
+## Chat (6 endpoint — Фазаи 9)
+
+⚠️ Мисли теги User — дар Swagger **ҳеҷ схемаи ҷавоб нест**. Ҳама аз API-и зинда (ду аккаунт).
+⚠️ **SignalR/WebSocket НЕСТ**: `/chatHub`, `/chathub`, `/hub`, `/signalr` → ҳама **404**
+→ ба ҷои realtime `refetchInterval: 5000` (`CHAT_POLL_MS`).
+
+### `POST /Chat/create-chat?receiverUserId=` → `{ data: 880 }`
+
+`data` = **chatId**. ✅ **Идемпотент**: барои ҳамон корбар боз занг занӣ — ҳамон chatId, чати нав намесозад.
+
+### `GET /Chat/get-chats`
+
+```jsonc
+[
+  {
+    "sendUserId": "857681bd-…",
+    "sendUserName": "ph8s…",
+    "sendUserImage": "",
+    "chatId": 880,
+    "receiveUserId": "0fc06a8c-…",
+    "receiveUserName": "ph9b…",
+    "receiveUserImage": "",
+  },
+]
+```
+
+⚠️ **Паёми охирин, вақт ва unread НЕСТ** — танҳо ду иштирокчӣ.
+→ «ҳамсуҳбат» = он ки `userId`-и ман нест (`getChatPeer`).
+→ Пешнамоиши сатр (паёми охирин + вақт) аз `get-chat-by-id`-и ҳамон чат гирифта мешавад.
+✅ Гиранда (B) чатро дарҳол дар `get-chats`-и худ мебинад.
+
+### `GET /Chat/get-chat-by-id?chatId=` — **навтарин АВВАЛ**
+
+```jsonc
+[
+  {
+    "userId": "857681bd-…",
+    "userName": "ph8s…",
+    "userImage": "",
+    "messageId": 4448,
+    "chatId": 880,
+    "messageText": "file test",
+    "sendMassageDate": "2026-07-13T08:38:15.387208Z", // ОПЕЧАТКА: Massage
+    "file": "9e2fb10e-….png", // null агар замима набошад
+  },
+]
+```
+
+Файл дар `/images/{file}` дастрас (200). chatId-и нодуруст → **400** `["Chat not found"]`.
+
+### `PUT /Chat/send-message` — multipart
+
+Майдонҳо: `ChatId` (ҳатмӣ), `MessageText`, `File`. Ҷавоб: `data` = **messageId**-и нав.
+⚠️ Паёми **комилан холӣ** (бе матн, бе файл) қабул мешавад → `BACKEND_BUGS.md` #17.
+
+### `DELETE /Chat/delete-message?massageId=` → `{ data: true }`
+
+⚠️ `massageId` — **опечаткаи бэкенд**, ҳамон тавр монд.
+🔴 **Санҷиши моликият НЕСТ** — паёми ҳамсуҳбатро ҳам нест мекунад → `BACKEND_BUGS.md` #15.
+
+### `DELETE /Chat/delete-chat?chatId=` → `{ data: true }`
+
+Чат аз `get-chats` меравад (баъди reload ҳам).
