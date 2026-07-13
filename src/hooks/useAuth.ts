@@ -7,7 +7,9 @@ import { useRouter } from "@/i18n/navigation";
 import { type ApiError } from "@/lib/axios";
 import { ROUTES } from "@/lib/constants";
 import { accountService } from "@/services/account.service";
+import { userProfileService } from "@/services/userProfile.service";
 import { useAuthStore } from "@/store/auth.store";
+import { useSavedAccountsStore } from "@/store/savedAccounts.store";
 import type { LoginDto, RegisterDto, SessionUser } from "@/types/auth.types";
 
 /**
@@ -31,11 +33,26 @@ export function useAuth() {
   const router = useRouter();
   const t = useTranslations("errors");
   const { user, isAuth, isReady, setUser } = useAuthStore();
+  const remember = useSavedAccountsStore((s) => s.remember);
 
   const login = useMutation({
     mutationFn: async (dto: LoginDto) => {
       const token = await accountService.login(dto);
-      return persistSession(token);
+      const sessionUser = await persistSession(token);
+
+      // Remember the account in this browser so the next visit can offer
+      // "Continue as …". The avatar is a nicety — a failure here must not
+      // break the login itself.
+      if (sessionUser) {
+        const profile = await userProfileService.getMyProfile().catch(() => null);
+        remember({
+          userId: sessionUser.userId,
+          userName: sessionUser.userName,
+          image: profile?.image ?? null,
+        });
+      }
+
+      return sessionUser;
     },
     onSuccess: (sessionUser) => {
       setUser(sessionUser);

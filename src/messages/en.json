@@ -47,7 +47,16 @@
     "noAccount": "Don't have an account?",
     "createAccount": "Create new account",
     "continue": "Continue",
-    "submit": "Submit"
+    "submit": "Submit",
+    "back": "Back",
+    "useAnotherProfile": "Use another profile",
+    "manageProfiles": "Manage profiles",
+    "remove": "Remove",
+    "removeProfilesTitle": "Remove profiles from this browser",
+    "removeProfilesHint": "Removing a profile only clears it from this browser. Your account and its data stay untouched.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "resetMailBroken": "The server could not send the reset email — its mail service is down. Please try again later."
   },
   "footer": {
     "meta": "Meta",

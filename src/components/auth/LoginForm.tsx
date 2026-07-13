@@ -11,7 +11,15 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { loginSchema, type LoginValues } from "@/lib/validators/auth.schema";
 
-export function LoginForm() {
+export function LoginForm({
+  prefillUserName = "",
+  onBack,
+}: {
+  /** Set when arriving from "Continue as …" — only the password is left to type. */
+  prefillUserName?: string;
+  /** Back to the saved-account card; absent when there is no card to go back to. */
+  onBack?: () => void;
+} = {}) {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
   const { login } = useAuth();
@@ -23,7 +31,7 @@ export function LoginForm() {
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema(tv)),
     mode: "onChange",
-    defaultValues: { userName: "", password: "" },
+    defaultValues: { userName: prefillUserName, password: "" },
   });
 
   return (
@@ -32,9 +40,15 @@ export function LoginForm() {
       className="w-full max-w-[420px] space-y-4"
     >
       <div className="mb-8 flex items-center gap-4">
-        <Link href={ROUTES.register} aria-label={t("register")}>
-          <ChevronLeft className="text-ig-text size-6" />
-        </Link>
+        {onBack ? (
+          <button type="button" onClick={onBack} aria-label={t("back")}>
+            <ChevronLeft className="text-ig-text size-6" />
+          </button>
+        ) : (
+          <Link href={ROUTES.register} aria-label={t("register")}>
+            <ChevronLeft className="text-ig-text size-6" />
+          </Link>
+        )}
         <h1 className="text-ig-text text-[17px] font-semibold">{t("loginTitle")}</h1>
       </div>
 
@@ -42,6 +56,7 @@ export function LoginForm() {
         {...register("userName")}
         placeholder={t("userName")}
         autoComplete="username"
+        autoFocus={prefillUserName.length > 0 ? false : undefined}
         error={errors.userName?.message}
       />
       <AuthInput

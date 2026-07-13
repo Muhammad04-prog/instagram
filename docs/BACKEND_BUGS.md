@@ -274,7 +274,33 @@ Mapping types: UpdateLocationDto -> Location
 
 ---
 
-# ҶАМЪБАСТ — 21 боги ёфташуда
+## 22. `ForgotPassword` — почтаи сервер шикастааст 🔴
+
+`DELETE /Account/ForgotPassword?Email=<email-и МАВҶУДА>`:
+
+```jsonc
+{
+  "data": null,
+  "statusCode": 400,
+  "errors": [
+    "Method not found: 'Void MailKit.MailTransport.Send(MimeKit.MimeMessage, System.Threading.CancellationToken, MailKit.ITransferProgress)'.",
+  ],
+}
+```
+
+Ин хатои дохилии сервер аст (версияи MailKit бо код мувофиқ нест) — **ҳеҷ номаи барқарорсозӣ фиристода намешавад**.
+Барои email-и вуҷуднадошта ҷавоб дуруст аст: `["email  not found"]`.
+
+**Оқибат:** `ResetPassword` низ ба амал намеояд — токен танҳо тавассути почта меояд, вале почта кор намекунад.
+Форма ва сервис сохта шудаанд ва ҳозиранд; ҳамин ки бэкенд MailKit-ро ислоҳ кунад, бе тағйири код кор мекунанд.
+
+→ Дар UI ба ҷои матни хоми MailKit паёми фаҳмо нишон дода мешавад (`auth.resetMailBroken`).
+
+✅ `ChangePassword` (бо токен, аз `settings`) бо ҳамин парол комилан кор мекунад.
+
+---
+
+# ҶАМЪБАСТ — 22 боги ёфташуда
 
 | #   | Endpoint / мавзӯъ                                  | Дараҷа | Таъсир ба UI                                   |
 | --- | -------------------------------------------------- | ------ | ---------------------------------------------- |
@@ -299,4 +325,4 @@ Mapping types: UpdateLocationDto -> Location
 | 19  | `update-Location` → 400 (AutoMapper)               | 🔴     | Тугма ҳаст, хато ба toast                      |
 | 20  | Location ба пост/профил пайваст намешавад          | 🟡     | CRUD дар settings, на дар post/create          |
 
-**6 боги 🔴** — UI онҳоро пинҳон намекунад: тугма мемонад, хатои воқеии сервер ба корбар нишон дода мешавад.
+**7 боги 🔴** — UI онҳоро пинҳон намекунад: тугма мемонад, хатои воқеии сервер ба корбар нишон дода мешавад.

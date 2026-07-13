@@ -32,7 +32,15 @@ export function ForgotPasswordForm() {
   const forgot = useMutation({
     mutationFn: (values: ForgotPasswordValues) => accountService.forgotPassword(values.email),
     onSuccess: () => toast.success(t("resetLinkSent")),
-    onError: (error: ApiError) => toast.error(error.message),
+    // The server's mailer is broken: a *valid* email answers with a raw MailKit
+    // stack message ("Method not found: Void MailKit.MailTransport.Send…").
+    // Show a sentence instead of that — docs/BACKEND_BUGS.md #22.
+    onError: (error: ApiError) =>
+      toast.error(
+        /mailkit|method not found/i.test(error.message)
+          ? t("resetMailBroken")
+          : error.message || t("findAccount"),
+      ),
   });
 
   return (

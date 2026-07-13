@@ -26,7 +26,9 @@ export function UserAvatar({
       <span
         style={{ width: size, height: size }}
         className={cn(
-          "bg-ig-elevated text-ig-text-secondary inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+          // --ig-elevated is #fff in light, which made the fallback invisible on
+          // white; --ig-button-secondary is grey in both themes.
+          "bg-ig-button-secondary text-ig-text-secondary inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full",
           className,
         )}
         aria-hidden

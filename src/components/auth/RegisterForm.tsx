@@ -56,6 +56,7 @@ export function RegisterForm() {
       </Link>
 
       <header className="space-y-2">
+        <p className="text-ig-text-secondary text-sm font-semibold">∞ Meta</p>
         <h1 className="text-ig-text text-[32px] font-bold">{t("registerTitle")}</h1>
         <p className="text-ig-text-secondary text-[15px]">{t("registerSubtitle")}</p>
       </header>

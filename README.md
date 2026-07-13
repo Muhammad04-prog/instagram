@@ -11,6 +11,10 @@ Backend: `https://instagram-api.softclub.tj`
 
 ## Screenshots
 
+Login — the promo collage floats on its own and fans out on hover:
+
+![Login](docs/preview/login-dark.png)
+
 | Feed — dark                         | Profile — light                            |
 | ----------------------------------- | ------------------------------------------ |
 | ![Feed](docs/preview/feed-dark.png) | ![Profile](docs/preview/profile-light.png) |
@@ -18,6 +22,10 @@ Backend: `https://instagram-api.softclub.tj`
 | Reels — dark                          | Chat — light                         |
 | ------------------------------------- | ------------------------------------ |
 | ![Reels](docs/preview/reels-dark.png) | ![Chat](docs/preview/chat-light.png) |
+
+| Settings — appearance and language          |
+| ------------------------------------------- |
+| ![Settings](docs/preview/settings-dark.png) |
 
 ---
 
@@ -50,8 +58,38 @@ Backend: `https://instagram-api.softclub.tj`
 - **Post create** — drag & drop, crop (1:1 / 4:5), caption
 - **Settings** — appearance (light / dark / system), language (EN / RU / TJ), locations CRUD
 - **Auth** — register, login, forgot / reset / change password, guarded routes
+- **"Continue as …"** — a browser that has signed in before is greeted with the saved account
+  instead of an empty form, plus a gear → "Remove profiles from this browser". No token is kept in
+  that list, so continuing still asks for the password
+
+The app opens in **dark** by default; light and system are one click away in Settings, and every
+screen is built for both.
 
 Every screen implements all three states: **loading (skeleton) · empty · error**.
+
+### Customising the login collage
+
+The three floating story cards on the login screen live in one file:
+
+| What                            | Where                                                    |
+| ------------------------------- | -------------------------------------------------------- |
+| The cards, animation and layout | `src/components/auth/PhoneCollage.tsx`                   |
+| The photos inside them          | `public/promo/story-1.jpg`, `story-2.jpg`, `story-3.jpg` |
+
+There are two ways to change a picture:
+
+1. **Replace the file** in `public/promo/` — keep the name, use a portrait image (≈900×1350).
+   No code change at all. (`story-2.jpg` is the bigger card in the middle.)
+2. **Paste a URL** into the `CARDS` array in `PhoneCollage.tsx`:
+   ```ts
+   { id: "left", src: "https://example.com/photo.jpg", ... }
+   ```
+   A full `http(s)://` URL is rendered with a plain `<img>`, so it works with **any host** — no
+   `next.config.ts` change needed. Local paths still go through `next/image` and get optimised.
+
+> ⚠️ If you replace a file in `public/promo/` while `npm run dev` is running and still see the old
+> picture, it's the Next image optimiser's cache (it keeps a separate entry per format, and the WebP
+> one can go stale). Stop the dev server, `rm -rf .next`, and start it again.
 
 ---
 
@@ -81,6 +119,9 @@ npm run typecheck  # tsc --noEmit
 ## Project structure
 
 ```
+public/
+└─ promo/                    the three photos used by the login collage
+
 src/
 ├─ app/
 │  ├─ [locale]/
@@ -100,7 +141,7 @@ src/
 │                           followingRelationShip, post, story, chat, location)
 ├─ hooks/                   useAuth, usePosts, useComments, useStories, useChat,
 │                           useUserSearch, useFollow, useProfile, useLocation, useDebounce
-├─ store/                   Zustand: auth, ui, story, chat drafts
+├─ store/                   Zustand: auth, ui, story, chat drafts, saved accounts
 ├─ types/                   DTOs taken from the live API, not from the spec
 ├─ lib/                     axios, constants, query-keys, utils, server-api, validators (Zod)
 ├─ i18n/                    next-intl routing / navigation / request
@@ -157,7 +198,7 @@ endpoint is merely "declared".
 
 ## Known backend issues
 
-21 server-side bugs surfaced while integrating, 6 of them serious. The full list, with reproductions,
+22 server-side bugs surfaced while integrating, 7 of them serious. The full list, with reproductions,
 is in [`docs/BACKEND_BUGS.md`](docs/BACKEND_BUGS.md). Highlights:
 
 | Endpoint                    | Problem                                                                    |
