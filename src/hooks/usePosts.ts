@@ -17,7 +17,15 @@ import { queryKeys } from "@/lib/query-keys";
 import { postService } from "@/services/post.service";
 import type { AddPostDto, Post } from "@/types/post.types";
 
-/** A short page means the end — the API's paging envelope is unwrapped away. */
+/**
+ * `/` — the feed.
+ *
+ * ⚠️ `get-following-post` **ignores PageNumber and PageSize**: it always returns
+ * the whole feed (verified — pages 1, 2 and 3 come back byte-identical, 56 posts
+ * each, with PageSize=5). Asking for page 2 would therefore duplicate every post.
+ * So the feed is a single page: `getNextPageParam` never advances.
+ * See docs/BACKEND_BUGS.md #21.
+ */
 export function useFeed() {
   const { user } = useAuth();
 
@@ -30,8 +38,7 @@ export function useFeed() {
         pageSize: FEED_PAGE_SIZE,
       }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length < FEED_PAGE_SIZE ? undefined : allPages.length + 1,
+    getNextPageParam: () => undefined,
     enabled: Boolean(user?.userId),
   });
 }
