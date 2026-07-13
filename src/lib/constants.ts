@@ -17,6 +17,7 @@ export const FEED_PAGE_SIZE = 5;
 export const EXPLORE_PAGE_SIZE = 24;
 export const REELS_PAGE_SIZE = 5;
 export const SEARCH_DEBOUNCE_MS = 400;
+export const SEARCH_PAGE_SIZE = 10;
 
 export const ROUTES = {
   home: "/",

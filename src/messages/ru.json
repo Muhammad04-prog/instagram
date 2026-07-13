@@ -215,13 +215,28 @@
     "dark": "Тёмная",
     "system": "Как в системе",
     "deleteAccount": "Удалить аккаунт",
-    "deleteAccountConfirm": "Аккаунт будет удалён навсегда. Это действие нельзя отменить."
+    "deleteAccountConfirm": "Аккаунт будет удалён навсегда. Это действие нельзя отменить.",
+    "changePassword": "Смена пароля",
+    "accountControl": "Управление аккаунтом",
+    "continue": "Продолжить",
+    "deleteAccountDone": "Ваш аккаунт удалён",
+    "deleteAccountFinalTitle": "Удалить аккаунт навсегда?",
+    "deleteAccountFinalDescription": "Ваши публикации, истории и комментарии исчезнут навсегда. Это действие нельзя отменить.",
+    "deleteAccountFinalConfirm": "Удалить навсегда",
+    "deleteAccountForbidden": "Удалить аккаунт может только администратор — сервер отклонил запрос (403)."
   },
   "search": {
     "placeholder": "Поиск",
     "recent": "Недавние",
     "clearAll": "Очистить все",
-    "noResults": "Ничего не найдено"
+    "noResults": "Ничего не найдено",
+    "title": "Поиск",
+    "noRecent": "Нет недавних поисков",
+    "clearAllTitle": "Очистить историю поиска?",
+    "clearAllDescription": "Это действие нельзя отменить. Недавние запросы и посещённые профили будут удалены.",
+    "remove": "Удалить",
+    "clear": "Очистить",
+    "followers": "{count, plural, one {# подписчик} few {# подписчика} many {# подписчиков} other {# подписчика}}"
   },
   "errors": {
     "title": "Что-то пошло не так",

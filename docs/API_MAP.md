@@ -54,16 +54,16 @@
 
 ## User — `services/user.service.ts` (10)
 
-- [ ] `getUsers(params)` → `GET /User/get-users?UserName&Email&PageNumber&PageSize` → `UserSearch`, `SuggestionsList`
-- [ ] `addSearchHistory(text)` → `POST /User/add-search-history?Text`
-- [ ] `getSearchHistories()` → `GET /User/get-search-histories`
-- [ ] `deleteSearchHistory(id)` → `DELETE /User/delete-search-history?id`
-- [ ] `deleteSearchHistories()` → `DELETE /User/delete-search-histories` («Очистить все»)
-- [ ] `addUserSearchHistory(userSearchId)` → `POST /User/add-user-search-history?UserSearchId`
-- [ ] `getUserSearchHistories()` → `GET /User/get-user-search-histories`
-- [ ] `deleteUserSearchHistory(id)` → `DELETE /User/delete-user-search-history?id`
-- [ ] `deleteUserSearchHistories()` → `DELETE /User/delete-user-search-histories`
-- [ ] `deleteUser(userId)` → `DELETE /User/delete-user?userId` → `DeleteAccountDialog`
+- [x] `getUsers(params)` → `GET /User/get-users?UserName&Email&PageNumber&PageSize` → `UserSearch`, `SuggestionsList`
+- [x] `addSearchHistory(text)` → `POST /User/add-search-history?Text`
+- [x] `getSearchHistories()` → `GET /User/get-search-histories`
+- [x] `deleteSearchHistory(id)` → `DELETE /User/delete-search-history?id`
+- [x] `deleteSearchHistories()` → `DELETE /User/delete-search-histories` («Очистить все»)
+- [x] `addUserSearchHistory(userSearchId)` → `POST /User/add-user-search-history?UserSearchId`
+- [x] `getUserSearchHistories()` → `GET /User/get-user-search-histories`
+- [x] `deleteUserSearchHistory(id)` → `DELETE /User/delete-user-search-history?id`
+- [x] `deleteUserSearchHistories()` → `DELETE /User/delete-user-search-histories`
+- [x] `deleteUser(userId)` → `DELETE /User/delete-user?userId` → `DeleteAccountDialog` (settings, double-confirm) — 🔴 **admin-only: 403 ҳатто барои нест кардани аккаунти ХУДӢ** (`docs/BACKEND_BUGS.md` #13); тугма мемонад, хато → toast
 
 ## UserProfile — `services/userProfile.service.ts` (7)
 

@@ -2,20 +2,17 @@
 
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
-import { Loader } from "@/components/shared/Loader";
-import { UserAvatar } from "@/components/shared/UserAvatar";
+import { useState } from "react";
+import { SearchResults } from "@/components/search/SearchResults";
 import { Separator } from "@/components/ui/separator";
-import { useUsers } from "@/hooks/useUserSearch";
-import { Link } from "@/i18n/navigation";
-import { ROUTES, SEARCH_DEBOUNCE_MS } from "@/lib/constants";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useAddSearchHistory } from "@/hooks/useUserSearch";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/ui.store";
 
 /**
- * Slide-out panel anchored to the collapsed sidebar (no screenshot exists for
- * it — INDEX.md §4 — so the layout follows IG's live search panel).
- * Search history endpoints are wired in Phase 8.
+ * Slide-out panel anchored to the collapsed sidebar. No screenshot exists for it
+ * (INDEX.md §4), so the layout follows IG's live search panel.
  */
 export function SearchPanel() {
   const t = useTranslations("search");
@@ -23,17 +20,8 @@ export function SearchPanel() {
   const open = panel === "search";
 
   const [term, setTerm] = useState("");
-  const [debounced, setDebounced] = useState("");
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(term.trim()), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(id);
-  }, [term]);
-
-  const { data: users, isFetching } = useUsers(
-    { userName: debounced, pageNumber: 1, pageSize: 15 },
-    debounced.length > 0,
-  );
+  const debounced = useDebounce(term.trim());
+  const addText = useAddSearchHistory();
 
   // Clear the query when the panel closes — adjusting state during render is the
   // recommended alternative to a reset effect.
@@ -52,59 +40,44 @@ export function SearchPanel() {
       )}
     >
       <div className="px-6 pt-6 pb-4">
-        <h2 className="text-ig-text mb-8 text-2xl font-semibold">{t("placeholder")}</h2>
-        <div className="relative">
+        <h2 className="text-ig-text mb-8 text-2xl font-semibold">{t("title")}</h2>
+        <form
+          className="relative"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const text = term.trim();
+            if (text) addText.mutate(text);
+          }}
+        >
           <input
             value={term}
             onChange={(event) => setTerm(event.target.value)}
             placeholder={t("placeholder")}
-            className="bg-ig-elevated text-ig-text placeholder:text-ig-text-secondary h-10 w-full rounded-lg px-4 text-sm outline-none"
+            aria-label={t("placeholder")}
+            className="bg-ig-button-secondary text-ig-text placeholder:text-ig-text-secondary h-10 w-full rounded-lg px-4 text-sm outline-none"
           />
           {term ? (
             <button
               type="button"
               onClick={() => setTerm("")}
-              aria-label={t("clearAll")}
+              aria-label={t("clear")}
               className="text-ig-text-secondary absolute inset-y-0 right-3 flex items-center"
             >
               <X className="size-4" />
             </button>
           ) : null}
-        </div>
+        </form>
       </div>
 
       <Separator className="bg-ig-separator" />
 
-      <div className="flex-1 overflow-y-auto px-2 py-3">
-        {debounced.length === 0 ? (
-          <p className="text-ig-text-secondary px-4 py-3 text-sm font-semibold">{t("recent")}</p>
-        ) : isFetching ? (
-          <Loader />
-        ) : users && users.length > 0 ? (
-          <ul>
-            {users.map((user) => (
-              <li key={user.id}>
-                <Link
-                  href={ROUTES.profile(user.id)}
-                  onClick={closePanel}
-                  className="hover:bg-ig-elevated flex items-center gap-3 rounded-lg px-4 py-2"
-                >
-                  <UserAvatar src={user.avatar} size={44} />
-                  <span className="min-w-0">
-                    <span className="text-ig-text block truncate text-sm font-semibold">
-                      {user.userName}
-                    </span>
-                    <span className="text-ig-text-secondary block truncate text-sm">
-                      {user.fullName}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-ig-text-secondary px-4 py-6 text-center text-sm">{t("noResults")}</p>
-        )}
+      <div className="flex-1 overflow-y-auto">
+        <SearchResults
+          term={term}
+          debouncedTerm={debounced}
+          onPickTerm={setTerm}
+          onNavigate={closePanel}
+        />
       </div>
     </aside>
   );

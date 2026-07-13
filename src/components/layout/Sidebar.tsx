@@ -50,7 +50,10 @@ export function Sidebar() {
       aria-label={t("primary")}
       className={cn(
         "group border-ig-border bg-ig-bg fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r px-3 pt-8 pb-4 md:flex",
-        "w-sidebar-collapsed hover:w-sidebar transition-[width] duration-200 ease-in-out",
+        "w-sidebar-collapsed transition-[width] duration-200 ease-in-out",
+        // Hover-expand would slide the 244px rail straight over the slide-out
+        // panel (which is anchored at 73px), so it is suppressed while one is open.
+        panel === null && "hover:w-sidebar",
         wide && "xl:w-sidebar",
       )}
     >

@@ -14,18 +14,21 @@ export interface GetUsersParams {
   pageSize?: number;
 }
 
-/** /User/get-search-histories — free-text search history. */
+/**
+ * /User/get-search-histories — free-text queries. Live API returns exactly
+ * `{ id, text }` (no userId), newest first. The server de-duplicates: adding an
+ * existing text twice does not create a second row.
+ */
 export interface SearchHistory {
   id: number;
   text: string;
-  userId: string;
 }
 
-/** /User/get-user-search-histories — visited-profile history. */
+/**
+ * /User/get-user-search-histories — visited profiles. The user is **nested**
+ * under `users` (not flattened), and `id` is the history row, not the user.
+ */
 export interface UserSearchHistory {
   id: number;
-  userId: string;
-  userName: string;
-  fullName: string | null;
-  userImage: string | null;
+  users: User;
 }

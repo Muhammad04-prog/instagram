@@ -201,12 +201,42 @@
 
 ## Фаза 8 — Поиск (10 endpoints User) (2 дня)
 
-- [ ] `services/user.service.ts` (10) + `hooks/useUserSearch.ts` + `useDebounce`
-- [ ] `UserSearch` в `SearchPanel` (`get-users`, debounce 400ms)
-- [ ] `add-search-history` / `add-user-search-history` при вводе и клике
-- [ ] `UserSearchHistory` — «Недавние», ✕ (удалить один), «Очистить все» (оба вида истории)
-- [ ] `delete-user` — в настройках (админ / удаление аккаунта, double-confirm)
+- [x] `services/user.service.ts` (10) + `hooks/useUserSearch.ts` + `useDebounce`
+- [x] `UserSearch` в `SearchPanel` (`get-users`, debounce 400ms) + `SearchResults` / `SearchUserRow`
+- [x] `add-search-history` / `add-user-search-history` при вводе и клике
+- [x] `UserSearchHistory` — «Недавние», ✕ (удалить один, optimistic), «Очистить все» (оба вида истории)
+- [x] Поиск в шапке `/explore` (img23) — тот же `SearchResults` в выпадающем списке
+- [x] `delete-user` — `settings/page.tsx` + `DeleteAccountDialog` (double-confirm)
 - ✅ Готово: 10 endpoints
+
+> Заметки Фазы 8:
+>
+> - ⚠️ **Swagger для тега User бесполезен**: у всех 10 endpoint'ов `responses.200` пуст — схемы ответа
+>   нет вообще. Все DTO сняты с живого API и записаны в `docs/API_REAL_DTO.md`.
+> - ⚠️ **`get-user-search-histories` возвращает пользователя ВЛОЖЕННЫМ**: `{ id, users: {...} }`, где
+>   `id` — строка истории, а не пользователя. `get-search-histories` → `{ id, text }` (без `userId`).
+>   Заготовка типов из Фазы 3 была неверна — исправлена.
+> - 🔴 **`delete-user` — admin-only, отвечает 403 ВСЕМ**, включая удаление собственного аккаунта
+>   (проверено на двух одноразовых аккаунтах, не на живом пользователе). Кнопка «Удалить аккаунт»
+>   оставлена с double-confirm, но честно показывает отказ сервера в toast. `BACKEND_BUGS.md` #13.
+> - ⚠️ **Хронологические «Недавние» невозможны**: у истории нет `createdAt`, а id двух историй идут из
+>   разных последовательностей. Показываем аккаунты, затем текстовые запросы (в каждой группе — свежие
+>   сверху). `BACKEND_BUGS.md` #14.
+> - **`add-search-history` вызывается на Enter и на клик по результату, а не на каждый keystroke** —
+>   иначе «Недавние» забиваются всеми префиксами («e», «er», «era»…). Сервер сам дедуплицирует повторы.
+> - `UserName` в `get-users` — substring и matches ещё и `fullName` (`er` → `eraj`, `amERica`, `chessmastER`).
+> - 🐛 **Починен баг Фазы 3:** развёрнутый по hover сайдбар (244px) наезжал на выехавшую панель (она
+>   прибита к 73px) — курсор после клика по «Поиску» остаётся на рейке, и панель закрывалась наполовину.
+>   Hover-expand теперь отключён, пока открыта панель (`Sidebar`: `panel === null && "hover:w-sidebar"`).
+> - 🐛 **Light-тема:** поле ввода и кружок иконки истории были на `--ig-elevated` = `#fff` → невидимы на
+>   белом фоне (та же ловушка, что в Фазе 4). Переведены на `--ig-button-secondary`, ховер строк — на
+>   `--ig-bg-secondary`. Оба токена читаемы и в light, и в dark.
+> - `settings/page.tsx` создан минимальным (смена пароля + удаление аккаунта); полная оболочка настроек
+>   (тема, язык, sidebar — img39–img42) остаётся на Фазу 10.
+> - Проверено вживую в браузере (Playwright, dark + light + /ru + мобильный 390px): поиск «er» → 10
+>   аккаунтов; клик по `eraj` → появился в «Недавние» и **пережил полную перезагрузку**; ✕ убрал строку
+>   (3 → 2); «Очистить всё» → 0 строк и после reload тоже 0; «Удалить аккаунт» → toast с отказом 403.
+> - `build` / `lint` / `typecheck` — зелёные.
 
 ## Фаза 9 — Чат (6 endpoints) (3–4 дня)
 

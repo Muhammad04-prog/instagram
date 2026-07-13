@@ -215,13 +215,28 @@
     "dark": "Dark",
     "system": "Use system setting",
     "deleteAccount": "Delete account",
-    "deleteAccountConfirm": "This will permanently delete your account. This cannot be undone."
+    "deleteAccountConfirm": "This will permanently delete your account. This cannot be undone.",
+    "changePassword": "Change password",
+    "accountControl": "Account control",
+    "continue": "Continue",
+    "deleteAccountDone": "Your account has been deleted",
+    "deleteAccountFinalTitle": "Delete account permanently?",
+    "deleteAccountFinalDescription": "Your posts, stories and comments will be gone forever. This cannot be undone.",
+    "deleteAccountFinalConfirm": "Delete permanently",
+    "deleteAccountForbidden": "Only an administrator can delete an account — the server rejected the request (403)."
   },
   "search": {
     "placeholder": "Search",
     "recent": "Recent",
     "clearAll": "Clear all",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "title": "Search",
+    "noRecent": "No recent searches",
+    "clearAllTitle": "Clear search history?",
+    "clearAllDescription": "You won't be able to undo this. Recent searches and visited profiles will be removed.",
+    "remove": "Remove",
+    "clear": "Clear",
+    "followers": "{count, plural, one {# follower} other {# followers}}"
   },
   "errors": {
     "title": "Something went wrong",

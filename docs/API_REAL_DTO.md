@@ -231,3 +231,85 @@ Swagger `GetStoryDto[]` ваъда медиҳад — дар амал **масс
 | `1`         | `"Male"`      |
 
 Дар код: `GENDER_VALUE` (`src/types/profile.types.ts`).
+
+---
+
+## User (10 endpoint — Фазаи 8)
+
+⚠️ Дар Swagger барои **ҳеҷ як** аз ин 10 endpoint схемаи ҷавоб нест (`responses.200` холӣ).
+Ҳама сохторҳои зер аз ҷавоби зинда гирифта шудаанд.
+
+### `GET /User/get-users?UserName=&Email=&PageNumber=&PageSize=`
+
+Пагинатсия дар сатҳи боло (мисли `get-post-favorites`):
+
+```jsonc
+{
+  "pageNumber": 1,
+  "pageSize": 3,
+  "totalPage": 19,
+  "totalRecord": 55,
+  "data": [
+    {
+      "id": "053f4edb-…",
+      "avatar": "", // на userImage
+      "fullName": "mirzoev ",
+      "subscribersCount": 20,
+      "userName": "eraj",
+    },
+  ],
+}
+```
+
+⚠️ `UserName` **substring** аст ва ба `fullName` низ мерасад: `UserName=er` → `eraj`, `amERica`, `chessmastER`.
+
+### `POST /User/add-search-history?Text=` → `{ data: true }`
+
+⚠️ `Text` холӣ → **400** `["The Text field is required."]`.
+✅ Такрор → сатри нав сохта **намешавад** (сервер dedupe мекунад).
+
+### `GET /User/get-search-histories`
+
+```jsonc
+[
+  { "id": 205, "text": "cat" },
+  { "id": 204, "text": "eraj" },
+] // навтарин аввал, userId НЕСТ
+```
+
+### `POST /User/add-user-search-history?UserSearchId=` → `{ data: true }`
+
+`UserSearchId` = **id-и корбар** (guid). Такрор → сатри нав намесозад.
+
+### `GET /User/get-user-search-histories` — корбар ДОХИЛИ `users` аст
+
+```jsonc
+[
+  {
+    "id": 541, // id-и САТРИ таърих, на корбар!
+    "users": {
+      "id": "053f4edb-…",
+      "avatar": "",
+      "fullName": "mirzoev ",
+      "subscribersCount": 20,
+      "userName": "eraj",
+    },
+  },
+]
+```
+
+⚠️ Ҳамвор (flat) НЕСТ — `{id, userId, userName, …}` интизор нашавед.
+
+### `DELETE /User/delete-search-history?id=` · `delete-user-search-history?id=`
+
+`{ data: true }`. id-и нодуруст → **404** `["Search history not found!"]`.
+
+### `DELETE /User/delete-search-histories` · `delete-user-search-histories`
+
+Ҳамаро тоза мекунад. «Очистить всё» = **ҳарду** занг (ду endpoint-и ҷудогона).
+
+### `DELETE /User/delete-user?userId=`
+
+🔴 **403 барои ҳама** — ҳатто барои нест кардани аккаунти ХУДӢ. → `BACKEND_BUGS.md` #13.
+
+⚠️ Дар таърих `createdAt` нест → «Недавние»-и хронологӣ ғайриимкон. → `BACKEND_BUGS.md` #14.
