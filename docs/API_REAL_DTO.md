@@ -379,3 +379,65 @@ Swagger `GetStoryDto[]` ваъда медиҳад — дар амал **масс
 ### `DELETE /Chat/delete-chat?chatId=` → `{ data: true }`
 
 Чат аз `get-chats` меравад (баъди reload ҳам).
+
+---
+
+## Location (5 endpoint — Фазаи 10)
+
+Swagger DTO-и **request** дорад (`AddLocationDto`, `UpdateLocationDto`), вале схемаи ҷавоб — не.
+
+### `GET /Location/get-Locations?City=&State=&ZipCode=&Country=&PageNumber=&PageSize=`
+
+Пагинатсия дар сатҳи боло (мисли `get-users`):
+
+```jsonc
+{
+  "pageNumber": 1,
+  "pageSize": 3,
+  "totalPage": 3,
+  "totalRecord": 7,
+  "data": [
+    {
+      "locationId": 10,
+      "city": "New York",
+      "state": "New York",
+      "zipCode": "11211",
+      "country": "United States of America",
+    },
+  ],
+}
+```
+
+⚠️ Калид **`locationId`**, на `id` (заготовкаи типи Фазаи 1 нодуруст буд).
+
+### `POST /Location/add-Location` — json
+
+`{ city, state, zipCode, country }` — ҳар чор **ҳатмӣ** (холӣ → 400 `["The City field is required."]`).
+Ҷавоб: **худи сатри сохташуда** (`{ locationId, city, … }`).
+
+### `GET /Location/get-Location-by-id?id=`
+
+⚠️ id-и нестшуда → **200 бо `data: null`** (на 404).
+
+### `PUT /Location/update-Location` — 🔴 ШИКАСТА
+
+```jsonc
+{
+  "data": null,
+  "statusCode": 400,
+  "errors": [
+    "Missing type map configuration or unsupported mapping.\n\nMapping types:\nUpdateLocationDto -> Location",
+  ],
+}
+```
+
+Бо camelCase, PascalCase ва query-параметрҳо санҷида шуд — **ҳамеша 400**. → `BACKEND_BUGS.md` #19.
+
+### `DELETE /Location/delete-Location?id=` → `{ data: true }` ✅
+
+### ⚠️ Location ба ҳеҷ чиз пайваст намешавад
+
+`add-post` майдони локатсия **надорад**, `update-user-profile` танҳо `about` + `gender` қабул мекунад
+(`locationId`-ро не). Яъне Location феҳристи **мустақил** аст.
+→ «Добавить место» дар `post/create` **сохта нашуд** (тугмае мебуд, ки ҳеҷ чизро сабт намекунад).
+Ба ҷояш — CRUD-и пурра дар `settings/locations`.

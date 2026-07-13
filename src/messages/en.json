@@ -239,7 +239,15 @@
     "deleteAccountFinalTitle": "Delete account permanently?",
     "deleteAccountFinalDescription": "Your posts, stories and comments will be gone forever. This cannot be undone.",
     "deleteAccountFinalConfirm": "Delete permanently",
-    "deleteAccountForbidden": "Only an administrator can delete an account — the server rejected the request (403)."
+    "deleteAccountForbidden": "Only an administrator can delete an account — the server rejected the request (403).",
+    "groupAccount": "Your account",
+    "groupApp": "App and preferences",
+    "groupControl": "Account control",
+    "editProfile": "Edit profile",
+    "appearanceAndLanguage": "Appearance and language",
+    "language": "Language",
+    "languageHint": "The interface language is remembered in this browser.",
+    "locations": "Locations"
   },
   "search": {
     "placeholder": "Search",
@@ -268,10 +276,33 @@
     "email": "Enter a valid email",
     "minLength": "Must be at least {count} characters",
     "maxLength": "Must be at most {count} characters",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "cityRequired": "City is required",
+    "stateRequired": "State is required",
+    "zipCodeRequired": "ZIP code is required",
+    "countryRequired": "Country is required"
   },
   "explore": {
     "title": "Explore",
     "empty": "Nothing to explore yet"
+  },
+  "locations": {
+    "title": "Locations",
+    "description": "Add and manage places. The API keeps them as a standalone catalogue — posts and profiles cannot be linked to them.",
+    "city": "City",
+    "state": "State",
+    "zipCode": "ZIP code",
+    "country": "Country",
+    "add": "Add location",
+    "edit": "Edit location",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "This location will be removed permanently.",
+    "saved": "Saved locations",
+    "empty": "No locations yet",
+    "locationAdded": "Location added",
+    "locationUpdated": "Location updated",
+    "locationDeleted": "Location deleted"
   }
 }

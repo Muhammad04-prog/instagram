@@ -33,5 +33,7 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/((?!api|_next|_vercel|.*\\..*).*)",
+  // Metadata images (icon, opengraph-image, apple-icon) are extension-less routes,
+  // so without this they would be caught by the auth guard and 307'd to /login.
+  matcher: "/((?!api|_next|_vercel|icon|apple-icon|opengraph-image|.*\\..*).*)",
 };

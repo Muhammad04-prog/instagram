@@ -10,7 +10,7 @@ import { ProfileTabs, type ProfileTab } from "@/components/profile/ProfileTabs";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { useFavorites, useMyProfile, useUserProfile } from "@/hooks/useProfile";
-import { useUserPosts } from "@/hooks/usePosts";
+import { useMyPosts, useUserPosts } from "@/hooks/usePosts";
 import { isVideo, type Post } from "@/types/post.types";
 
 /**
@@ -26,10 +26,17 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   const other = useUserProfile(isMe ? "" : userId);
   const profileQuery = isMe ? mine : other;
 
-  const posts = useUserPosts(userId);
+  // My own grid comes from get-my-posts; someone else's from get-posts?UserId
+  // (the only one of the two that can filter by user).
+  const myPosts = useMyPosts(isMe);
+  const otherPosts = useUserPosts(userId, !isMe);
+  const posts = isMe ? myPosts : otherPosts;
   const favorites = useFavorites();
 
-  const allPosts = useMemo(() => posts.data?.pages.flat() ?? [], [posts.data]);
+  const allPosts = useMemo(
+    () => (isMe ? (myPosts.data ?? []) : (otherPosts.data?.pages.flat() ?? [])),
+    [isMe, myPosts.data, otherPosts.data],
+  );
   const reels = useMemo(
     () => allPosts.filter((post) => post.images.some((file) => isVideo(file))),
     [allPosts],

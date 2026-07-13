@@ -1,6 +1,27 @@
+import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { PostDetail } from "@/components/post/PostDetail";
+import { serverGet } from "@/lib/server-api";
+import type { Post } from "@/types/post.types";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ postId: string }>;
+}): Promise<Metadata> {
+  const { postId } = await params;
+  const post = await serverGet<Post>("/Post/get-post-by-id", { id: postId });
+
+  if (!post) return { title: "Post" };
+
+  // The root layout's template already appends "• Instagram".
+  const caption = post.content?.trim();
+  return {
+    title: post.userName ?? "Post",
+    description: caption || undefined,
+  };
+}
 
 /** Full page — the same view the intercepted modal shows, framed by a card. */
 export default async function PostPage({

@@ -10,6 +10,9 @@ export const PROXY_BASE_URL = "/api/proxy";
 /** Backend serves uploaded files from /images/{fileName}. */
 export const IMAGE_BASE = `${API_URL}/images`;
 
+/** Canonical origin, used by robots.ts / sitemap.ts / OG images. */
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 export const ACCESS_TOKEN_COOKIE = "access_token";
 
 export const PAGE_SIZE = 12;
@@ -41,4 +44,6 @@ export const ROUTES = {
   favorites: "/profile/favorites",
   settings: "/settings",
   changePassword: "/settings/change-password",
+  locations: "/settings/locations",
+  deleteAccount: "/settings/delete-account",
 } as const;

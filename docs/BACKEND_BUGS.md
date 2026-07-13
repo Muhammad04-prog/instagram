@@ -229,3 +229,55 @@ Swagger response-schema надорад. Дар амал он **тамоми пр
 → `refetchInterval: 5000` (`CHAT_POLL_MS`) барои рӯйхати чатҳо ва чати кушода.
 Санҷида шуд: B паём фиристод → A онро **бе reload** дар ~5 сония гирифт.
 «Печатает…» ва «Просмотрено» дар API нестанд → сохта нашуданд.
+
+---
+
+## 19. `update-Location` ҳамеша 400 медиҳад (AutoMapper) 🔴
+
+```
+Missing type map configuration or unsupported mapping.
+Mapping types: UpdateLocationDto -> Location
+```
+
+Хатои конфигуратсияи AutoMapper дар худи сервер. Санҷида шуд бо `camelCase`, `PascalCase`
+ва query-параметрҳо — натиҷа якхела. `add` ва `delete` бошанд, комилан кор мекунанд.
+
+→ Тугмаи «Сохранить» дар `LocationForm` мемонад, хатои сервер ба toast мебарояд.
+Агар бэкенд mapper-ро ислоҳ кунад — UI бе ягон тағйирот кор мекунад.
+
+---
+
+## 20. Location ба пост ва профил пайваст намешавад 🟡
+
+`add-post` майдони локатсия надорад; `update-user-profile` танҳо `about` + `gender` мегирад.
+Ҳол он ки `get-my-profile` майдони `locationId` **бармегардонад** (танҳо барои хондан).
+→ Location феҳристи мустақил аст; «Добавить место» (img33) сохта нашуд — сохтакорӣ мебуд.
+
+---
+
+# ҶАМЪБАСТ — 20 боги ёфташуда
+
+| #   | Endpoint / мавзӯъ                                  | Дараҷа | Таъсир ба UI                                   |
+| --- | -------------------------------------------------- | ------ | ---------------------------------------------- |
+| 1   | `delete-user-image-profile` аккаунтро мебандад     | 🔴     | Тугма ҳаст + огоҳии сурх дар ConfirmDialog     |
+| 2   | `errors: ["success"]` дар ҷавоби муваффақ          | 🟡     | Интерцептор танҳо ба `statusCode` такя мекунад |
+| 3   | `gender` асимметрӣ (хондан сатр, навиштан рақам)   | 🟡     | `GENDER_VALUE`                                 |
+| 4   | `get-is-follow…` профили пурра медиҳад, на boolean | 🟢     | Як дархост ҳам header, ҳам FollowButton        |
+| 5   | `get-post-favorites` → `totalRecord` ҳамаи постҳо  | 🟢     | Infinite scroll аз рӯи дарозии саҳифа          |
+| 6   | `comments[].userName` ҳамеша `null`                | 🟡     | Ном аз `useProfileLite`                        |
+| 7   | `get-my-posts` бе конверт                          | 🟡     | Unwrap шартӣ                                   |
+| 8   | `get-following-post` бе `UserId` → лентаи холӣ     | 🟡     | Ҳамеша id аз JWT фиристода мешавад             |
+| 9   | `like-post` / `add-post-favorite` toggle-анд       | 🟢     | Optimistic UI инверсия мекунад                 |
+| 10  | Файлҳои кӯҳнаи сторис 404                          | 🟡     | Матни ростқавлона дар вьюер                    |
+| 11  | Story `likedCount` ҳамеша 0                        | 🟡     | Ҳисоб аз `viewerDto.viewLike`                  |
+| 12  | «Ман дидаам»-и сторис дар API нест                 | 🟡     | Ҳалқаи хокистарӣ дар localStorage              |
+| 13  | `delete-user` → **403 ба ҳама** (admin-only)       | 🔴     | Тугма ҳаст, хато ба toast                      |
+| 14  | Таърихи ҷустуҷӯ timestamp надорад                  | 🟡     | «Недавние» аввал аккаунтҳо, баъд матн          |
+| 15  | `delete-message` моликиятро тафтиш намекунад       | 🔴     | Меню танҳо дар паёми худӣ (ҳимояи client)      |
+| 16  | «Хондашуда/нохонда» дар Chat нест                  | 🟡     | Badge сохта нашуд                              |
+| 17  | `send-message` паёми холӣ қабул мекунад            | 🟡     | Фиристодани холӣ баста шуд                     |
+| 18  | SignalR/realtime нест                              | 🟡     | Polling 5s                                     |
+| 19  | `update-Location` → 400 (AutoMapper)               | 🔴     | Тугма ҳаст, хато ба toast                      |
+| 20  | Location ба пост/профил пайваст намешавад          | 🟡     | CRUD дар settings, на дар post/create          |
+
+**5 боги 🔴** — UI онҳоро пинҳон намекунад: тугма мемонад, хатои воқеии сервер ба корбар нишон дода мешавад.

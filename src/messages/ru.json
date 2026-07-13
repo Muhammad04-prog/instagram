@@ -239,7 +239,15 @@
     "deleteAccountFinalTitle": "Удалить аккаунт навсегда?",
     "deleteAccountFinalDescription": "Ваши публикации, истории и комментарии исчезнут навсегда. Это действие нельзя отменить.",
     "deleteAccountFinalConfirm": "Удалить навсегда",
-    "deleteAccountForbidden": "Удалить аккаунт может только администратор — сервер отклонил запрос (403)."
+    "deleteAccountForbidden": "Удалить аккаунт может только администратор — сервер отклонил запрос (403).",
+    "groupAccount": "Ваш аккаунт",
+    "groupApp": "Приложение и настройки",
+    "groupControl": "Управление аккаунтом",
+    "editProfile": "Редактировать профиль",
+    "appearanceAndLanguage": "Оформление и язык",
+    "language": "Язык",
+    "languageHint": "Язык интерфейса запоминается в этом браузере.",
+    "locations": "Места"
   },
   "search": {
     "placeholder": "Поиск",
@@ -268,10 +276,33 @@
     "email": "Введите корректный email",
     "minLength": "Минимум {count} символов",
     "maxLength": "Максимум {count} символов",
-    "passwordMismatch": "Пароли не совпадают"
+    "passwordMismatch": "Пароли не совпадают",
+    "cityRequired": "Укажите город",
+    "stateRequired": "Укажите область",
+    "zipCodeRequired": "Укажите индекс",
+    "countryRequired": "Укажите страну"
   },
   "explore": {
     "title": "Интересное",
     "empty": "Пока нечего показать"
+  },
+  "locations": {
+    "title": "Места",
+    "description": "Добавляйте и редактируйте места. В API это отдельный справочник — привязать их к постам или профилю нельзя.",
+    "city": "Город",
+    "state": "Область",
+    "zipCode": "Почтовый индекс",
+    "country": "Страна",
+    "add": "Добавить место",
+    "edit": "Редактировать место",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "deleteConfirm": "Место будет удалено навсегда.",
+    "saved": "Сохранённые места",
+    "empty": "Мест пока нет",
+    "locationAdded": "Место добавлено",
+    "locationUpdated": "Место обновлено",
+    "locationDeleted": "Место удалено"
   }
 }

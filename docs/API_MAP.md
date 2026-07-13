@@ -15,7 +15,7 @@
 - [x] `getPosts(params)` → `GET /Post/get-posts?UserId&Title&Content&PageNumber&PageSize` → `PostGrid` профиля (explore — Фаза 7)
 - [x] `getReels(params)` → `GET /Post/get-reels?PageNumber&PageSize` → сервис готов; экран `/reels` — Фаза 7
 - [x] `getPostById(id)` → `GET /Post/get-post-by-id?id` → `post/[postId]` + `@modal/(.)post/[postId]`
-- [x] `getMyPosts()` → `GET /Post/get-my-posts` (⚠️ отдаёт **голый массив**, без конверта)
+- [x] `getMyPosts()` → `GET /Post/get-my-posts` → сетка `profile/me` (⚠️ отдаёт **голый массив**, без конверта)
 - [x] `getFollowingPosts(params)` → `GET /Post/get-following-post?UserId&PageNumber&PageSize` → **feed `/`** (⚠️ без `UserId` молча отдаёт пусто)
 - [x] `addPost(form)` → `POST /Post/add-post` multipart (Title, Content, Images[]) → `post/create` (возвращает новый postId)
 - [x] `deletePost(id)` → `DELETE /Post/delete-post?id` → меню «…» в `PostHeader` + ConfirmDialog
@@ -77,11 +77,11 @@
 
 ## Location — `services/location.service.ts` (5)
 
-- [ ] `getLocations(params)` → `GET /Location/get-Locations?City&State&ZipCode&Country&PageNumber&PageSize` → `LocationSelect`
-- [ ] `getLocationById(id)` → `GET /Location/get-Location-by-id?id`
-- [ ] `addLocation(dto)` → `POST /Location/add-Location` (city, state, zipCode, country)
-- [ ] `updateLocation(dto)` → `PUT /Location/update-Location` (locationId + поля)
-- [ ] `deleteLocation(id)` → `DELETE /Location/delete-Location?id`
+- [x] `getLocations(params)` → `GET /Location/get-Locations?City&State&ZipCode&Country&PageNumber&PageSize` → `LocationManager` (settings/locations)
+- [x] `getLocationById(id)` → `GET /Location/get-Location-by-id?id`
+- [x] `addLocation(dto)` → `POST /Location/add-Location` (city, state, zipCode, country)
+- [x] `updateLocation(dto)` → `PUT /Location/update-Location` (locationId + поля) → `LocationForm` — 🔴 **сервер всегда 400** (AutoMapper, `BACKEND_BUGS.md` #19); кнопка есть, ошибка → toast
+- [x] `deleteLocation(id)` → `DELETE /Location/delete-Location?id`
 
 ---
 

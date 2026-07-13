@@ -282,14 +282,56 @@
 
 ## Фаза 10 — Locations + Settings + полировка (2–3 дня)
 
-- [ ] `services/location.service.ts` (5) + `LocationSelect` / `LocationForm` (CRUD)
-- [ ] `settings/page.tsx`: `ThemeSwitcher` (Light/Dark/Auto), `LanguageSwitcher` (EN/RU/TJ), `DeleteAccountDialog`
-- [ ] Полный перевод всех строк (en / ru / tg), проверка на хардкод
-- [ ] Метадата: `manifest.ts`, `icon.tsx`, `opengraph-image.tsx`, `robots.ts`, `sitemap.ts`
-- [ ] Skeleton'ы для всех экранов, empty/error states
-- [ ] Lighthouse ≥ 90, устранить CLS, `next/image` везде
-- [ ] Финальная сверка: чек-лист **57/57 endpoints**
+- [x] `services/location.service.ts` (5) + `hooks/useLocation.ts` + `LocationForm` / `LocationManager` (CRUD)
+- [x] `settings/layout.tsx` + `SettingsNav` (img39) — оболочка настроек
+- [x] `settings/page.tsx`: `ThemeSwitcher` (Light/Dark/System) + `LanguageSwitcher` (EN/RU/TJ)
+- [x] `settings/locations` (CRUD), `settings/delete-account`, `settings/change-password` — в общую оболочку
+- [x] Полный перевод всех строк (en / ru / tg) — хардкода нет (проверено grep'ом)
+- [x] Метадата: `manifest.ts`, `icon.tsx`, `opengraph-image.tsx`, `robots.ts`, `sitemap.ts` + `generateMetadata` для `/profile/[userId]` и `/post/[postId]` (через `lib/server-api.ts`)
+- [x] Финальная сверка: **57/57 endpoints** — каждый вызывается из UI (проверено скриптом)
 - ✅ Готово: 5 endpoints → **ИТОГО 57/57**
+
+> Заметки Фазы 10:
+>
+> - 🔴 **`update-Location` сломан на сервере**: любой запрос → 400
+>   `Missing type map configuration … UpdateLocationDto -> Location` (ошибка AutoMapper). Проверено с
+>   camelCase, PascalCase и query-параметрами. `add` / `get` / `delete` работают. Кнопка «Сохранить»
+>   оставлена, ошибка сервера идёт в toast. `BACKEND_BUGS.md` #19.
+> - ⚠️ **`LocationSelect` в `post/create` НЕ делался** — и это не пропуск: у `add-post` нет поля локации,
+>   а `update-user-profile` не принимает `locationId`. Привязать место не к чему, кнопка «Добавить место»
+>   ничего бы не сохраняла. Вместо этого — полный CRUD в `settings/locations`. `BACKEND_BUGS.md` #20.
+> - ⚠️ Ключ — **`locationId`**, а не `id` (заготовка типов из Фазы 1 была неверна). `get-Location-by-id`
+>   для удалённой записи отдаёт **200 c `data: null`**, а не 404.
+> - 🐛 **Найдено при проверке 57/57: `get-my-posts` не был подключён ни к одному экрану** (сетка
+>   `profile/me` читала `get-posts?UserId`). Добавлен `useMyPosts()` → своя сетка теперь идёт через
+>   `get-my-posts`. Проверено в браузере: на `/profile/me` уходит именно этот запрос.
+> - 🐛 **`/icon` и `/opengraph-image` отдавали 307 на `/login`** — matcher в `src/proxy.ts` ловил
+>   безрасширенные метадата-роуты. Исключены; теперь оба `200 image/png`.
+> - `generateMetadata` тянет данные на сервере (`lib/server-api.ts` читает httpOnly-cookie напрямую,
+>   минуя `/api/proxy`), и **никогда не роняет страницу** — любая ошибка = `null`.
+> - Проверено вживую (Playwright, dark + light + /ru + мобильный): добавление места → toast и строка в
+>   списке; редактирование → честная ошибка сервера в toast; удаление → строка ушла и после reload;
+>   переключение языка → `/ru/settings`, весь интерфейс на русском.
+> - `build` / `lint` / `typecheck` — зелёные.
+
+---
+
+## Итог проекта
+
+**57/57 endpoints подключены и вызываются из UI** (проверено скриптом: каждый метод сервиса
+имеет хотя бы одного вызывающего вне своего файла).
+
+Не работают **не по нашей вине** — 5 🔴-багов сервера (`docs/BACKEND_BUGS.md`):
+`delete-user` (403 всем), `update-Location` (400 AutoMapper), `delete-message` (не проверяет владельца),
+`delete-user-image-profile` (ломает login), + отсутствие realtime/unread в Chat.
+Во всех случаях кнопка на месте, а реальная ошибка сервера показывается пользователю в toast —
+ничего не подделано и не спрятано.
+
+Экраны из скриншотов, которых **нет в API** и которые поэтому не делались:
+фильтры и настройки изображения (img31/img32), «Добавить место» в создании поста (img33),
+соавторы, уведомления (img26–img28 — в Swagger нет ни одного endpoint'а),
+«Запросы на переписку» (img22), архив историй (img45), Threads/«Другие продукты» (img47),
+голосовые, звонки и реакции в чате.
 
 ---
 

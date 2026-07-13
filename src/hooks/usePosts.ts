@@ -49,6 +49,19 @@ export function useUserPosts(userId: string, enabled = true) {
 }
 
 /**
+ * My own posts. `get-my-posts` answers with a **bare array** (no envelope, no
+ * paging), so this is a plain query — the profile grid's Panel only needs
+ * `{ isPending, isError, refetch }`, which a useQuery satisfies just as well.
+ */
+export function useMyPosts(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.posts.mine(),
+    queryFn: () => postService.getMyPosts(),
+    enabled,
+  });
+}
+
+/**
  * /reels. The API hands back `images` as a single file name here (not an array),
  * so each reel is normalised into a Post — that way the Phase-5 like / save /
  * comment hooks work on it unchanged.

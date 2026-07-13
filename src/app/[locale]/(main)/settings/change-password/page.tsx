@@ -13,9 +13,10 @@ export default async function ChangePasswordPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  // The Settings shell (layout) already supplies the page frame and the left menu.
   return (
-    <main className="flex flex-1 justify-center px-6 py-10">
+    <div className="max-w-[640px]">
       <ChangePasswordForm />
-    </main>
+    </div>
   );
 }
