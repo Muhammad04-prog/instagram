@@ -546,7 +546,14 @@
     "deleteNote": "Нест кардани қайд",
     "replyPlaceholder": "Ҷавоб…",
     "replySent": "Ба {userName} фиристода шуд",
-    "like": "Писандидан"
+    "like": "Писандидан",
+    "insightsTitle": "Ёддошти шумо",
+    "likes": "Писандҳо",
+    "replies": "Ҷавобҳо",
+    "noLikes": "Ҳоло касе ёддоштро писанд накардааст",
+    "noReplies": "Ҳоло ҷавоб нест",
+    "openChat": "Чатро кушодан",
+    "loadMore": "Бештар нишон деҳ"
   },
   "verification": {
     "navTitle": "Meta Verified",

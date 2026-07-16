@@ -29,33 +29,40 @@ export function NotesRail() {
   return (
     <>
       <div className="flex scrollbar-none gap-4 overflow-x-auto px-6 pt-2 pb-4">
-        <button
-          type="button"
-          onClick={() => setComposerOpen(true)}
-          className="flex w-16 shrink-0 flex-col items-center gap-1"
-        >
+        {/* My own bubble is itself a button — it opens who liked and replied —
+            and a button inside a button is invalid HTML: the browser flattens
+            it and the outer click wins. So the avatar is the button and the
+            bubble is its sibling, both inside the same positioning context so
+            the bubble still sits over the avatar. */}
+        <div className="flex w-16 shrink-0 flex-col items-center gap-1">
+          {/* Same order and inline flow as someone else's note below: the
+              bubble anchors itself off this span, so it must sit beside the
+              avatar, not on a line of its own. */}
           <span className="relative">
-            {mine ? (
-              <NoteBubble note={mine} />
-            ) : (
-              <span className="relative block">
-                <span className="bg-ig-button-secondary text-ig-text-secondary absolute -top-7 left-1/2 flex h-8 -translate-x-1/2 items-center rounded-full px-3 text-[11px] whitespace-nowrap">
-                  {t("newNote")}
+            {mine ? <NoteBubble note={mine} /> : null}
+
+            <button type="button" onClick={() => setComposerOpen(true)}>
+              {mine ? null : (
+                <>
+                  <span className="bg-ig-button-secondary text-ig-text-secondary absolute -top-7 left-1/2 flex h-8 -translate-x-1/2 items-center rounded-full px-3 text-[11px] whitespace-nowrap">
+                    {t("newNote")}
+                  </span>
+                  <span className="bg-ig-button-secondary absolute -top-1 left-2 size-2 rounded-full" />
+                </>
+              )}
+
+              <UserAvatar src={profile?.avatarUrl} size={56} />
+
+              {mine ? null : (
+                <span className="bg-ig-primary border-ig-bg absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full border-2">
+                  <Plus className="size-3 text-white" />
                 </span>
-                <span className="bg-ig-button-secondary absolute -top-1 left-2 size-2 rounded-full" />
-              </span>
-            )}
-
-            <UserAvatar src={profile?.avatarUrl} size={56} />
-
-            {mine ? null : (
-              <span className="bg-ig-primary border-ig-bg absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full border-2">
-                <Plus className="size-3 text-white" />
-              </span>
-            )}
+              )}
+            </button>
           </span>
+
           <span className="text-ig-text w-full truncate text-center text-xs">{t("yourNote")}</span>
-        </button>
+        </div>
 
         {isPending
           ? Array.from({ length: 3 }, (_, index) => (

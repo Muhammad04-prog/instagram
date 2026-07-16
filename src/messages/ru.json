@@ -546,7 +546,14 @@
     "deleteNote": "Удалить заметку",
     "replyPlaceholder": "Ответить…",
     "replySent": "Отправлено — {userName}",
-    "like": "Нравится"
+    "like": "Нравится",
+    "insightsTitle": "Ваша заметка",
+    "likes": "Лайки",
+    "replies": "Ответы",
+    "noLikes": "Заметку пока никто не лайкнул",
+    "noReplies": "Ответов пока нет",
+    "openChat": "Открыть чат",
+    "loadMore": "Показать ещё"
   },
   "verification": {
     "navTitle": "Meta Verified",

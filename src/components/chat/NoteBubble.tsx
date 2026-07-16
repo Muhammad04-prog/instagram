@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { HeartIcon } from "@/components/icons";
+import { NoteInsightsSheet } from "@/components/chat/NoteInsightsSheet";
 import { useLikeNote, useReplyToNote } from "@/hooks/useNotes";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -18,12 +19,14 @@ import type { NoteDto } from "@/types/api.types";
  * Someone else's opens a small popover: like it, or reply — and a **reply is a
  * message in their chat**, not a comment, so it takes you there.
  *
- * Mine is display-only here; tapping the avatar opens the composer instead.
+ * Mine opens who liked and who replied — the two endpoints only its author may
+ * read. (Tapping the avatar still opens the composer.)
  */
 export function NoteBubble({ note }: { note: NoteDto }) {
   const t = useTranslations("note");
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(false);
   const [text, setText] = useState("");
 
   const like = useLikeNote();
@@ -32,14 +35,19 @@ export function NoteBubble({ note }: { note: NoteDto }) {
   const color = note.bgColor ?? undefined;
   const fg = noteTextColor(note.bgColor);
 
+  // Deliberately not wrapped in a positioned element of its own. It used to be,
+  // and that wrapper was a zero-width inline span sitting beside the avatar — so
+  // `left-1/2` resolved to the span's left edge and every bubble in the rail sat
+  // 28px (half an avatar) to the left of the face it belongs to. The caller
+  // already provides a relative span around the avatar; anchor to that.
   return (
-    <span className="relative">
+    <>
       <button
         type="button"
-        onClick={() => !note.isMine && setOpen((value) => !value)}
+        onClick={() => (note.isMine ? setInsightsOpen(true) : setOpen((value) => !value))}
         aria-expanded={note.isMine ? undefined : open}
         style={{ backgroundColor: color, color: fg }}
-        className="absolute -top-7 left-1/2 flex h-8 max-w-[120px] -translate-x-1/2 items-center gap-1 rounded-full px-3 text-[11px]"
+        className="absolute -top-7 left-1/2 z-10 flex h-8 max-w-[120px] -translate-x-1/2 items-center gap-1 rounded-full px-3 text-[11px]"
       >
         {note.music ? <Music className="size-3 shrink-0" /> : null}
         <span className="truncate">{note.text}</span>
@@ -104,6 +112,10 @@ export function NoteBubble({ note }: { note: NoteDto }) {
           </form>
         </div>
       ) : null}
-    </span>
+
+      {note.isMine ? (
+        <NoteInsightsSheet noteId={note.id} open={insightsOpen} onOpenChange={setInsightsOpen} />
+      ) : null}
+    </>
   );
 }

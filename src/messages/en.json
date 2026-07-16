@@ -546,7 +546,14 @@
     "deleteNote": "Delete note",
     "replyPlaceholder": "Reply…",
     "replySent": "Sent to {userName}",
-    "like": "Like"
+    "like": "Like",
+    "insightsTitle": "Your note",
+    "likes": "Likes",
+    "replies": "Replies",
+    "noLikes": "No one has liked this note",
+    "noReplies": "No replies yet",
+    "openChat": "Open chat",
+    "loadMore": "Show more"
   },
   "verification": {
     "navTitle": "Meta Verified",
