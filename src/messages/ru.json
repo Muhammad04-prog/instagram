@@ -15,7 +15,8 @@
     "theme": "Тема",
     "submit": "Отправить",
     "previous": "Назад",
-    "next": "Далее"
+    "next": "Далее",
+    "done": "Готово"
   },
   "auth": {
     "login": "Войти",
@@ -184,7 +185,29 @@
     "addLocation": "Добавить место",
     "removeLocation": "Убрать место",
     "tagPeople": "Отметить людей",
-    "removeTag": "Убрать {userName}"
+    "removeTag": "Убрать {userName}",
+    "filtersTab": "Фильтры",
+    "adjustTab": "Настройки",
+    "originalFilter": "Оригинал",
+    "adjust_brightness": "Яркость",
+    "adjust_contrast": "Контраст",
+    "adjust_saturation": "Насыщенность",
+    "adjust_temperature": "Температура",
+    "adjust_vignette": "Виньетка",
+    "resetAdjustments": "Сбросить",
+    "addMusic": "Добавить музыку",
+    "removeMusic": "Убрать музыку",
+    "trendingMusic": "В тренде",
+    "play": "Слушать",
+    "pause": "Пауза",
+    "editCaption": "Изменить подпись",
+    "captionUpdated": "Подпись обновлена",
+    "saveToCollection": "Сохранить в коллекцию",
+    "collectionHint": "Коллекции видны только вам.",
+    "collectionPlaceholder": "Название коллекции",
+    "justSave": "Просто сохранить",
+    "saved": "Сохранено",
+    "savedToCollection": "Сохранено в «{name}»"
   },
   "story": {
     "yourStory": "Ваша история",

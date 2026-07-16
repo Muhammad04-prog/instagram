@@ -15,7 +15,8 @@
     "theme": "Мавзӯъ",
     "submit": "Фиристодан",
     "previous": "Қаблӣ",
-    "next": "Оянда"
+    "next": "Оянда",
+    "done": "Тайёр"
   },
   "auth": {
     "login": "Ворид шудан",
@@ -184,7 +185,29 @@
     "addLocation": "Илова кардани ҷой",
     "removeLocation": "Хориҷ кардани ҷой",
     "tagPeople": "Одамонро қайд кунед",
-    "removeTag": "Хориҷ кардани {userName}"
+    "removeTag": "Хориҷ кардани {userName}",
+    "filtersTab": "Филтрҳо",
+    "adjustTab": "Танзимот",
+    "originalFilter": "Аслӣ",
+    "adjust_brightness": "Равшанӣ",
+    "adjust_contrast": "Контраст",
+    "adjust_saturation": "Сершавӣ",
+    "adjust_temperature": "Ҳарорат",
+    "adjust_vignette": "Виньетка",
+    "resetAdjustments": "Аз нав",
+    "addMusic": "Илова кардани мусиқӣ",
+    "removeMusic": "Хориҷ кардани мусиқӣ",
+    "trendingMusic": "Дар тренд",
+    "play": "Гӯш кардан",
+    "pause": "Таваққуф",
+    "editCaption": "Тағйири матн",
+    "captionUpdated": "Матн нав шуд",
+    "saveToCollection": "Ба коллексия сақл кардан",
+    "collectionHint": "Коллексияҳоро танҳо шумо мебинед.",
+    "collectionPlaceholder": "Номи коллексия",
+    "justSave": "Танҳо сақл кардан",
+    "saved": "Сақл шуд",
+    "savedToCollection": "Ба «{name}» сақл шуд"
   },
   "story": {
     "yourStory": "Ҳикояи шумо",

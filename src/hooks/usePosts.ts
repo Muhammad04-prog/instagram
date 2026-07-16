@@ -178,21 +178,29 @@ export function useLikePost() {
   });
 }
 
+/**
+ * Save / unsave. Toggle → `{ favorited }`.
+ *
+ * `collection` files it under a named collection. The API takes a **name**, not
+ * an id, and exposes no way to list collections back — so the UI asks for a name
+ * rather than offering a picker over something it cannot read.
+ */
 export function useSavePost() {
   const patch = usePatchPost();
   const queryClient = useQueryClient();
   const t = useTranslations("errors");
 
   return useMutation({
-    mutationFn: (post: PostDto) => postService.favorite(post.id),
-    onMutate: (post) => {
+    mutationFn: ({ post, collection }: { post: PostDto; collection?: string }) =>
+      postService.favorite(post.id, collection),
+    onMutate: ({ post }) => {
       patch(post.id, (current) => ({ ...current, isFavorited: !post.isFavorited }));
       return { previous: post };
     },
-    onSuccess: (result, post) => {
+    onSuccess: (result, { post }) => {
       patch(post.id, (current) => ({ ...current, isFavorited: result.favorited }));
     },
-    onError: (error: ApiError, _post, context) => {
+    onError: (error: ApiError, _vars, context) => {
       if (context?.previous) {
         const { isFavorited } = context.previous;
         patch(context.previous.id, (current) => ({ ...current, isFavorited }));

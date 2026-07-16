@@ -144,13 +144,17 @@ export function ReelCard({
           <ActionRail
             post={post}
             onLike={() => like.mutate(post)}
-            onSave={() => save.mutate(post)}
+            onSave={() => save.mutate({ post })}
           />
         </div>
       </div>
 
       <div className="text-ig-text hidden flex-col items-center gap-5 pb-10 md:flex">
-        <ActionRail post={post} onLike={() => like.mutate(post)} onSave={() => save.mutate(post)} />
+        <ActionRail
+          post={post}
+          onLike={() => like.mutate(post)}
+          onSave={() => save.mutate({ post })}
+        />
       </div>
     </section>
   );

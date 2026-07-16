@@ -3,6 +3,7 @@
 import useEmblaCarousel from "embla-carousel-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
+import { filterCss } from "@/lib/filters";
 import { cn, getImageUrl } from "@/lib/utils";
 import { isVideo, type PostMediaDto } from "@/types/post.types";
 
@@ -92,6 +93,7 @@ function Media({
         controls
         playsInline
         onDoubleClick={onDoubleTap}
+        style={{ filter: filterCss(slide.filter) }}
         className="bg-ig-bg-secondary max-h-[70vh] w-full object-contain"
       />
     );
@@ -102,7 +104,17 @@ function Media({
       onDoubleClick={onDoubleTap}
       className="bg-ig-bg-secondary relative flex aspect-square w-full items-center justify-center"
     >
-      <Image src={url} alt={alt} fill priority={priority} sizes="470px" className="object-cover" />
+      {/* The filter is stored by name, not baked — so it has to be re-applied
+          on every render, or the post would look nothing like the preview. */}
+      <Image
+        src={url}
+        alt={alt}
+        fill
+        priority={priority}
+        sizes="470px"
+        style={{ filter: filterCss(slide.filter) }}
+        className="object-cover"
+      />
     </div>
   );
 }

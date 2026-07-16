@@ -15,7 +15,8 @@
     "theme": "Theme",
     "submit": "Submit",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "done": "Done"
   },
   "auth": {
     "login": "Log in",
@@ -184,7 +185,29 @@
     "addLocation": "Add location",
     "removeLocation": "Remove location",
     "tagPeople": "Tag people",
-    "removeTag": "Remove {userName}"
+    "removeTag": "Remove {userName}",
+    "filtersTab": "Filters",
+    "adjustTab": "Adjustments",
+    "originalFilter": "Original",
+    "adjust_brightness": "Brightness",
+    "adjust_contrast": "Contrast",
+    "adjust_saturation": "Saturation",
+    "adjust_temperature": "Temperature",
+    "adjust_vignette": "Vignette",
+    "resetAdjustments": "Reset",
+    "addMusic": "Add music",
+    "removeMusic": "Remove music",
+    "trendingMusic": "Trending",
+    "play": "Play",
+    "pause": "Pause",
+    "editCaption": "Edit caption",
+    "captionUpdated": "Caption updated",
+    "saveToCollection": "Save to collection",
+    "collectionHint": "Collections are private — only you can see them.",
+    "collectionPlaceholder": "Collection name",
+    "justSave": "Just save",
+    "saved": "Saved",
+    "savedToCollection": "Saved to “{name}”"
   },
   "story": {
     "yourStory": "Your story",

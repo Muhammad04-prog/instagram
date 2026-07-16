@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useExplorePosts } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { filterCss } from "@/lib/filters";
 import { formatCount, getImageUrl } from "@/lib/utils";
 import { coverMedia, isCarousel, isVideo, mediaPoster, type PostDto } from "@/types/post.types";
 
@@ -99,6 +100,7 @@ function Tile({ post, likeLabel }: { post: PostDto; likeLabel: string }) {
               alt={post.caption ?? ""}
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
+              style={{ filter: filterCss(cover?.filter) }}
               className="object-cover"
             />
           )

@@ -1,12 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BookmarkIcon, CommentIcon, HeartIcon, ShareIcon } from "@/components/icons";
+import { SaveToCollectionDialog } from "@/components/post/SaveToCollectionDialog";
 import { ShareSheet } from "@/components/post/ShareSheet";
 import { useLikePost, useSavePost } from "@/hooks/usePosts";
 import { cn } from "@/lib/utils";
 import type { PostDto } from "@/types/post.types";
+
+/** How long a press must last to mean "choose a collection" rather than "save". */
+const HOLD_MS = 500;
 
 /** Like / comment / share on the left, save on the right (docs/screenshots/img11). */
 export function PostActions({
@@ -20,8 +24,14 @@ export function PostActions({
 }) {
   const t = useTranslations("post");
   const [shareOpen, setShareOpen] = useState(false);
+  const [collectionOpen, setCollectionOpen] = useState(false);
   const like = useLikePost();
   const save = useSavePost();
+
+  const holdTimer = useRef<number | undefined>(undefined);
+  // Set when the hold fired, so the click that follows the release does not
+  // also toggle the save.
+  const heldRef = useRef(false);
 
   return (
     <div className={cn("flex items-center justify-between", className)}>
@@ -58,17 +68,40 @@ export function PostActions({
         </button>
       </div>
 
+      {/* Tap saves; press-and-hold files it under a collection — IG's gesture.
+          The context menu is the keyboard/right-click route to the same thing,
+          so the feature is not gated behind a gesture some people cannot make. */}
       <button
         type="button"
         aria-label={t("save")}
         aria-pressed={post.isFavorited}
-        onClick={() => save.mutate(post)}
+        onClick={() => {
+          if (heldRef.current) {
+            heldRef.current = false;
+            return;
+          }
+          save.mutate({ post });
+        }}
+        onPointerDown={() => {
+          heldRef.current = false;
+          holdTimer.current = window.setTimeout(() => {
+            heldRef.current = true;
+            setCollectionOpen(true);
+          }, HOLD_MS);
+        }}
+        onPointerUp={() => window.clearTimeout(holdTimer.current)}
+        onPointerLeave={() => window.clearTimeout(holdTimer.current)}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          setCollectionOpen(true);
+        }}
         className="text-ig-text hover:opacity-60"
       >
         <BookmarkIcon filled={post.isFavorited} className="size-6" />
       </button>
 
       <ShareSheet postId={post.id} open={shareOpen} onOpenChange={setShareOpen} />
+      <SaveToCollectionDialog post={post} open={collectionOpen} onOpenChange={setCollectionOpen} />
     </div>
   );
 }

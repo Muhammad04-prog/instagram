@@ -6,6 +6,7 @@ import { CarouselIcon, ClipIcon, CommentIcon, HeartIcon } from "@/components/ico
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { filterCss } from "@/lib/filters";
 import { formatCount, getImageUrl } from "@/lib/utils";
 import { coverMedia, isCarousel, isVideo, mediaPoster, type PostDto } from "@/types/post.types";
 
@@ -51,6 +52,7 @@ function PostGridItem({ post }: { post: PostDto }) {
               alt={post.caption ?? ""}
               fill
               sizes="(max-width: 768px) 33vw, 310px"
+              style={{ filter: filterCss(cover?.filter) }}
               className="object-cover"
             />
           )

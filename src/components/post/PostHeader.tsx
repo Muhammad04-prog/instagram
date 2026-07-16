@@ -4,6 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useState } from "react";
 import { DotsIcon } from "@/components/icons";
+import { EditCaptionDialog } from "@/components/post/EditCaptionDialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
@@ -36,6 +37,7 @@ export function PostHeader({
   const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const remove = useDeletePost();
   const archive = useArchivePost();
   const report = useReportPost(post.id);
@@ -89,6 +91,12 @@ export function PostHeader({
           </DropdownMenuItem>
 
           {isMine ? (
+            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+              {t("editCaption")}
+            </DropdownMenuItem>
+          ) : null}
+
+          {isMine ? (
             <DropdownMenuItem
               onSelect={() =>
                 archive.mutate(
@@ -120,6 +128,8 @@ export function PostHeader({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <EditCaptionDialog post={post} open={editOpen} onOpenChange={setEditOpen} />
 
       <ConfirmDialog
         open={reportOpen}

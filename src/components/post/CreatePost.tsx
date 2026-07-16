@@ -4,7 +4,9 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import Cropper from "react-easy-crop";
 import { toast } from "sonner";
+import { EditMediaStep } from "@/components/post/EditMediaStep";
 import { LocationPicker } from "@/components/post/LocationPicker";
+import { MusicPicker } from "@/components/post/MusicPicker";
 import { TagPeoplePicker } from "@/components/post/TagPeoplePicker";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -16,21 +18,29 @@ import { cropImageToFile, type CropArea } from "@/lib/crop";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { isVideoFile } from "@/types/post.types";
-import type { LocationDto, UserBriefDto } from "@/types/api.types";
+import { NEUTRAL_ADJUSTMENTS, ORIGINAL_FILTER, previewCss, type Adjustments } from "@/lib/filters";
+import type { LocationDto, MusicDto, UserBriefDto } from "@/types/api.types";
 
 const CAPTION_MAX = 2200;
 const ASPECTS = { square: 1, portrait: 4 / 5 } as const;
 type AspectKey = keyof typeof ASPECTS;
 
-type Step = "pick" | "crop" | "caption";
+type Step = "pick" | "crop" | "edit" | "caption";
 
 /**
- * «Создание публикации» (docs/screenshots/img29 → img30 → img33): pick files →
- * crop (1:1 / 4:5) → caption → add-post (multipart Images[]).
+ * «Создание публикации» — the whole flow the screenshots show:
+ * pick (img29) → crop (img30) → edit: filters + adjustments (img31, img32) →
+ * caption, location, tagging, music (img33) → `POST /posts`.
  *
- * The filter/adjust steps of img31–img32 are not built: the backend stores the
- * raw file and has no filter field. «Добавить место» / «Добавить соавторов» from
- * img33 are absent from add-post too, so they are not faked either.
+ * All four steps are real now. On softclub the endpoint took nothing but files,
+ * so img31–img33 could not be built and were left out rather than faked; this
+ * backend takes `filters`, `locationId`, `taggedUserIds`, `musicId` and `isReel`.
+ *
+ * Filters travel **by name** (the media row has a `filter` field) and are applied
+ * at display; the img32 sliders have no field anywhere, so they are baked into
+ * the pixels — see `lib/crop.ts`.
+ *
+ * «Добавить соавторов» from img33 is still absent: there is no co-author field.
  */
 export function CreatePost() {
   const t = useTranslations("post");
@@ -46,12 +56,19 @@ export function CreatePost() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [areas, setAreas] = useState<Record<number, CropArea>>({});
+  // Per-slide, because IG filters each photo of a carousel separately and the
+  // API takes one filter name per media item.
+  const [filters, setFilters] = useState<Record<number, string>>({});
+  const [adjustments, setAdjustments] = useState<Record<number, Adjustments>>({});
   const [caption, setCaption] = useState("");
+  const [music, setMusic] = useState<MusicDto | null>(null);
   const [location, setLocation] = useState<LocationDto | null>(null);
   const [tagged, setTagged] = useState<UserBriefDto[]>([]);
   const [cancelOpen, setCancelOpen] = useState(false);
 
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
+  // Filters and sliders apply to photos; a video-only post skips the edit step.
+  const hasPhotos = files.some((file) => !isVideoFile(file));
   const current = files[index];
   const currentPreview = previews[index];
 
@@ -69,7 +86,8 @@ export function CreatePost() {
       files.map(async (file, position) => {
         const area = areas[position];
         if (!area || isVideoFile(file)) return file;
-        return cropImageToFile(file, area);
+        // Sliders are baked here; the filter name travels separately.
+        return cropImageToFile(file, area, adjustments[position]);
       }),
     );
 
@@ -79,6 +97,12 @@ export function CreatePost() {
         caption,
         ...(location ? { locationId: location.id } : {}),
         ...(tagged.length ? { taggedUserIds: tagged.map((user) => user.id) } : {}),
+        ...(music ? { musicId: music.id } : {}),
+        // One name per media, positionally — Swagger's example is
+        // "clarendon,gingham". Videos and untouched photos send "original".
+        ...(Object.keys(filters).length
+          ? { filters: files.map((_, position) => filters[position] ?? ORIGINAL_FILTER) }
+          : {}),
         // A video-only post is a reel; IG makes the same call.
         ...(prepared.every(isVideoFile) ? { isReel: true } : {}),
       },
@@ -104,6 +128,14 @@ export function CreatePost() {
           </button>
           <h1 className="text-ig-text text-base font-semibold">{t("createPost")}</h1>
           {step === "crop" ? (
+            <button
+              type="button"
+              onClick={() => setStep(hasPhotos ? "edit" : "caption")}
+              className="text-ig-primary text-sm font-semibold"
+            >
+              {t("next")}
+            </button>
+          ) : step === "edit" ? (
             <button
               type="button"
               onClick={() => setStep("caption")}
@@ -228,6 +260,16 @@ export function CreatePost() {
           </div>
         ) : null}
 
+        {step === "edit" && currentPreview ? (
+          <EditMediaStep
+            preview={currentPreview}
+            filterId={filters[index] ?? ORIGINAL_FILTER}
+            adjustments={adjustments[index] ?? NEUTRAL_ADJUSTMENTS}
+            onFilterChange={(id) => setFilters((all) => ({ ...all, [index]: id }))}
+            onAdjustmentsChange={(next) => setAdjustments((all) => ({ ...all, [index]: next }))}
+          />
+        ) : null}
+
         {step === "caption" && currentPreview ? (
           <div className="flex flex-col md:flex-row">
             <div className="bg-black md:w-[55%]">
@@ -235,7 +277,18 @@ export function CreatePost() {
                 <video src={currentPreview} controls className="size-full object-contain" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element -- blob: preview, never optimised
-                <img src={currentPreview} alt="" className="h-[420px] w-full object-contain" />
+                <img
+                  src={currentPreview}
+                  alt=""
+                  style={{
+                    filter:
+                      previewCss(
+                        filters[index] ?? ORIGINAL_FILTER,
+                        adjustments[index] ?? NEUTRAL_ADJUSTMENTS,
+                      ) || undefined,
+                  }}
+                  className="h-[420px] w-full object-contain"
+                />
               )}
             </div>
 
@@ -260,6 +313,7 @@ export function CreatePost() {
                   field on softclub, so the button would have saved nothing. */}
               <LocationPicker value={location} onChange={setLocation} />
               <TagPeoplePicker value={tagged} onChange={setTagged} />
+              <MusicPicker value={music} onChange={setMusic} />
             </div>
           </div>
         ) : null}
