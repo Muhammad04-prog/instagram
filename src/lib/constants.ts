@@ -61,8 +61,10 @@ export const ROUTES = {
   profile: (userId: string) => `/profile/${userId}`,
   editProfile: "/profile/edit",
   favorites: "/profile/favorites",
+  activity: "/profile/activity",
   settings: "/settings",
   changePassword: "/settings/change-password",
+  privacy: "/settings/privacy",
   locations: "/settings/locations",
   deleteAccount: "/settings/delete-account",
 } as const;

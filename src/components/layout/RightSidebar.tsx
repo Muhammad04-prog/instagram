@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useSuggestions } from "@/hooks/useUserSearch";
@@ -35,11 +36,8 @@ export function RightSidebar() {
             <UserAvatar src={profile.avatarUrl} size={56} />
           </Link>
           <div className="min-w-0 flex-1">
-            <Link
-              href={ROUTES.myProfile}
-              className="text-ig-text block truncate text-sm font-semibold"
-            >
-              {profile.userName}
+            <Link href={ROUTES.myProfile} className="text-ig-text block text-sm font-semibold">
+              <UserNameWithBadge userName={profile.userName} isVerified={profile.isVerified} />
             </Link>
             <p className="text-ig-text-secondary truncate text-sm">{profile.fullName}</p>
           </div>
@@ -67,9 +65,12 @@ export function RightSidebar() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={ROUTES.profile(candidate.id)}
-                  className="text-ig-text block truncate text-sm font-semibold"
+                  className="text-ig-text block text-sm font-semibold"
                 >
-                  {candidate.userName}
+                  <UserNameWithBadge
+                    userName={candidate.userName}
+                    isVerified={candidate.isVerified}
+                  />
                 </Link>
                 {/* `followedBy` is the mutual follows — IG's "Followed by X + N others". */}
                 <p className="text-ig-text-secondary truncate text-xs">

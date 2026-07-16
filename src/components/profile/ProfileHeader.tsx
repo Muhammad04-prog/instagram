@@ -6,11 +6,13 @@ import { SettingsIcon } from "@/components/icons";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowDialog, type FollowTab } from "@/components/profile/FollowDialog";
 import { MessageUserButton } from "@/components/profile/MessageUserButton";
+import { ProfileActionsMenu } from "@/components/profile/ProfileActionsMenu";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn, formatCount } from "@/lib/utils";
-import type { ProfileDto } from "@/types/profile.types";
+import type { OtherProfileDto, ProfileDto } from "@/types/profile.types";
 
 /**
  * Profile header, measured off docs/screenshots/img35 (DPR 1.25): 150px avatar
@@ -23,12 +25,16 @@ export function ProfileHeader({
   isMe,
 }: {
   userId: string;
-  profile: ProfileDto;
+  /** Someone else's profile carries the relationship; mine does not need one. */
+  profile: ProfileDto | OtherProfileDto;
   isMe: boolean;
 }) {
   const t = useTranslations("profile");
   const [followTab, setFollowTab] = useState<FollowTab>("followers");
   const [followOpen, setFollowOpen] = useState(false);
+
+  // `isFollowing` only exists on someone else's profile.
+  const relation = "isFollowing" in profile ? profile : null;
 
   const fullName = profile.fullName;
   // The word only — the number is rendered next to it, so it must not repeat.
@@ -56,7 +62,10 @@ export function ProfileHeader({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-4">
-            <h1 className="text-ig-text truncate text-xl font-normal">{profile.userName}</h1>
+            <h1 className="text-ig-text flex min-w-0 items-center gap-1.5 text-xl font-normal">
+              <span className="truncate">{profile.userName}</span>
+              {profile.isVerified ? <VerifiedBadge className="size-[18px]" /> : null}
+            </h1>
             {isMe ? (
               <Link
                 href={ROUTES.settings}
@@ -65,7 +74,14 @@ export function ProfileHeader({
               >
                 <SettingsIcon className="size-6" />
               </Link>
-            ) : null}
+            ) : (
+              <ProfileActionsMenu
+                userId={userId}
+                userName={profile.userName}
+                isBlocked={relation?.isBlocked ?? false}
+                className="ml-auto"
+              />
+            )}
           </div>
 
           {fullName ? <p className="text-ig-text mt-2 text-sm">{fullName}</p> : null}
@@ -102,7 +118,15 @@ export function ProfileHeader({
           </>
         ) : (
           <>
-            <FollowButton userId={userId} userName={profile.userName} className="flex-1" />
+            {/* The relationship is already on the profile we fetched — hand it
+                over so the button does not ask for it a second time. */}
+            <FollowButton
+              userId={userId}
+              userName={profile.userName}
+              following={relation?.isFollowing ?? false}
+              requested={relation?.hasRequestPending ?? false}
+              className="flex-1"
+            />
             <MessageUserButton userId={userId} />
           </>
         )}

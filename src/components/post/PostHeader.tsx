@@ -6,6 +6,7 @@ import { DotsIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StoryUploadDialog } from "@/components/story/StoryUploadDialog";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,9 +49,9 @@ export function PostHeader({
       <div className="flex min-w-0 flex-1 items-center gap-1 text-sm">
         <Link
           href={ROUTES.profile(post.author.id)}
-          className="text-ig-text truncate font-semibold hover:opacity-60"
+          className="text-ig-text min-w-0 font-semibold hover:opacity-60"
         >
-          {post.author.userName}
+          <UserNameWithBadge userName={post.author.userName} isVerified={post.author.isVerified} />
         </Link>
         <span className="text-ig-text-secondary">·</span>
         <time

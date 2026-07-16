@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { UserBriefDto } from "@/types/api.types";
@@ -36,7 +37,11 @@ export function SearchUserRow({
       >
         <UserAvatar src={user.avatarUrl ?? null} size={44} />
         <span className="min-w-0 flex-1">
-          <span className="text-ig-text block truncate text-sm font-semibold">{user.userName}</span>
+          <UserNameWithBadge
+            userName={user.userName}
+            isVerified={user.isVerified}
+            className="text-ig-text block text-sm font-semibold"
+          />
           {/* `UserBriefDto` has no follower count — the row shows the real name
               instead of a number the search endpoint never sends. */}
           <span className="text-ig-text-secondary block truncate text-sm">{user.fullName}</span>

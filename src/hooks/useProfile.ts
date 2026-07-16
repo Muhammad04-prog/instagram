@@ -99,6 +99,18 @@ export function useFavorites() {
   });
 }
 
+/** "Your activity" — likes, comments, post views and searches. */
+export function useMyActivity() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.profile.activity(),
+    queryFn: ({ pageParam }) => profileService.getMyActivity(cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    // ⚠️ ActivityItemDto has no id of its own, and the cursor IS the last row's
+    // id — so there is nothing to page with. One page of PAGE_SIZE, honestly.
+    getNextPageParam: () => undefined,
+  });
+}
+
 export function useMyReposts() {
   return useInfiniteQuery({
     queryKey: queryKeys.profile.reposts(),

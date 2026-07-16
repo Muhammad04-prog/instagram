@@ -7,7 +7,7 @@
 вызывается хотя бы из одного файла вне самого сервиса. Это проверка проводки, **не** проверка
 того, что экран работает: БД бэкенда лежит, живьём ни один ответ не сверен.
 
-**Покрытие: 81 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 93 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 0/4
 
@@ -34,7 +34,7 @@
 | [x] | POST  | `/auth/check-username`  | `auth.checkUsername`      | Свободен ли userName (live-валидация формы регистрации) |
 | [x] | GET   | `/auth/me`              | `route.ts (server)`       | Текущий пользователь + профиль                          |
 
-## chats — 10/20
+## chats — 13/20
 
 | ✓   | Метод  | Путь                            | Сервис                       | Что делает                                         |
 | --- | ------ | ------------------------------- | ---------------------------- | -------------------------------------------------- |
@@ -46,8 +46,8 @@
 | [ ] | POST   | `/chats/messages/{id}/reaction` | `chat.reactToMessage`        | Реакция на сообщение                               |
 | [ ] | DELETE | `/chats/messages/{id}/reaction` | `chat.removeMessageReaction` | Убрать реакцию                                     |
 | [x] | GET    | `/chats/requests`               | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
-| [ ] | POST   | `/chats/requests/{id}/accept`   | `chat.acceptRequest`         | Принять запрос на переписку                        |
-| [ ] | POST   | `/chats/requests/{id}/decline`  | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
+| [x] | POST   | `/chats/requests/{id}/accept`   | `chat.acceptRequest`         | Принять запрос на переписку                        |
+| [x] | POST   | `/chats/requests/{id}/decline`  | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
 | [x] | GET    | `/chats/{id}`                   | `chat.getChatById`           | Детали чата                                        |
 | [x] | DELETE | `/chats/{id}`                   | `chat.remove`                | Удалить чат (выйти из него)                        |
 | [x] | GET    | `/chats/{id}/messages`          | `chat.getMessages`           | Сообщения чата (cursor)                            |
@@ -56,7 +56,7 @@
 | [ ] | PUT    | `/chats/{id}/theme`             | `chat.setTheme`              | Тема чата                                          |
 | [ ] | PUT    | `/chats/{id}/nickname`          | `chat.setNickname`           | Никнейм собеседника в чате                         |
 | [ ] | PUT    | `/chats/{id}/mute`              | `chat.setMuted`              | Заглушить/включить уведомления чата                |
-| [ ] | POST   | `/chats/{id}/report`            | `chat.report`                | Пожаловаться на чат                                |
+| [x] | POST   | `/chats/{id}/report`            | `chat.report`                | Пожаловаться на чат                                |
 | [ ] | POST   | `/chats/{id}/call`              | `chat.startCall`             | Начать звонок (WebRTC-сигналинг через сокет)       |
 
 ## close-friends — 0/3
@@ -67,17 +67,17 @@
 | [ ] | POST   | `/close-friends/{userId}` | —      | Добавить в близкие друзья (идемпотентно)     |
 | [ ] | DELETE | `/close-friends/{userId}` | —      | Убрать из близких друзей                     |
 
-## follow — 5/11
+## follow — 11/11
 
 | ✓   | Метод  | Путь                            | Сервис                  | Что делает                                           |
 | --- | ------ | ------------------------------- | ----------------------- | ---------------------------------------------------- |
 | [x] | GET    | `/follow/requests`              | `follow.getRequests`    | Входящие заявки на подписку (для закрытого аккаунта) |
-| [ ] | POST   | `/follow/requests/{id}/accept`  | `follow.acceptRequest`  | Принять заявку → подписчик видит контент             |
-| [ ] | POST   | `/follow/requests/{id}/decline` | `follow.declineRequest` | Отклонить заявку                                     |
-| [ ] | GET    | `/follow/blocked`               | `follow.getBlocked`     | Список заблокированных мной                          |
-| [ ] | DELETE | `/follow/followers/{userId}`    | `follow.removeFollower` | Удалить подписчика (убирает ЕГО подписку на меня)    |
-| [ ] | POST   | `/follow/{userId}/block`        | `follow.block`          | Заблокировать                                        |
-| [ ] | DELETE | `/follow/{userId}/block`        | `follow.unblock`        | Разблокировать (подписки НЕ восстанавливаются)       |
+| [x] | POST   | `/follow/requests/{id}/accept`  | `follow.acceptRequest`  | Принять заявку → подписчик видит контент             |
+| [x] | POST   | `/follow/requests/{id}/decline` | `follow.declineRequest` | Отклонить заявку                                     |
+| [x] | GET    | `/follow/blocked`               | `follow.getBlocked`     | Список заблокированных мной                          |
+| [x] | DELETE | `/follow/followers/{userId}`    | `follow.removeFollower` | Удалить подписчика (убирает ЕГО подписку на меня)    |
+| [x] | POST   | `/follow/{userId}/block`        | `follow.block`          | Заблокировать                                        |
+| [x] | DELETE | `/follow/{userId}/block`        | `follow.unblock`        | Разблокировать (подписки НЕ восстанавливаются)       |
 | [x] | GET    | `/follow/{userId}/followers`    | `follow.getFollowers`   | Подписчики (у закрытого аккаунта — только своим)     |
 | [x] | GET    | `/follow/{userId}/following`    | `follow.getFollowing`   | Подписки (у закрытого аккаунта — только своим)       |
 | [x] | POST   | `/follow/{userId}`              | `follow.follow`         | Подписаться                                          |
@@ -193,7 +193,7 @@
 | [x] | POST   | `/posts/{id}/comments`         | `post.addComment`        | Добавить комментарий                                            |
 | [x] | GET    | `/posts/{id}/comments`         | `post.getComments`       | Комментарии к публикации (корневые, cursor)                     |
 
-## profile — 11/14
+## profile — 13/14
 
 | ✓   | Метод  | Путь                             | Сервис                   | Что делает                                       |
 | --- | ------ | -------------------------------- | ------------------------ | ------------------------------------------------ |
@@ -201,13 +201,13 @@
 | [x] | GET    | `/profile/favorites`             | `profile.getFavorites`   | Сохранённое (только своё)                        |
 | [x] | GET    | `/profile/me/reposts`            | `profile.getMyReposts`   | Мои репосты                                      |
 | [ ] | GET    | `/profile/me/saved-music`        | `profile.getSavedMusic`  | Сохранённая музыка                               |
-| [ ] | GET    | `/profile/me/activity`           | `profile.getMyActivity`  | Ваши действия                                    |
+| [x] | GET    | `/profile/me/activity`           | `profile.getMyActivity`  | Ваши действия                                    |
 | [x] | PUT    | `/profile`                       | `profile.update`         | Изменить профиль                                 |
 | [x] | PUT    | `/profile/privacy`               | `profile.setPrivacy`     | Закрытый аккаунт вкл/выкл                        |
 | [x] | PUT    | `/profile/avatar`                | `profile.uploadAvatar`   | Загрузить аватар                                 |
 | [x] | DELETE | `/profile/avatar`                | `profile.deleteAvatar`   | Удалить аватар                                   |
 | [x] | GET    | `/profile/{userId}`              | `profile.getProfileById` | Профиль пользователя                             |
-| [ ] | GET    | `/profile/{userId}/is-following` | `profile.isFollowing`    | Подписан ли я на этого пользователя              |
+| [x] | GET    | `/profile/{userId}/is-following` | `profile.isFollowing`    | Подписан ли я на этого пользователя              |
 | [x] | GET    | `/profile/{userId}/posts`        | `profile.getUserPosts`   | Публикации пользователя (закрытый аккаунт → 403) |
 | [x] | GET    | `/profile/{userId}/reels`        | `profile.getUserReels`   | Reels пользователя (закрытый аккаунт → 403)      |
 | [x] | GET    | `/profile/{userId}/tagged`       | `profile.getUserTagged`  | Отмеченные публикации (закрытый аккаунт → 403)   |
@@ -253,7 +253,7 @@
 | [ ] | POST   | `/upload`       | `upload.upload` | Загрузить до 10 файлов (фото / видео / аудио) |
 | [x] | DELETE | `/upload/{key}` | `upload.remove` | Удалить файл по ключу                         |
 
-## users — 11/12
+## users — 12/12
 
 | ✓   | Метод  | Путь                              | Сервис                    | Что делает                                                    |
 | --- | ------ | --------------------------------- | ------------------------- | ------------------------------------------------------------- |
@@ -268,7 +268,7 @@
 | [x] | DELETE | `/users/search-history/{id}`      | `user.removeSearchText`   | Удалить один текстовый запрос из истории                      |
 | [x] | POST   | `/users/search-history/user`      | `user.addSearchedUser`    | Добавить профиль в историю поиска (повтор — поднимает наверх) |
 | [x] | DELETE | `/users/me`                       | `user.deleteMe`           | Удалить свой аккаунт (soft-delete)                            |
-| [ ] | POST   | `/users/{id}/report`              | `user.report`             | Пожаловаться на пользователя                                  |
+| [x] | POST   | `/users/{id}/report`              | `user.report`             | Пожаловаться на пользователя                                  |
 
 ## verification — 0/4
 

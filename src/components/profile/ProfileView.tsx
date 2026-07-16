@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { BookmarkIcon, GridIcon, TaggedIcon } from "@/components/icons";
 import { PostGrid, PostGridSkeleton } from "@/components/profile/PostGrid";
+import { PrivateAccountGate } from "@/components/profile/PrivateAccountGate";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileHeaderSkeleton } from "@/components/profile/ProfileSkeleton";
 import { ProfileTabs, type ProfileTab } from "@/components/profile/ProfileTabs";
@@ -50,13 +51,21 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
     return <ErrorState onRetry={() => void profileQuery.refetch()} />;
   }
 
+  const profile = profileQuery.data;
+
+  // A private account I have not been accepted by: posts/reels/tagged all answer
+  // 403. That is the product, not a failure — show the lock instead of the tabs.
+  const locked = "canViewContent" in profile && !profile.canViewContent;
+
   return (
     <div className="pb-16">
-      <ProfileHeader userId={userId} profile={profileQuery.data} isMe={isMe} />
+      <ProfileHeader userId={userId} profile={profile} isMe={isMe} />
 
-      <ProfileTabs value={tab} onChange={setTab} showSaved={isMe} />
+      {locked ? <PrivateAccountGate /> : null}
 
-      <div className="pt-4">
+      {locked ? null : <ProfileTabs value={tab} onChange={setTab} showSaved={isMe} />}
+
+      <div className={locked ? "hidden" : "pt-4"}>
         {tab === "posts" ? (
           <Panel
             query={posts}
