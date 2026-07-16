@@ -28,6 +28,9 @@
   /* Positive confirmation (username available). IG greens this state; there was
      no success token before because nothing in the old API could succeed softly. */
   --ig-success: #00b74a;
+  /* Close-friends ring. IG uses one green for it in both themes — it is a
+     status colour, not a surface, so it must not flip with the palette. */
+  --ig-close-friends: #21d167;
   --ig-badge: #ff3040;
   --ig-story-gradient: linear-gradient(
     45deg,
@@ -116,6 +119,9 @@
   /* Positive confirmation (username available). IG greens this state; there was
      no success token before because nothing in the old API could succeed softly. */
   --ig-success: #00b74a;
+  /* Close-friends ring. IG uses one green for it in both themes — it is a
+     status colour, not a surface, so it must not flip with the palette. */
+  --ig-close-friends: #21d167;
   --ig-badge: #ff3040;
 
   /* Auth (sampled from docs/screenshots/img4, img6, img7) */
@@ -173,6 +179,7 @@
   --color-ig-link: var(--ig-link);
   --color-ig-danger: var(--ig-danger);
   --color-ig-success: var(--ig-success);
+  --color-ig-close-friends: var(--ig-close-friends);
   --color-ig-badge: var(--ig-badge);
 
   --color-auth-bg: var(--auth-bg);

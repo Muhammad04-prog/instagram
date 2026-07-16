@@ -55,6 +55,11 @@ export const queryKeys = {
     savedMusic: () => [...queryKeys.profile.all, "saved-music"] as const,
     activity: () => [...queryKeys.profile.all, "activity"] as const,
   },
+  highlights: {
+    all: ["highlights"] as const,
+    byUser: (userId: string) => [...queryKeys.highlights.all, "user", userId] as const,
+    detail: (id: string) => [...queryKeys.highlights.all, "detail", id] as const,
+  },
   closeFriends: {
     all: ["close-friends"] as const,
     list: () => [...queryKeys.closeFriends.all, "list"] as const,

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { BookmarkIcon, GridIcon, TaggedIcon } from "@/components/icons";
 import { PostGrid, PostGridSkeleton } from "@/components/profile/PostGrid";
+import { HighlightCircles } from "@/components/profile/HighlightCircles";
 import { PrivateAccountGate } from "@/components/profile/PrivateAccountGate";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileHeaderSkeleton } from "@/components/profile/ProfileSkeleton";
@@ -60,6 +61,9 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   return (
     <div className="pb-16">
       <ProfileHeader userId={userId} profile={profile} isMe={isMe} />
+
+      {/* A locked account hides its highlights too — they are stories. */}
+      {locked ? null : <HighlightCircles userId={userId} isMe={isMe} />}
 
       {locked ? <PrivateAccountGate /> : null}
 

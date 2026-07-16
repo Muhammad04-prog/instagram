@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -27,17 +28,20 @@ export function StoryUploadDialog({
   const add = useAddStory();
 
   const preview = file ? URL.createObjectURL(file) : null;
+  // The green ring: only the close-friends list will see this story.
+  const [closeFriendsOnly, setCloseFriendsOnly] = useState(false);
 
   const onSubmit = () => {
     if (!file) return;
     add.mutate(
       // Multi-upload is supported (up to 10 → 10 separate stories); the dialog
       // still takes one file, so this sends a one-item list.
-      { media: [file], fromPostId: postId },
+      { media: [file], fromPostId: postId, closeFriendsOnly },
       {
         onSuccess: () => {
           toast.success(t("storyAdded"));
           setFile(null);
+          setCloseFriendsOnly(false);
           onOpenChange(false);
         },
       },
@@ -84,6 +88,21 @@ export function StoryUploadDialog({
             </label>
           )}
         </div>
+
+        {/* Green-ring toggle, offered only once there is something to post. */}
+        {file ? (
+          <label className="border-ig-separator flex cursor-pointer items-center gap-3 border-t px-4 py-3">
+            <span className="min-w-0 flex-1">
+              <span className="text-ig-text block text-sm font-semibold">
+                {t("closeFriendsOnly")}
+              </span>
+              <span className="text-ig-text-secondary block text-xs">
+                {t("closeFriendsOnlyHint")}
+              </span>
+            </span>
+            <Switch checked={closeFriendsOnly} onCheckedChange={setCloseFriendsOnly} />
+          </label>
+        ) : null}
 
         <div className="border-ig-separator flex border-t">
           <button

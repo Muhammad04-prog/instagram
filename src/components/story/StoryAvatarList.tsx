@@ -92,6 +92,7 @@ export function StoryAvatarList() {
               src={item.author.avatarUrl ?? null}
               alt={item.author.userName}
               seen={item.allViewed}
+              closeFriends={item.hasCloseFriends}
             />
             <span className="text-ig-text w-full truncate text-center text-xs">
               {item.author.userName}

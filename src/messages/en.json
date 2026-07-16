@@ -268,7 +268,15 @@
     "closeFriendsEmpty": "Your close friends list is empty",
     "addCloseFriend": "Add",
     "removeCloseFriend": "Remove",
-    "searchPeople": "Search"
+    "searchPeople": "Search",
+    "newHighlight": "New",
+    "highlightTitle": "Highlight name",
+    "highlightCreated": "Highlight created",
+    "noArchivedStories": "No stories to add yet",
+    "deleteHighlight": "Delete highlight",
+    "deleteHighlightConfirm": "The highlight is removed from your profile. The stories inside it are kept in your archive.",
+    "closeFriendsOnly": "Close friends only",
+    "closeFriendsOnlyHint": "Only people on your close friends list will see this story."
   },
   "reels": {
     "title": "Reels",

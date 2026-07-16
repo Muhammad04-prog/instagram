@@ -268,7 +268,15 @@
     "closeFriendsEmpty": "Список близких друзей пуст",
     "addCloseFriend": "Добавить",
     "removeCloseFriend": "Убрать",
-    "searchPeople": "Поиск"
+    "searchPeople": "Поиск",
+    "newHighlight": "Новое",
+    "highlightTitle": "Название актуального",
+    "highlightCreated": "Актуальное создано",
+    "noArchivedStories": "Пока нечего добавить",
+    "deleteHighlight": "Удалить актуальное",
+    "deleteHighlightConfirm": "Актуальное исчезнет из профиля. Истории внутри останутся в вашем архиве.",
+    "closeFriendsOnly": "Только для близких друзей",
+    "closeFriendsOnlyHint": "Эту историю увидят только люди из вашего списка близких друзей."
   },
   "reels": {
     "title": "Reels",
