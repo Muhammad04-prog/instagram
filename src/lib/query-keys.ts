@@ -60,6 +60,12 @@ export const queryKeys = {
     byUser: (userId: string) => [...queryKeys.highlights.all, "user", userId] as const,
     detail: (id: string) => [...queryKeys.highlights.all, "detail", id] as const,
   },
+  notes: {
+    all: ["notes"] as const,
+    list: () => [...queryKeys.notes.all, "list"] as const,
+    likes: (id: number) => [...queryKeys.notes.all, "likes", id] as const,
+    replies: (id: number) => [...queryKeys.notes.all, "replies", id] as const,
+  },
   closeFriends: {
     all: ["close-friends"] as const,
     list: () => [...queryKeys.closeFriends.all, "list"] as const,

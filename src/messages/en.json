@@ -525,5 +525,20 @@
     "locationAdded": "Location added",
     "locationUpdated": "Location updated",
     "locationDeleted": "Location deleted"
+  },
+  "note": {
+    "newNote": "Note…",
+    "yourNote": "Your note",
+    "editNote": "Edit note",
+    "share": "Share",
+    "placeholder": "Share a thought…",
+    "expiryHint": "Notes disappear after 24 hours.",
+    "noteShared": "Note shared",
+    "noteUpdated": "Note updated",
+    "noteDeleted": "Note deleted",
+    "deleteNote": "Delete note",
+    "replyPlaceholder": "Reply…",
+    "replySent": "Sent to {userName}",
+    "like": "Like"
   }
 }

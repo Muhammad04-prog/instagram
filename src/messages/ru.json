@@ -525,5 +525,20 @@
     "locationAdded": "Место добавлено",
     "locationUpdated": "Место обновлено",
     "locationDeleted": "Место удалено"
+  },
+  "note": {
+    "newNote": "Заметка…",
+    "yourNote": "Ваша заметка",
+    "editNote": "Изменить заметку",
+    "share": "Поделиться",
+    "placeholder": "Поделитесь мыслью…",
+    "expiryHint": "Заметки исчезают через 24 часа.",
+    "noteShared": "Заметка опубликована",
+    "noteUpdated": "Заметка обновлена",
+    "noteDeleted": "Заметка удалена",
+    "deleteNote": "Удалить заметку",
+    "replyPlaceholder": "Ответить…",
+    "replySent": "Отправлено — {userName}",
+    "like": "Нравится"
   }
 }

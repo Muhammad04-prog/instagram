@@ -525,5 +525,20 @@
     "locationAdded": "Ҷой илова шуд",
     "locationUpdated": "Ҷой навсозӣ шуд",
     "locationDeleted": "Ҷой нест карда шуд"
+  },
+  "note": {
+    "newNote": "Қайд…",
+    "yourNote": "Қайди шумо",
+    "editNote": "Тағйири қайд",
+    "share": "Мубодила",
+    "placeholder": "Фикратонро нависед…",
+    "expiryHint": "Қайдҳо пас аз 24 соат нест мешаванд.",
+    "noteShared": "Қайд нашр шуд",
+    "noteUpdated": "Қайд нав шуд",
+    "noteDeleted": "Қайд нест шуд",
+    "deleteNote": "Нест кардани қайд",
+    "replyPlaceholder": "Ҷавоб…",
+    "replySent": "Ба {userName} фиристода шуд",
+    "like": "Писандидан"
   }
 }

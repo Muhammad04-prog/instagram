@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ChatListItem } from "@/components/chat/ChatListItem";
 import { NewChatDialog } from "@/components/chat/NewChatDialog";
+import { NotesRail } from "@/components/chat/NotesRail";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,6 +66,8 @@ export function ChatList() {
           />
         </div>
       </div>
+
+      <NotesRail />
 
       <div className="flex items-center justify-between px-6 pb-2">
         <h2 className="text-ig-text text-base font-bold">{t("title")}</h2>
