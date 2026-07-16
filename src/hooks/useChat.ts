@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useApiError } from "@/hooks/useApiError";
 import { useAuth } from "@/hooks/useAuth";
 import type { ApiError } from "@/lib/axios";
 import { CHAT_POLL_MS, MESSAGES_PAGE_SIZE, PAGE_SIZE } from "@/lib/constants";
@@ -203,6 +204,77 @@ export function useDeleteMessage(chatId: number) {
       toast.error(error.message || t("network"));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+  });
+}
+
+/**
+ * Theme / nickname / mute — three tiny PUTs that all change the same chat, so
+ * they share one invalidation: the list row shows the mute bell and the window
+ * paints the theme.
+ */
+function useChatSettings(chatId: number) {
+  const queryClient = useQueryClient();
+
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.chats.detail(chatId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.chats.list() });
+  };
+}
+
+export function useSetChatTheme(chatId: number) {
+  const settled = useChatSettings(chatId);
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (theme: string) => chatService.setTheme(chatId, { theme }),
+    onSuccess: settled,
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/** A nickname is per-chat and only I see it — the peer is never told. */
+export function useSetChatNickname(chatId: number) {
+  const settled = useChatSettings(chatId);
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: ({ userId, nickname }: { userId: string; nickname: string }) =>
+      chatService.setNickname(chatId, { userId, nickname }),
+    onSuccess: settled,
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+export function useSetChatMuted(chatId: number) {
+  const settled = useChatSettings(chatId);
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (muted: boolean) => chatService.setMuted(chatId, { muted }),
+    onSuccess: settled,
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/**
+ * React to a message / take the reaction back.
+ *
+ * One reaction per person: tapping the emoji you already left removes it, which
+ * is why this takes the current state rather than an "add" flag.
+ */
+export function useToggleMessageReaction(chatId: number) {
+  const queryClient = useQueryClient();
+  const toMessage = useApiError();
+
+  return useMutation({
+    // The two calls answer different shapes (OkDto vs MessageReactionDto) and
+    // nothing here needs either — the list is refetched. So: await, discard.
+    mutationFn: async ({ messageId, emoji }: { messageId: number; emoji: string | null }) => {
+      if (emoji === null) await chatService.removeMessageReaction(messageId);
+      else await chatService.reactToMessage(messageId, { emoji });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) }),
+    onError: (error) => toast.error(toMessage(error)),
   });
 }
 

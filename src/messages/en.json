@@ -316,7 +316,18 @@
     "chatOptions": "Chat options",
     "deleteChatConfirm": "The conversation and all its messages will be deleted.",
     "online": "Online",
-    "muted": "Muted"
+    "muted": "Muted",
+    "chatDetails": "Details",
+    "theme": "Theme",
+    "themeSet": "Theme updated",
+    "nickname": "Nickname",
+    "nicknameHint": "Only you see this nickname. They are not told.",
+    "nicknameSet": "Nickname saved",
+    "save": "Save",
+    "muteChat": "Mute notifications",
+    "muteChatHint": "You will still see the messages.",
+    "react": "React",
+    "removeReaction": "Remove reaction"
   },
   "profile": {
     "posts": "posts",

@@ -1,8 +1,10 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageBubble } from "@/components/chat/MessageBubble";
+import { ChatSettingsDialog } from "@/components/chat/ChatSettingsDialog";
 import { MessageInput } from "@/components/chat/MessageInput";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
@@ -35,6 +37,7 @@ export function ChatWindow({ chatId }: { chatId: number }) {
   const { data: chat } = useChat(chatId);
   const { data, isPending, isError, refetch } = useChatMessages(chatId);
   const markRead = useMarkChatRead(chatId);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const myUserId = user?.id ?? "";
@@ -59,25 +62,40 @@ export function ChatWindow({ chatId }: { chatId: number }) {
   return (
     <div className="flex h-full flex-1 flex-col">
       {chat ? (
-        <Link
-          href={ROUTES.profile(chat.peer.id)}
-          className="border-ig-border flex items-center gap-3 border-b px-6 py-3"
-        >
-          <UserAvatar src={chat.peer.avatarUrl ?? null} size={44} />
-          <span className="min-w-0">
-            <span className="text-ig-text block truncate text-base font-bold">
-              {chat.peer.userName}
+        <div className="border-ig-border flex items-center gap-3 border-b px-6 py-3">
+          <Link
+            href={ROUTES.profile(chat.peer.id)}
+            className="flex min-w-0 flex-1 items-center gap-3"
+          >
+            <UserAvatar src={chat.peer.avatarUrl ?? null} size={44} />
+            <span className="min-w-0">
+              <span className="text-ig-text block truncate text-base font-bold">
+                {chat.peer.userName}
+              </span>
+              {/* Presence is real data now — softclub had no online/last-seen at all. */}
+              <span className="text-ig-text-secondary block text-xs">
+                {chat.isOnline
+                  ? t("online")
+                  : chat.lastSeenAt
+                    ? t("lastSeen", { time: format.relativeTime(new Date(chat.lastSeenAt)) })
+                    : ""}
+              </span>
             </span>
-            {/* Presence is real data now — softclub had no online/last-seen at all. */}
-            <span className="text-ig-text-secondary block text-xs">
-              {chat.isOnline
-                ? t("online")
-                : chat.lastSeenAt
-                  ? t("lastSeen", { time: format.relativeTime(new Date(chat.lastSeenAt)) })
-                  : ""}
-            </span>
-          </span>
-        </Link>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            aria-label={t("chatDetails")}
+            className="text-ig-text shrink-0"
+          >
+            <Info className="size-6" />
+          </button>
+        </div>
+      ) : null}
+
+      {chat ? (
+        <ChatSettingsDialog chat={chat} open={settingsOpen} onOpenChange={setSettingsOpen} />
       ) : null}
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -104,6 +122,7 @@ export function ChatWindow({ chatId }: { chatId: number }) {
                     message={message}
                     mine={message.senderId === myUserId}
                     peerImage={chat?.peer.avatarUrl ?? null}
+                    theme={chat?.theme}
                   />
                 ))}
               </section>
