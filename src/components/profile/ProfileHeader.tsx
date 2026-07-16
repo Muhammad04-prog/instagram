@@ -109,8 +109,10 @@ export function ProfileHeader({
             >
               {t("editProfile")}
             </Link>
+            {/* "View archive" now goes to the story archive it names (img45).
+                It pointed at Saved posts, because softclub had no archive. */}
             <Link
-              href={ROUTES.favorites}
+              href={ROUTES.storyArchive}
               className="bg-ig-button-secondary text-ig-text hover:bg-ig-button-secondary-hover flex-1 rounded-lg py-1.5 text-center text-sm font-semibold"
             >
               {t("viewArchive")}

@@ -276,7 +276,13 @@
     "deleteHighlight": "Delete highlight",
     "deleteHighlightConfirm": "The highlight is removed from your profile. The stories inside it are kept in your archive.",
     "closeFriendsOnly": "Close friends only",
-    "closeFriendsOnlyHint": "Only people on your close friends list will see this story."
+    "closeFriendsOnlyHint": "Only people on your close friends list will see this story.",
+    "archiveTitle": "Archive",
+    "archiveTab": "Stories",
+    "archiveHint": "Stories in your archive are only visible to you unless you share them.",
+    "archiveEmpty": "No archived stories",
+    "archiveEmptyDescription": "Stories you share are saved here after 24 hours.",
+    "back": "Back"
   },
   "reels": {
     "title": "Reels",

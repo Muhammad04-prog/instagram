@@ -62,6 +62,18 @@ export function useStoryViewers(storyId: number, enabled = true) {
   });
 }
 
+/**
+ * One story by id — the only place `GET /stories/{id}` fits: the archive grid
+ * holds ids, and opening a tile needs the full row (media, music, overlays).
+ */
+export function useStoryDetail(storyId: number | null) {
+  return useQuery({
+    queryKey: queryKeys.stories.detail(storyId ?? 0),
+    queryFn: () => storyService.getStoryById(storyId as number),
+    enabled: storyId !== null,
+  });
+}
+
 export function useAddStory() {
   const queryClient = useQueryClient();
   const t = useTranslations("errors");

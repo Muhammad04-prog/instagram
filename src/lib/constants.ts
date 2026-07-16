@@ -74,6 +74,7 @@ export const ROUTES = {
   editProfile: "/profile/edit",
   favorites: "/profile/favorites",
   activity: "/profile/activity",
+  storyArchive: "/stories/archive",
   settings: "/settings",
   changePassword: "/settings/change-password",
   privacy: "/settings/privacy",

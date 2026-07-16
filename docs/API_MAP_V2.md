@@ -7,7 +7,7 @@
 вызывается хотя бы из одного файла вне самого сервиса. Это проверка проводки, **не** проверка
 того, что экран работает: БД бэкенда лежит, живьём ни один ответ не сверен.
 
-**Покрытие: 116 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 117 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 0/4
 
@@ -229,7 +229,7 @@
 | [ ] | POST   | `/spotify/tracks/{spotifyId}/save` | —      | Сохранить трек из Spotify  |
 | [ ] | DELETE | `/spotify/tracks/{spotifyId}/save` | —      | Убрать трек из сохранённых |
 
-## stories — 11/12
+## stories — 12/12
 
 | ✓   | Метод  | Путь                     | Сервис                 | Что делает                                                            |
 | --- | ------ | ------------------------ | ---------------------- | --------------------------------------------------------------------- |
@@ -238,7 +238,7 @@
 | [x] | GET    | `/stories/my`            | `story.getMyStories`   | Мои активные истории                                                  |
 | [x] | GET    | `/stories/archive`       | `story.getArchive`     | Мои истёкшие истории (архив)                                          |
 | [x] | GET    | `/stories/user/{userId}` | `story.getUserStories` | Истории пользователя                                                  |
-| [ ] | GET    | `/stories/{id}`          | `story.getStoryById`   | История по id                                                         |
+| [x] | GET    | `/stories/{id}`          | `story.getStoryById`   | История по id                                                         |
 | [x] | DELETE | `/stories/{id}`          | `story.remove`         | Удалить свою историю                                                  |
 | [x] | POST   | `/stories/{id}/view`     | `story.view`           | Отметить просмотренной (считается на сервере, 1 раз/зритель)          |
 | [x] | POST   | `/stories/{id}/like`     | `story.like`           | Лайк истории (toggle → { liked, likesCount })                         |
