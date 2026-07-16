@@ -11,7 +11,7 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
-import { useChat, useChatMessages, useMarkChatRead } from "@/hooks/useChat";
+import { useBulkDeleteMessages, useChat, useChatMessages, useMarkChatRead } from "@/hooks/useChat";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { MessageDto } from "@/types/chat.types";
@@ -36,6 +36,12 @@ export function ChatWindow({ chatId }: { chatId: number }) {
   const { user } = useAuth();
   const { data: chat } = useChat(chatId);
   const { data, isPending, isError, refetch } = useChatMessages(chatId);
+  const bulkDelete = useBulkDeleteMessages(chatId);
+
+  // null = not selecting. A Set, not an array: toggling is the only operation
+  // and order means nothing here.
+  const [selected, setSelected] = useState<Set<number> | null>(null);
+  const selecting = selected !== null;
   const markRead = useMarkChatRead(chatId);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -123,6 +129,19 @@ export function ChatWindow({ chatId }: { chatId: number }) {
                     mine={message.senderId === myUserId}
                     peerImage={chat?.peer.avatarUrl ?? null}
                     theme={chat?.theme}
+                    selecting={selecting}
+                    selected={selected?.has(message.id) ?? false}
+                    onStartSelecting={() => setSelected(new Set([message.id]))}
+                    onToggleSelected={() =>
+                      setSelected((current) => {
+                        const next = new Set(current);
+                        if (next.has(message.id)) next.delete(message.id);
+                        else next.add(message.id);
+                        // Deselecting the last one leaves selection mode, so the
+                        // bar cannot sit there offering to delete nothing.
+                        return next.size === 0 ? null : next;
+                      })
+                    }
                   />
                 ))}
               </section>
@@ -132,7 +151,52 @@ export function ChatWindow({ chatId }: { chatId: number }) {
         )}
       </div>
 
-      <MessageInput chatId={chatId} />
+      {/* The composer gives way to the selection bar — IG does the same, and
+          two bars stacked would fight for the same corner. */}
+      {selecting ? (
+        <SelectionBar
+          count={selected.size}
+          pending={bulkDelete.isPending}
+          onCancel={() => setSelected(null)}
+          onDelete={() => bulkDelete.mutate([...selected], { onSuccess: () => setSelected(null) })}
+        />
+      ) : (
+        <MessageInput chatId={chatId} />
+      )}
+    </div>
+  );
+}
+
+/** Replaces the composer while messages are selected. */
+function SelectionBar({
+  count,
+  pending,
+  onCancel,
+  onDelete,
+}: {
+  count: number;
+  pending: boolean;
+  onCancel: () => void;
+  onDelete: () => void;
+}) {
+  const t = useTranslations("chat");
+
+  return (
+    <div className="border-ig-border flex items-center gap-3 border-t px-6 py-3">
+      <button type="button" onClick={onCancel} className="text-ig-text text-sm font-semibold">
+        {t("cancel")}
+      </button>
+      <span className="text-ig-text-secondary flex-1 text-center text-sm">
+        {t("selectedCount", { count })}
+      </span>
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={pending}
+        className="text-ig-danger text-sm font-semibold disabled:opacity-50"
+      >
+        {t("deleteSelected")}
+      </button>
     </div>
   );
 }

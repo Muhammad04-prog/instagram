@@ -11,7 +11,7 @@
 Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
 не сверен.
 
-**Покрытие: 157 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 160 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 4/4
 
@@ -38,15 +38,15 @@
 | [x] | POST  | `/auth/check-username`  | `auth.checkUsername`      | Свободен ли userName (live-валидация формы регистрации) |
 | [x] | GET   | `/auth/me`              | `route.ts (server)`       | Текущий пользователь + профиль                          |
 
-## chats — 16/20
+## chats — 19/20
 
 | ✓   | Метод  | Путь                            | Сервис                       | Что делает                                         |
 | --- | ------ | ------------------------------- | ---------------------------- | -------------------------------------------------- |
 | [x] | GET    | `/chats`                        | `chat.getChats`              | Список чатов                                       |
 | [x] | POST   | `/chats`                        | `chat.create`                | Начать чат (идемпотентно)                          |
-| [ ] | PUT    | `/chats/messages/{id}`          | `chat.editMessage`           | Редактировать сообщение (≤15 мин, только своё)     |
+| [x] | PUT    | `/chats/messages/{id}`          | `chat.editMessage`           | Редактировать сообщение (≤15 мин, только своё)     |
 | [x] | DELETE | `/chats/messages/{id}`          | `chat.deleteMessage`         | Удалить сообщение (OwnerGuard: только своё)        |
-| [ ] | POST   | `/chats/messages/bulk-delete`   | `chat.bulkDeleteMessages`    | Удалить несколько своих сообщений                  |
+| [x] | POST   | `/chats/messages/bulk-delete`   | `chat.bulkDeleteMessages`    | Удалить несколько своих сообщений                  |
 | [x] | POST   | `/chats/messages/{id}/reaction` | `chat.reactToMessage`        | Реакция на сообщение                               |
 | [x] | DELETE | `/chats/messages/{id}/reaction` | `chat.removeMessageReaction` | Убрать реакцию                                     |
 | [x] | GET    | `/chats/requests`               | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
@@ -60,7 +60,7 @@
 | [x] | PUT    | `/chats/{id}/theme`             | `chat.setTheme`              | Тема чата                                          |
 | [x] | PUT    | `/chats/{id}/nickname`          | `chat.setNickname`           | Никнейм собеседника в чате                         |
 | [x] | PUT    | `/chats/{id}/mute`              | `chat.setMuted`              | Заглушить/включить уведомления чата                |
-| [ ] | POST   | `/chats/{id}/report`            | `chat.report`                | Пожаловаться на чат                                |
+| [x] | POST   | `/chats/{id}/report`            | `chat.report`                | Пожаловаться на чат                                |
 | [ ] | POST   | `/chats/{id}/call`              | `chat.startCall`             | Начать звонок (WebRTC-сигналинг через сокет)       |
 
 ## close-friends — 3/3

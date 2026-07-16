@@ -337,7 +337,21 @@
     "loadMore": "Показать ещё",
     "back": "Назад",
     "deleteAllRequests": "Удалить все {count}",
-    "deleteAllRequestsConfirm": "Эти запросы будут удалены. Отправителям об этом не сообщат."
+    "deleteAllRequestsConfirm": "Эти запросы будут удалены. Отправителям об этом не сообщат.",
+    "edited": "Изменено",
+    "editMessage": "Изменить",
+    "reportChat": "Пожаловаться на чат",
+    "reportSent": "Спасибо — жалоба отправлена",
+    "sendReport": "Отправить жалобу",
+    "reportReasonPlaceholder": "Расскажите, что не так",
+    "reportReason_spam": "Спам",
+    "reportReason_harassment": "Оскорбления или травля",
+    "reportReason_nudity": "Обнажённое тело или секс",
+    "reportReason_scam": "Мошенничество",
+    "reportReason_other": "Другое",
+    "selectMessages": "Выбрать",
+    "selectedCount": "{count, plural, one {Выбрано #} few {Выбрано #} many {Выбрано #} other {Выбрано #}}",
+    "deleteSelected": "Удалить"
   },
   "profile": {
     "posts": "публикаций",

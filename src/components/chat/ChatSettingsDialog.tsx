@@ -7,6 +7,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { ReportChatDialog } from "@/components/chat/ReportChatDialog";
 import { useSetChatMuted, useSetChatNickname, useSetChatTheme } from "@/hooks/useChat";
 import { CHAT_THEMES } from "@/lib/chat-themes";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ export function ChatSettingsDialog({
   const setTheme = useSetChatTheme(chat.id);
   const setNickname = useSetChatNickname(chat.id);
   const setMuted = useSetChatMuted(chat.id);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const [nickname, setNicknameValue] = useState("");
 
@@ -121,7 +123,17 @@ export function ChatSettingsDialog({
               onCheckedChange={(muted) => setMuted.mutate(muted)}
             />
           </label>
+
+          <button
+            type="button"
+            onClick={() => setReportOpen(true)}
+            className="text-ig-danger border-ig-separator w-full border-t pt-4 text-left text-sm font-semibold"
+          >
+            {t("reportChat")}
+          </button>
         </div>
+
+        <ReportChatDialog chatId={chat.id} open={reportOpen} onOpenChange={setReportOpen} />
       </DialogContent>
     </Dialog>
   );

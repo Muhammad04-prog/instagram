@@ -325,3 +325,34 @@ export function useDeleteChat() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
   });
 }
+
+/** Reports land in the admin panel; `reason` is a free string, not an enum. */
+export function useReportChat(chatId: number) {
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (reason: string) => chatService.report(chatId, { reason }),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/**
+ * Deletes several of my own messages at once.
+ *
+ * The list is refetched rather than spliced: the server decides what actually
+ * went (it refuses someone else's), so trusting our own selection could leave
+ * a message on screen that is gone, or hide one that is not.
+ */
+export function useBulkDeleteMessages(chatId: number) {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (messageIds: number[]) => chatService.bulkDeleteMessages({ messageIds }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.chats.list() });
+    },
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}

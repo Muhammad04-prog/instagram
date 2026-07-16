@@ -337,7 +337,21 @@
     "loadMore": "Load more",
     "back": "Back",
     "deleteAllRequests": "Delete all {count}",
-    "deleteAllRequestsConfirm": "These requests will be deleted. The people who sent them are not told."
+    "deleteAllRequestsConfirm": "These requests will be deleted. The people who sent them are not told.",
+    "edited": "Edited",
+    "editMessage": "Edit",
+    "reportChat": "Report conversation",
+    "reportSent": "Thanks — the report was sent",
+    "sendReport": "Send report",
+    "reportReasonPlaceholder": "Tell us what is wrong",
+    "reportReason_spam": "Spam",
+    "reportReason_harassment": "Harassment or bullying",
+    "reportReason_nudity": "Nudity or sexual content",
+    "reportReason_scam": "Scam or fraud",
+    "reportReason_other": "Something else",
+    "selectMessages": "Select",
+    "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+    "deleteSelected": "Delete"
   },
   "profile": {
     "posts": "posts",

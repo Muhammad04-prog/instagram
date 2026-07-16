@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, SmilePlus } from "lucide-react";
+import { Check, MoreHorizontal, SmilePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { canEditMessage, EditMessageDialog } from "@/components/chat/EditMessageDialog";
 import { useDeleteMessage, useToggleMessageReaction } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { themeBubble } from "@/lib/chat-themes";
@@ -32,16 +33,26 @@ export function MessageBubble({
   mine,
   peerImage,
   theme,
+  selecting,
+  selected,
+  onStartSelecting,
+  onToggleSelected,
 }: {
   message: MessageDto;
   mine: boolean;
   peerImage: string | null;
   /** Chat theme name — colours my own bubbles. */
   theme?: string | null;
+  /** The whole window is in select-many mode. */
+  selecting: boolean;
+  selected: boolean;
+  onStartSelecting: () => void;
+  onToggleSelected: () => void;
 }) {
   const t = useTranslations("chat");
   const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const deleteMessage = useDeleteMessage(message.chatId);
   const react = useToggleMessageReaction(message.chatId);
@@ -51,15 +62,40 @@ export function MessageBubble({
 
   // Negative id = optimistic, not yet acknowledged by the server.
   const pending = message.id < 0;
+  // Optimistic rows have no server id, so they cannot be part of a bulk delete.
+  const selectable = mine && !pending && !message.isDeleted;
   const fileUrl = message.mediaUrl ? getImageUrl(message.mediaUrl) : null;
 
   return (
-    <div className={cn("group flex items-end gap-2", mine ? "justify-end" : "justify-start")}>
+    <div
+      className={cn(
+        "group flex items-end gap-2",
+        mine ? "justify-end" : "justify-start",
+        // Only my own messages can go: the server refuses the rest, so they are
+        // not selectable and must not look like they are.
+        selecting && selectable && "cursor-pointer rounded-lg",
+        selecting && selected && "bg-ig-elevated",
+      )}
+      onClick={selecting && selectable ? onToggleSelected : undefined}
+    >
+      {selecting ? (
+        <span
+          aria-hidden
+          className={cn(
+            "mb-2 flex size-5 shrink-0 items-center justify-center rounded-full border",
+            selected ? "bg-ig-primary border-ig-primary" : "border-ig-border",
+            !selectable && "invisible",
+          )}
+        >
+          {selected ? <Check className="size-3 text-white" /> : null}
+        </span>
+      ) : null}
+
       {!mine ? <UserAvatar src={peerImage} size={28} /> : null}
 
       {/* Own messages only — and the server agrees now: its OwnerGuard rejects
           deleting someone else's. Softclub enforced nothing (bug #15). */}
-      {mine && !pending ? (
+      {mine && !pending && !selecting ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -71,6 +107,26 @@ export function MessageBubble({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {/* The backend allows an edit for 15 minutes and only on text.
+                Offering it later would just produce a refusal. */}
+            {canEditMessage(message) ? (
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setEditOpen(true);
+                }}
+              >
+                {t("editMessage")}
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                onStartSelecting();
+              }}
+            >
+              {t("selectMessages")}
+            </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
               onSelect={(event) => {
@@ -117,7 +173,14 @@ export function MessageBubble({
         ) : null}
 
         {message.text ? (
-          <p className="text-sm break-words whitespace-pre-wrap">{message.text}</p>
+          <p className="text-sm break-words whitespace-pre-wrap">
+            {message.text}
+            {/* IG marks an edited message. `editedAt` was arriving and being
+                dropped, so a silent rewrite looked like the original. */}
+            {message.editedAt ? (
+              <span className="ml-1.5 align-baseline text-[10px] opacity-60">{t("edited")}</span>
+            ) : null}
+          </p>
         ) : null}
 
         {/* Reactions hang off the bubble's corner, as in IG. */}
@@ -139,7 +202,7 @@ export function MessageBubble({
       </div>
 
       {/* Reaction picker, on hover like IG's desktop web. */}
-      {pending ? null : (
+      {pending || selecting ? null : (
         <div className="relative self-center">
           <button
             type="button"
@@ -178,6 +241,10 @@ export function MessageBubble({
           ) : null}
         </div>
       )}
+
+      {editOpen ? (
+        <EditMessageDialog message={message} open={editOpen} onOpenChange={setEditOpen} />
+      ) : null}
 
       <ConfirmDialog
         open={confirmOpen}
