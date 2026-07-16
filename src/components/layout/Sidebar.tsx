@@ -16,6 +16,7 @@ import { InstagramGlyph, InstagramWordmark } from "@/components/icons/InstagramL
 import { MoreMenu } from "@/components/layout/MoreMenu";
 import { SidebarLabel } from "@/components/layout/SidebarLabel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { useUnreadCount } from "@/hooks/useNotifications";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useSidebarForcedCollapsed } from "@/hooks/useSidebarState";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -40,6 +41,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const { panel, togglePanel, closePanel } = useUiStore();
   const { data: profile } = useMyProfile();
+  const { data: unreadData } = useUnreadCount();
+
+  const unread = unreadData?.count ?? 0;
 
   const forcedCollapsed = useSidebarForcedCollapsed();
   // Only when not forced narrow may the rail stay open at ≥1264px.
@@ -119,7 +123,20 @@ export function Sidebar() {
           icon={
             <span className="relative">
               <HeartIcon filled={panel === "notifications"} />
-              <span className="bg-ig-badge absolute -top-0.5 -right-0.5 size-2 rounded-full" />
+              {/* Real count now. This dot used to be painted unconditionally —
+                  softclub had no notifications endpoint, so it was decoration
+                  that lied on every single render. */}
+              {unread > 0 ? (
+                <span
+                  aria-label={t("unreadCount", { count: unread })}
+                  className={cn(
+                    "bg-ig-badge absolute -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white",
+                    unread > 9 ? "-right-2" : "-right-1.5",
+                  )}
+                >
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              ) : null}
             </span>
           }
         />

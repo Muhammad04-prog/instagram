@@ -39,6 +39,12 @@ export const NOTIFICATIONS_PAGE_SIZE = 20;
 export const RESEND_CODE_COOLDOWN_S = 60;
 
 /**
+ * The unread badge polls. The backend has a socket, but wiring it is Phase 17;
+ * until then a small count every 30s is honest and cheap.
+ */
+export const UNREAD_POLL_MS = 30_000;
+
+/**
  * Chat still polls. This backend does have a socket (it signals calls and live
  * rooms), but wiring it is Phase 17 — until then the Phase 9 poll stands.
  */

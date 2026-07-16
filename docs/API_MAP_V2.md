@@ -7,7 +7,7 @@
 вызывается хотя бы из одного файла вне самого сервиса. Это проверка проводки, **не** проверка
 того, что экран работает: БД бэкенда лежит, живьём ни один ответ не сверен.
 
-**Покрытие: 101 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 106 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 0/4
 
@@ -156,15 +156,15 @@
 | [ ] | POST   | `/notes/{id}/reply`   | —      | Ответить на заметку → сообщение в чат                 |
 | [ ] | GET    | `/notes/{id}/replies` | —      | Ответы на заметку (только автору)                     |
 
-## notifications — 0/5
+## notifications — 5/5
 
-| ✓   | Метод | Путь                           | Сервис | Что делает                                 |
-| --- | ----- | ------------------------------ | ------ | ------------------------------------------ |
-| [ ] | GET   | `/notifications`               | —      | Лента уведомлений (cursor, с группировкой) |
-| [ ] | GET   | `/notifications/unread-count`  | —      | Количество непрочитанных                   |
-| [ ] | GET   | `/notifications/profile-views` | —      | Кто заходил в твой профиль                 |
-| [ ] | POST  | `/notifications/{id}/read`     | —      | Пометить прочитанным (всю группу)          |
-| [ ] | POST  | `/notifications/read-all`      | —      | Пометить всё прочитанным                   |
+| ✓   | Метод | Путь                           | Сервис                          | Что делает                                 |
+| --- | ----- | ------------------------------ | ------------------------------- | ------------------------------------------ |
+| [x] | GET   | `/notifications`               | `notification.getNotifications` | Лента уведомлений (cursor, с группировкой) |
+| [x] | GET   | `/notifications/unread-count`  | `notification.getUnreadCount`   | Количество непрочитанных                   |
+| [x] | GET   | `/notifications/profile-views` | `notification.getProfileViews`  | Кто заходил в твой профиль                 |
+| [x] | POST  | `/notifications/{id}/read`     | `notification.markRead`         | Пометить прочитанным (всю группу)          |
+| [x] | POST  | `/notifications/read-all`      | `notification.markAllRead`      | Пометить всё прочитанным                   |
 
 ## posts — 22/22
 
