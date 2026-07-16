@@ -57,12 +57,8 @@ for (const s of sources) {
 
 const isUiFile = (file) => file.startsWith("src/components/") || file.startsWith("src/app/");
 
-/** The exported function of `text` whose body contains `needle`. */
-function enclosingExport(text, needle) {
-  const at = text.indexOf(needle);
-  if (at === -1) return null;
-
-  const before = text.slice(0, at);
+/** The exported function `before` ends inside — the last one declared above it. */
+function enclosingExport(before) {
   const matches = [...before.matchAll(/export function (\w+)/g)];
   return matches.at(-1)?.[1] ?? null;
 }
@@ -84,13 +80,18 @@ function isCalledFromUi(methodName, serviceFile) {
   // wired purely because the *follow* hook exists.
   // "src/services/chat.service.ts" -> "chatService".
   const serviceVar = path.basename(serviceFile, ".service.ts").replace(/\..*/, "") + "Service";
-  const call = new RegExp(`\\b${serviceVar}\\.${methodName}\\(`);
+  // Whitespace-tolerant: prettier breaks method chains across lines, e.g.
+  //   void storyService
+  //     .view(id)
+  // and a strict `storyService\.view\(` silently misses those.
+  const call = new RegExp(`\\b${serviceVar}\\s*\\.\\s*${methodName}\\s*\\(`);
 
   const callers = sources.filter((s) => s.file !== serviceFile && call.test(s.text));
   if (callers.some((s) => isUiFile(s.file))) return true;
 
   return callers.some((caller) => {
-    const hookName = enclosingExport(caller.text, `${serviceVar}.${methodName}(`);
+    const at = caller.text.search(call);
+    const hookName = at === -1 ? null : enclosingExport(caller.text.slice(0, at));
     if (!hookName) return false;
 
     const used = new RegExp(`\\b${hookName}\\b`);
