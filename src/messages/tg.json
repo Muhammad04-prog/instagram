@@ -476,7 +476,8 @@
     "clearAllDescription": "Ин амалро бекор кардан мумкин нест. Дархостҳои охирин ва профилҳои дидашуда нест мешаванд.",
     "remove": "Нест кардан",
     "clear": "Тоза кардан",
-    "followers": "{count, plural, one {# обунашуда} other {# обунашуда}}"
+    "followers": "{count, plural, one {# обунашуда} other {# обунашуда}}",
+    "postsCount": "{count} нашр"
   },
   "errors": {
     "title": "Хатогӣ рӯй дод",
@@ -505,7 +506,9 @@
     "title": "Ҷолиб",
     "empty": "Ҳанӯз чизе барои нишон додан нест",
     "hashtagSubtitle": "Нашрҳо бо ин хештег",
-    "hashtagEmpty": "Ҳанӯз нашре бо #{name} нест"
+    "hashtagEmpty": "Ҳанӯз нашре бо #{name} нест",
+    "locationNoFeed": "Нашрҳо аз ин ҷой дастрас нестанд",
+    "locationNoFeedDescription": "Дар API ҳанӯз endpoint-и «нашрҳо аз рӯи ҷой» нест, пас ин сетка сохта мешуд, на воқеӣ."
   },
   "locations": {
     "title": "Ҷойҳо",

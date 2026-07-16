@@ -476,7 +476,8 @@
     "clearAllDescription": "Это действие нельзя отменить. Недавние запросы и посещённые профили будут удалены.",
     "remove": "Удалить",
     "clear": "Очистить",
-    "followers": "{count, plural, one {# подписчик} few {# подписчика} many {# подписчиков} other {# подписчика}}"
+    "followers": "{count, plural, one {# подписчик} few {# подписчика} many {# подписчиков} other {# подписчика}}",
+    "postsCount": "{count} публикаций"
   },
   "errors": {
     "title": "Что-то пошло не так",
@@ -505,7 +506,9 @@
     "title": "Интересное",
     "empty": "Пока нечего показать",
     "hashtagSubtitle": "Публикации с этим хэштегом",
-    "hashtagEmpty": "Публикаций с #{name} пока нет"
+    "hashtagEmpty": "Публикаций с #{name} пока нет",
+    "locationNoFeed": "Публикации из этого места недоступны",
+    "locationNoFeedDescription": "В API пока нет endpoint'а «посты по локации», поэтому сетка здесь была бы выдуманной, а не настоящей."
   },
   "locations": {
     "title": "Места",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Hash, MapPin, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { SearchUserRow } from "@/components/search/SearchUserRow";
@@ -15,8 +15,11 @@ import {
   useDeleteUserSearchHistory,
   useSearchHistories,
   useUserSearchHistories,
-  useUsers,
 } from "@/hooks/useUserSearch";
+import { useSearch } from "@/hooks/useSearch";
+import { Link } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
+import { formatCount } from "@/lib/utils";
 import type { UserBriefDto } from "@/types/api.types";
 
 /**
@@ -45,7 +48,7 @@ export function SearchResults({
 
   const searching = debouncedTerm.length > 0;
 
-  const results = useUsers(debouncedTerm, searching);
+  const results = useSearch(debouncedTerm, searching);
   const textHistory = useSearchHistories();
   const userHistory = useUserSearchHistories();
 
@@ -67,8 +70,12 @@ export function SearchResults({
     if (results.isPending) return <Loader className="py-10" />;
     if (results.isError) return <ErrorState onRetry={() => void results.refetch()} />;
 
-    const users = results.data ?? [];
-    if (users.length === 0) {
+    // One response, three kinds. Phase 8 could only search accounts —
+    // softclub had neither hashtags nor place search.
+    const { users = [], hashtags = [], locations = [] } = results.data ?? {};
+    const nothing = users.length === 0 && hashtags.length === 0 && locations.length === 0;
+
+    if (nothing) {
       return (
         <p className="text-ig-text-secondary px-6 py-10 text-center text-sm">{t("noResults")}</p>
       );
@@ -78,6 +85,50 @@ export function SearchResults({
       <ul className="py-2">
         {users.map((user) => (
           <SearchUserRow key={user.id} user={user} onSelect={handleSelect} />
+        ))}
+
+        {hashtags.map((hashtag) => (
+          <li key={`h${hashtag.id}`}>
+            <Link
+              href={ROUTES.hashtag(hashtag.name)}
+              onClick={onNavigate}
+              className="hover:bg-ig-bg-secondary flex items-center gap-3 px-6 py-2"
+            >
+              <span className="bg-ig-button-secondary text-ig-text flex size-11 shrink-0 items-center justify-center rounded-full">
+                <Hash className="size-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="text-ig-text block truncate text-sm font-semibold">
+                  #{hashtag.name}
+                </span>
+                <span className="text-ig-text-secondary block text-sm">
+                  {t("postsCount", { count: formatCount(hashtag.postsCount) })}
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+
+        {locations.map((location) => (
+          <li key={`l${location.id}`}>
+            <Link
+              href={ROUTES.location(location.id)}
+              onClick={onNavigate}
+              className="hover:bg-ig-bg-secondary flex items-center gap-3 px-6 py-2"
+            >
+              <span className="bg-ig-button-secondary text-ig-text flex size-11 shrink-0 items-center justify-center rounded-full">
+                <MapPin className="size-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="text-ig-text block truncate text-sm font-semibold">
+                  {location.city}
+                </span>
+                <span className="text-ig-text-secondary block truncate text-sm">
+                  {[location.state, location.country].filter(Boolean).join(", ")}
+                </span>
+              </span>
+            </Link>
+          </li>
         ))}
       </ul>
     );
@@ -89,6 +140,14 @@ export function SearchResults({
   const texts = textHistory.data ?? [];
   const accounts = userHistory.data ?? [];
   const isEmpty = texts.length === 0 && accounts.length === 0;
+
+  // Truly chronological now. Phase 8 had to show accounts, then queries, and say
+  // so out loud: softclub's history had no timestamp, and the two kinds came
+  // from different id sequences (bug #14). Both carry `createdAt` here.
+  const recent = [
+    ...accounts.map((row) => ({ kind: "user" as const, at: row.createdAt, row })),
+    ...texts.map((row) => ({ kind: "text" as const, at: row.createdAt, row })),
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   return (
     <div className="py-2">
@@ -127,43 +186,43 @@ export function SearchResults({
         <p className="text-ig-text-secondary px-6 py-10 text-center text-sm">{t("noRecent")}</p>
       ) : (
         <ul>
-          {accounts.map((row) => (
-            <SearchUserRow
-              key={`u${row.id}`}
-              user={row.user}
-              onSelect={handleSelect}
-              onRemove={() => deleteUser.mutate(row.id)}
-            />
-          ))}
-
-          {texts.map((row) => (
-            <li
-              key={`t${row.id}`}
-              className="hover:bg-ig-bg-secondary flex items-center gap-3 px-6 py-2"
-            >
-              <button
-                type="button"
-                onClick={() => onPickTerm(row.text)}
-                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          {recent.map((entry) =>
+            entry.kind === "user" ? (
+              <SearchUserRow
+                key={`u${entry.row.id}`}
+                user={entry.row.user}
+                onSelect={handleSelect}
+                onRemove={() => deleteUser.mutate(entry.row.id)}
+              />
+            ) : (
+              <li
+                key={`t${entry.row.id}`}
+                className="hover:bg-ig-bg-secondary flex items-center gap-3 px-6 py-2"
               >
-                <span className="bg-ig-button-secondary text-ig-text-secondary flex size-11 shrink-0 items-center justify-center rounded-full">
-                  <Search className="size-5" />
-                </span>
-                <span className="text-ig-text min-w-0 truncate text-sm font-semibold">
-                  {row.text}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => onPickTerm(entry.row.text)}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <span className="bg-ig-button-secondary text-ig-text-secondary flex size-11 shrink-0 items-center justify-center rounded-full">
+                    <Search className="size-5" />
+                  </span>
+                  <span className="text-ig-text min-w-0 truncate text-sm font-semibold">
+                    {entry.row.text}
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => deleteText.mutate(row.id)}
-                aria-label={t("remove")}
-                className="text-ig-text-secondary hover:text-ig-text shrink-0 p-1"
-              >
-                <X className="size-4" />
-              </button>
-            </li>
-          ))}
+                <button
+                  type="button"
+                  onClick={() => deleteText.mutate(entry.row.id)}
+                  aria-label={t("remove")}
+                  className="text-ig-text-secondary hover:text-ig-text shrink-0 p-1"
+                >
+                  <X className="size-4" />
+                </button>
+              </li>
+            ),
+          )}
         </ul>
       )}
     </div>

@@ -16,6 +16,7 @@ import { cursorParams, nextCursor } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
 import { postService, type CreatePostInput } from "@/services/post.service";
 import { profileService } from "@/services/profile.service";
+import { searchService } from "@/services/search.service";
 import type { PostDto, ReportPostDto, ShareDto } from "@/types/api.types";
 
 /**
@@ -89,11 +90,18 @@ export function useReels() {
   });
 }
 
-/** /explore — other people's posts (docs/screenshots/img23). */
+/**
+ * /explore — docs/screenshots/img23.
+ *
+ * `/search/explore` is the endpoint built for this grid (photos and videos
+ * mixed, ranked); `/posts` is the plain "other people's posts" list we used
+ * before it existed in our services.
+ */
 export function useExplorePosts() {
   return useInfiniteQuery({
     queryKey: queryKeys.posts.explore(),
-    queryFn: ({ pageParam }) => postService.getPosts(cursorParams(pageParam, EXPLORE_PAGE_SIZE)),
+    queryFn: ({ pageParam }) =>
+      searchService.getExplore(cursorParams(pageParam, EXPLORE_PAGE_SIZE)),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => nextCursor(lastPage, EXPLORE_PAGE_SIZE),
   });

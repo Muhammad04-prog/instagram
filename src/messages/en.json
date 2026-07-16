@@ -476,7 +476,8 @@
     "clearAllDescription": "You won't be able to undo this. Recent searches and visited profiles will be removed.",
     "remove": "Remove",
     "clear": "Clear",
-    "followers": "{count, plural, one {# follower} other {# followers}}"
+    "followers": "{count, plural, one {# follower} other {# followers}}",
+    "postsCount": "{count} posts"
   },
   "errors": {
     "title": "Something went wrong",
@@ -505,7 +506,9 @@
     "title": "Explore",
     "empty": "Nothing to explore yet",
     "hashtagSubtitle": "Posts with this hashtag",
-    "hashtagEmpty": "No posts with #{name} yet"
+    "hashtagEmpty": "No posts with #{name} yet",
+    "locationNoFeed": "Posts from this place aren't available",
+    "locationNoFeedDescription": "The API has no \"posts by location\" endpoint yet, so this grid would be invented rather than real."
   },
   "locations": {
     "title": "Locations",
