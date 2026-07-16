@@ -19,6 +19,16 @@ const nextConfig: NextConfig = {
         hostname: "backend-instagram-kvv4.onrender.com",
         pathname: "/**",
       },
+      /**
+       * Spotify album art. `SpotifyTrackDto.albumCover` is Spotify's own CDN —
+       * the track is not ours until it is imported, so the cover is served from
+       * their host and this entry is what lets <Image> render it at all.
+       */
+      {
+        protocol: "https",
+        hostname: "i.scdn.co",
+        pathname: "/**",
+      },
     ],
   },
 };

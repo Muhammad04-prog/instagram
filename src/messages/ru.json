@@ -659,6 +659,14 @@
     "closePlayer": "Закрыть плеер",
     "playTrack": "Слушать {title}",
     "uses": "{count} публикаций",
-    "savedState": "Сохранено"
+    "savedState": "Сохранено",
+    "library": "Наша музыка",
+    "spotify": "Spotify",
+    "preview": "Превью",
+    "preview30": "превью 30 сек",
+    "noPreview": "без превью",
+    "openInSpotify": "Открыть в Spotify",
+    "import": "Добавить в мою музыку",
+    "spotifyNote": "Трек добавляется в вашу музыку — после этого он играет целиком."
   }
 }

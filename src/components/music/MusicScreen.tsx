@@ -2,7 +2,8 @@
 
 import type { InfiniteData, UseInfiniteQueryResult } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { SpotifyResults } from "@/components/music/SpotifyResults";
 import { TrackRow } from "@/components/music/TrackRow";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
@@ -36,34 +37,54 @@ export function MusicScreen() {
         className="bg-ig-button-secondary text-ig-text placeholder:text-ig-text-secondary h-10 w-full rounded-lg px-4 text-sm outline-none"
       />
 
+      {/* Searching swaps the tabs rather than the whole screen: the same term
+          asks two catalogues — ours, and Spotify's for what we do not have. */}
       {debounced ? (
-        <SearchResults term={debounced} />
+        <MusicTabs
+          tabs={[
+            { value: "library", content: <SearchResults term={debounced} /> },
+            { value: "spotify", content: <SpotifyResults term={debounced} /> },
+          ]}
+        />
       ) : (
-        <Tabs defaultValue="trending">
-          <TabsList
-            variant="line"
-            className="border-ig-separator mb-2 h-auto w-full justify-start gap-8 rounded-none border-b bg-transparent p-0"
-          >
-            {(["trending", "saved"] as const).map((tab) => (
-              <TabsTrigger
-                key={tab}
-                value={tab}
-                className="text-ig-text-secondary data-active:text-ig-text data-active:border-b-ig-text flex-none rounded-none border-b-2 border-b-transparent py-3 text-sm font-semibold"
-              >
-                {t(tab)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value="trending">
-            <TrendingList />
-          </TabsContent>
-          <TabsContent value="saved">
-            <SavedList />
-          </TabsContent>
-        </Tabs>
+        <MusicTabs
+          tabs={[
+            { value: "trending", content: <TrendingList /> },
+            { value: "saved", content: <SavedList /> },
+          ]}
+        />
       )}
     </div>
+  );
+}
+
+/** The tab strip is the same in both modes; only what it holds changes. */
+function MusicTabs({ tabs }: { tabs: { value: string; content: ReactNode }[] }) {
+  const t = useTranslations("music");
+
+  return (
+    <Tabs defaultValue={tabs[0]?.value}>
+      <TabsList
+        variant="line"
+        className="border-ig-separator mb-2 h-auto w-full justify-start gap-8 rounded-none border-b bg-transparent p-0"
+      >
+        {tabs.map((tab) => (
+          <TabsTrigger
+            key={tab.value}
+            value={tab.value}
+            className="text-ig-text-secondary data-active:text-ig-text data-active:border-b-ig-text flex-none rounded-none border-b-2 border-b-transparent py-3 text-sm font-semibold"
+          >
+            {t(tab.value)}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      {tabs.map((tab) => (
+        <TabsContent key={tab.value} value={tab.value}>
+          {tab.content}
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }
 

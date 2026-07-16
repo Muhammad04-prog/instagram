@@ -11,7 +11,7 @@
 Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
 не сверен.
 
-**Покрытие: 152 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 155 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 4/4
 
@@ -225,13 +225,13 @@
 | [ ] | GET   | `/search/top`            | `search.getTop`     | Тренды: популярные хэштеги + аккаунты недели                      |
 | [x] | GET   | `/search/hashtag/{name}` | `search.getHashtag` | Все посты с хэштегом (cursor)                                     |
 
-## spotify — 0/3
+## spotify — 3/3
 
-| ✓   | Метод  | Путь                               | Сервис | Что делает                 |
-| --- | ------ | ---------------------------------- | ------ | -------------------------- |
-| [ ] | GET    | `/spotify/search`                  | —      | Поиск треков в Spotify     |
-| [ ] | POST   | `/spotify/tracks/{spotifyId}/save` | —      | Сохранить трек из Spotify  |
-| [ ] | DELETE | `/spotify/tracks/{spotifyId}/save` | —      | Убрать трек из сохранённых |
+| ✓   | Метод  | Путь                               | Сервис           | Что делает                 |
+| --- | ------ | ---------------------------------- | ---------------- | -------------------------- |
+| [x] | GET    | `/spotify/search`                  | `spotify.search` | Поиск треков в Spotify     |
+| [x] | POST   | `/spotify/tracks/{spotifyId}/save` | `spotify.save`   | Сохранить трек из Spotify  |
+| [x] | DELETE | `/spotify/tracks/{spotifyId}/save` | `spotify.unsave` | Убрать трек из сохранённых |
 
 ## stories — 12/12
 

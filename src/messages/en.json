@@ -659,6 +659,14 @@
     "closePlayer": "Close player",
     "playTrack": "Play {title}",
     "uses": "{count} posts",
-    "savedState": "Saved"
+    "savedState": "Saved",
+    "library": "Library",
+    "spotify": "Spotify",
+    "preview": "Preview",
+    "preview30": "30s preview",
+    "noPreview": "no preview",
+    "openInSpotify": "Open in Spotify",
+    "import": "Add to my music",
+    "spotifyNote": "Adding a track imports it into your music — then it plays in full."
   }
 }

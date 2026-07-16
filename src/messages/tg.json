@@ -659,6 +659,14 @@
     "closePlayer": "Плеерро пӯшидан",
     "playTrack": "{title}-ро гӯш кардан",
     "uses": "{count} публикатсия",
-    "savedState": "Захира шуд"
+    "savedState": "Захира шуд",
+    "library": "Мусиқии мо",
+    "spotify": "Spotify",
+    "preview": "Превю",
+    "preview30": "превюи 30 сония",
+    "noPreview": "бе превю",
+    "openInSpotify": "Дар Spotify кушодан",
+    "import": "Ба мусиқии ман илова",
+    "spotifyNote": "Трек ба мусиқии шумо ворид мешавад — баъд аз он пурра садо медиҳад."
   }
 }

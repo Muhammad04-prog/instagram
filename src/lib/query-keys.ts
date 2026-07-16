@@ -98,6 +98,10 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.music.all, "detail", id] as const,
     saved: () => [...queryKeys.music.all, "saved"] as const,
   },
+  spotify: {
+    all: ["spotify"] as const,
+    search: (q: string) => [...queryKeys.spotify.all, "search", q] as const,
+  },
   live: {
     all: ["live"] as const,
     feed: () => [...queryKeys.live.all, "feed"] as const,
