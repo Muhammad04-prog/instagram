@@ -57,6 +57,12 @@ export const ROUTES = {
   createPost: "/post/create",
   post: (postId: number | string) => `/post/${postId}`,
   stories: (userId: string) => `/stories/${userId}`,
+  hashtag: (name: string) => `/explore/tags/${encodeURIComponent(name)}`,
+  /**
+   * @mention target. There is no username→id endpoint and profile routes need
+   * the uuid, so this page resolves the name and forwards to /profile/{id}.
+   */
+  userByName: (userName: string) => `/u/${encodeURIComponent(userName)}`,
   myProfile: "/profile/me",
   profile: (userId: string) => `/profile/${userId}`,
   editProfile: "/profile/edit",

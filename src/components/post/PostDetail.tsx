@@ -5,6 +5,7 @@ import { PostActions } from "@/components/post/PostActions";
 import { PostCarousel } from "@/components/post/PostCarousel";
 import { CommentForm, CommentList } from "@/components/post/PostComments";
 import { PostHeader } from "@/components/post/PostHeader";
+import { RichCaption } from "@/components/post/RichCaption";
 import { PostDetailSkeleton } from "@/components/post/PostSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -59,7 +60,7 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
                 <Link href={ROUTES.profile(post.author.id)} className="mr-1.5 font-semibold">
                   {post.author.userName}
                 </Link>
-                {post.caption}
+                <RichCaption text={post.caption} />
               </p>
             </div>
           ) : null}

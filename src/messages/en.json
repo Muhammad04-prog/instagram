@@ -177,7 +177,14 @@
     "reportPost": "Report",
     "reportPostDescription": "We won't tell them who reported this post.",
     "reportReasonDefault": "Spam or inappropriate content",
-    "reportSent": "Thanks for letting us know."
+    "reportSent": "Thanks for letting us know.",
+    "reply": "Reply",
+    "hideReplies": "Hide replies",
+    "loadingReplies": "Loading replies…",
+    "addLocation": "Add location",
+    "removeLocation": "Remove location",
+    "tagPeople": "Tag people",
+    "removeTag": "Remove {userName}"
   },
   "story": {
     "yourStory": "Your story",
@@ -329,7 +336,8 @@
     "activity_POST_VIEW": "You viewed a post",
     "activity_SEARCH": "You searched",
     "fullName": "Name",
-    "dobHint": "This won't be part of your public profile."
+    "dobHint": "This won't be part of your public profile.",
+    "userNotFound": "Sorry, we couldn't find @{userName}."
   },
   "settings": {
     "title": "Settings",
@@ -396,7 +404,9 @@
   },
   "explore": {
     "title": "Explore",
-    "empty": "Nothing to explore yet"
+    "empty": "Nothing to explore yet",
+    "hashtagSubtitle": "Posts with this hashtag",
+    "hashtagEmpty": "No posts with #{name} yet"
   },
   "locations": {
     "title": "Locations",

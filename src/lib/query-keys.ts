@@ -55,6 +55,12 @@ export const queryKeys = {
     savedMusic: () => [...queryKeys.profile.all, "saved-music"] as const,
     activity: () => [...queryKeys.profile.all, "activity"] as const,
   },
+  search: {
+    all: ["search"] as const,
+    combined: (q: string) => [...queryKeys.search.all, "combined", q] as const,
+    top: () => [...queryKeys.search.all, "top"] as const,
+    hashtag: (name: string) => [...queryKeys.search.all, "hashtag", name] as const,
+  },
   notifications: {
     all: ["notifications"] as const,
     list: () => [...queryKeys.notifications.all, "list"] as const,

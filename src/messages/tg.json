@@ -177,7 +177,14 @@
     "reportPost": "Шикоят",
     "reportPostDescription": "Мо намегӯем, ки шикоятро кӣ фиристод.",
     "reportReasonDefault": "Спам ё мундариҷаи номуносиб",
-    "reportSent": "Ташаккур, шикоят қабул шуд."
+    "reportSent": "Ташаккур, шикоят қабул шуд.",
+    "reply": "Ҷавоб",
+    "hideReplies": "Пинҳон кардани ҷавобҳо",
+    "loadingReplies": "Боркунии ҷавобҳо…",
+    "addLocation": "Илова кардани ҷой",
+    "removeLocation": "Хориҷ кардани ҷой",
+    "tagPeople": "Одамонро қайд кунед",
+    "removeTag": "Хориҷ кардани {userName}"
   },
   "story": {
     "yourStory": "Ҳикояи шумо",
@@ -329,7 +336,8 @@
     "activity_POST_VIEW": "Шумо нашрро дидед",
     "activity_SEARCH": "Шумо ҷустуҷӯ кардед",
     "fullName": "Ном",
-    "dobHint": "Ин маълумот дар профили шумо нишон дода намешавад."
+    "dobHint": "Ин маълумот дар профили шумо нишон дода намешавад.",
+    "userNotFound": "@{userName} ёфт нашуд."
   },
   "settings": {
     "title": "Танзимот",
@@ -396,7 +404,9 @@
   },
   "explore": {
     "title": "Ҷолиб",
-    "empty": "Ҳанӯз чизе барои нишон додан нест"
+    "empty": "Ҳанӯз чизе барои нишон додан нест",
+    "hashtagSubtitle": "Нашрҳо бо ин хештег",
+    "hashtagEmpty": "Ҳанӯз нашре бо #{name} нест"
   },
   "locations": {
     "title": "Ҷойҳо",

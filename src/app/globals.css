@@ -21,6 +21,9 @@
   --ig-button-secondary-hover: #dbdbdb;
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
+  /* Hashtags and @mentions inside text. IG uses a deeper blue than the buttons:
+     #0095f6 at text size on white is too light to read comfortably. */
+  --ig-link: #00376b;
   --ig-danger: #ed4956;
   /* Positive confirmation (username available). IG greens this state; there was
      no success token before because nothing in the old API could succeed softly. */
@@ -107,6 +110,8 @@
   --ig-button-secondary-hover: #262626;
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
+  /* On black the link blue inverts — light instead of dark. */
+  --ig-link: #e0f1ff;
   --ig-danger: #ed4956;
   /* Positive confirmation (username available). IG greens this state; there was
      no success token before because nothing in the old API could succeed softly. */
@@ -165,6 +170,7 @@
   --color-ig-button-secondary-hover: var(--ig-button-secondary-hover);
   --color-ig-primary: var(--ig-primary);
   --color-ig-primary-hover: var(--ig-primary-hover);
+  --color-ig-link: var(--ig-link);
   --color-ig-danger: var(--ig-danger);
   --color-ig-success: var(--ig-success);
   --color-ig-badge: var(--ig-badge);

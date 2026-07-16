@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import Cropper from "react-easy-crop";
 import { toast } from "sonner";
+import { LocationPicker } from "@/components/post/LocationPicker";
+import { TagPeoplePicker } from "@/components/post/TagPeoplePicker";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +16,7 @@ import { cropImageToFile, type CropArea } from "@/lib/crop";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { isVideoFile } from "@/types/post.types";
+import type { LocationDto, UserBriefDto } from "@/types/api.types";
 
 const CAPTION_MAX = 2200;
 const ASPECTS = { square: 1, portrait: 4 / 5 } as const;
@@ -44,6 +47,8 @@ export function CreatePost() {
   const [zoom, setZoom] = useState(1);
   const [areas, setAreas] = useState<Record<number, CropArea>>({});
   const [caption, setCaption] = useState("");
+  const [location, setLocation] = useState<LocationDto | null>(null);
+  const [tagged, setTagged] = useState<UserBriefDto[]>([]);
   const [cancelOpen, setCancelOpen] = useState(false);
 
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
@@ -69,9 +74,14 @@ export function CreatePost() {
     );
 
     addPost.mutate(
-      // Location, music, tagged people and filters exist on this endpoint now;
-      // wiring them into the stepper (img31–img33) is Phase 14.
-      { media: prepared, caption },
+      {
+        media: prepared,
+        caption,
+        ...(location ? { locationId: location.id } : {}),
+        ...(tagged.length ? { taggedUserIds: tagged.map((user) => user.id) } : {}),
+        // A video-only post is a reel; IG makes the same call.
+        ...(prepared.every(isVideoFile) ? { isReel: true } : {}),
+      },
       {
         onSuccess: () => {
           toast.success(t("published"));
@@ -245,6 +255,11 @@ export function CreatePost() {
               <p className="text-ig-text-secondary text-right text-xs">
                 {caption.length}/{CAPTION_MAX}
               </p>
+
+              {/* img33's "Add location" — real at last: `add-post` had no such
+                  field on softclub, so the button would have saved nothing. */}
+              <LocationPicker value={location} onChange={setLocation} />
+              <TagPeoplePicker value={tagged} onChange={setTagged} />
             </div>
           </div>
         ) : null}

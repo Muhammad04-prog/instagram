@@ -9,6 +9,7 @@ import { PostLikesDialog } from "@/components/post/PostLikesDialog";
 import { PostCarousel } from "@/components/post/PostCarousel";
 import { CommentForm } from "@/components/post/PostComments";
 import { PostHeader } from "@/components/post/PostHeader";
+import { RichCaption } from "@/components/post/RichCaption";
 import { useLikePost, useViewPost } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -102,7 +103,7 @@ export function PostCard({ post }: { post: PostDto }) {
           <Link href={ROUTES.profile(post.author.id)} className="mr-1.5 font-semibold">
             {post.author.userName}
           </Link>
-          {shown}
+          <RichCaption text={shown} />
           {isLong && !expanded ? (
             <button
               type="button"

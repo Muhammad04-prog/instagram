@@ -177,7 +177,14 @@
     "reportPost": "Пожаловаться",
     "reportPostDescription": "Мы не сообщим, кто отправил жалобу.",
     "reportReasonDefault": "Спам или неприемлемый контент",
-    "reportSent": "Спасибо, мы получили жалобу."
+    "reportSent": "Спасибо, мы получили жалобу.",
+    "reply": "Ответить",
+    "hideReplies": "Скрыть ответы",
+    "loadingReplies": "Загрузка ответов…",
+    "addLocation": "Добавить место",
+    "removeLocation": "Убрать место",
+    "tagPeople": "Отметить людей",
+    "removeTag": "Убрать {userName}"
   },
   "story": {
     "yourStory": "Ваша история",
@@ -329,7 +336,8 @@
     "activity_POST_VIEW": "Вы посмотрели публикацию",
     "activity_SEARCH": "Вы искали",
     "fullName": "Имя",
-    "dobHint": "Эти данные не будут видны в вашем профиле."
+    "dobHint": "Эти данные не будут видны в вашем профиле.",
+    "userNotFound": "Не удалось найти @{userName}."
   },
   "settings": {
     "title": "Настройки",
@@ -396,7 +404,9 @@
   },
   "explore": {
     "title": "Интересное",
-    "empty": "Пока нечего показать"
+    "empty": "Пока нечего показать",
+    "hashtagSubtitle": "Публикации с этим хэштегом",
+    "hashtagEmpty": "Публикаций с #{name} пока нет"
   },
   "locations": {
     "title": "Места",

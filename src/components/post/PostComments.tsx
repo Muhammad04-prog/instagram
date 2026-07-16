@@ -5,9 +5,17 @@ import { useState } from "react";
 import { HeartIcon } from "@/components/icons";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { useAddComment, useComments, useDeleteComment, useLikeComment } from "@/hooks/useComments";
+import {
+  useAddComment,
+  useCommentReplies,
+  useComments,
+  useDeleteComment,
+  useLikeComment,
+  useReplyToComment,
+} from "@/hooks/useComments";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { RichCaption } from "@/components/post/RichCaption";
 import { cn, formatCount } from "@/lib/utils";
 import type { CommentDto } from "@/types/api.types";
 
@@ -40,7 +48,7 @@ export function CommentList({ postId, className }: { postId: number; className?:
     <div className={className}>
       <ul className="space-y-4">
         {comments.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} postId={postId} />
+          <CommentThread key={comment.id} comment={comment} postId={postId} />
         ))}
       </ul>
 
@@ -58,7 +66,16 @@ export function CommentList({ postId, className }: { postId: number; className?:
   );
 }
 
-function CommentItem({ comment, postId }: { comment: CommentDto; postId: number }) {
+function CommentItem({
+  comment,
+  postId,
+  onReply,
+}: {
+  comment: CommentDto;
+  postId: number;
+  /** Absent on a reply — IG's threads are one level deep. */
+  onReply?: () => void;
+}) {
   const t = useTranslations("common");
   const tPost = useTranslations("post");
   const format = useFormatter();
@@ -78,7 +95,7 @@ function CommentItem({ comment, postId }: { comment: CommentDto; postId: number 
           <Link href={ROUTES.profile(author.id)} className="mr-1.5 font-semibold">
             {author.userName}
           </Link>
-          {comment.text}
+          <RichCaption text={comment.text} />
         </p>
 
         <div className="text-ig-text-secondary mt-1 flex items-center gap-3 text-xs">
@@ -90,10 +107,10 @@ function CommentItem({ comment, postId }: { comment: CommentDto; postId: number 
             <span className="font-semibold">{tPost("likes", { count: comment.likesCount })}</span>
           ) : null}
 
-          {comment.repliesCount > 0 ? (
-            <span className="font-semibold">
-              {tPost("viewReplies", { count: formatCount(comment.repliesCount) })}
-            </span>
+          {onReply ? (
+            <button type="button" onClick={onReply} className="font-semibold">
+              {tPost("reply")}
+            </button>
           ) : null}
 
           {/* The server decides who may delete — no need to compare ids here. */}
@@ -123,6 +140,137 @@ function CommentItem({ comment, postId }: { comment: CommentDto; postId: number 
         />
       </button>
     </li>
+  );
+}
+
+/**
+ * A root comment with its replies underneath.
+ *
+ * Threads are one level deep, as on IG: a reply has no Reply button of its own,
+ * it just @mentions the person. `repliesCount` comes with the comment, so the
+ * "View replies (N)" line can be drawn without fetching anything — the replies
+ * themselves are only fetched when the line is clicked.
+ */
+function CommentThread({ comment, postId }: { comment: CommentDto; postId: number }) {
+  const [repliesOpen, setRepliesOpen] = useState(false);
+  const [replying, setReplying] = useState(false);
+
+  return (
+    <li>
+      <ul>
+        <CommentItem comment={comment} postId={postId} onReply={() => setReplying(true)} />
+      </ul>
+
+      {replying ? (
+        <ReplyForm
+          postId={postId}
+          commentId={comment.id}
+          userName={comment.author.userName}
+          onDone={() => {
+            setReplying(false);
+            setRepliesOpen(true);
+          }}
+        />
+      ) : null}
+
+      {comment.repliesCount > 0 ? (
+        <ReplyThread
+          comment={comment}
+          postId={postId}
+          open={repliesOpen}
+          onToggle={() => setRepliesOpen((value) => !value)}
+        />
+      ) : null}
+    </li>
+  );
+}
+
+/** One level of replies, fetched only when the thread is opened. */
+function ReplyThread({
+  comment,
+  postId,
+  open,
+  onToggle,
+}: {
+  comment: CommentDto;
+  postId: number;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const tPost = useTranslations("post");
+  const { data, isFetching } = useCommentReplies(comment.id, open);
+  const replies = data?.pages.flat() ?? [];
+
+  return (
+    <div className="mt-2 ml-11 space-y-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="text-ig-text-secondary flex items-center gap-3 text-xs font-semibold"
+      >
+        <span className="bg-ig-text-secondary block h-px w-6" />
+        {open
+          ? tPost("hideReplies")
+          : tPost("viewReplies", { count: formatCount(comment.repliesCount) })}
+      </button>
+
+      {open && isFetching && replies.length === 0 ? (
+        <p className="text-ig-text-secondary text-xs">{tPost("loadingReplies")}</p>
+      ) : null}
+
+      {open ? (
+        <ul className="space-y-3">
+          {replies.map((reply) => (
+            <CommentItem key={reply.id} comment={reply} postId={postId} />
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/** Inline "reply to this comment" box. */
+function ReplyForm({
+  postId,
+  commentId,
+  userName,
+  onDone,
+}: {
+  postId: number;
+  commentId: number;
+  userName: string;
+  onDone: () => void;
+}) {
+  const t = useTranslations("post");
+  // Pre-fills the @mention, exactly as IG does when you tap Reply.
+  const [value, setValue] = useState(`@${userName} `);
+  const reply = useReplyToComment(postId, commentId);
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        const text = value.trim();
+        if (!text) return;
+        reply.mutate({ text }, { onSuccess: onDone });
+      }}
+      className="mt-2 ml-11 flex items-center gap-2"
+    >
+      <input
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        autoFocus
+        aria-label={t("reply")}
+        className="border-ig-separator text-ig-text placeholder:text-ig-text-secondary flex-1 border-b bg-transparent pb-1 text-sm outline-none"
+      />
+      <button
+        type="submit"
+        disabled={!value.trim() || reply.isPending}
+        className="text-ig-primary text-sm font-semibold disabled:opacity-40"
+      >
+        {t("publish")}
+      </button>
+    </form>
   );
 }
 
