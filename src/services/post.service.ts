@@ -41,7 +41,13 @@ export interface CreatePostInput {
  * Every list is cursor-paginated and answers a bare array; see `lib/cursor.ts`.
  */
 export const postService = {
-  /** Explore — other people's posts (private accounts and blocks excluded server-side). */
+  /**
+   * Explore — other people's posts (private accounts and blocks excluded server-side).
+   *
+   * Superseded by `searchService.getExplore` (`/search/explore`), which returns
+   * the same posts ranked; see `useExplorePosts`. Kept because the endpoint
+   * exists, but nothing calls it.
+   */
   getPosts: (params: CursorParams) => http.get<PostDto[]>("/posts", params),
 
   getFeed: (params: CursorParams) => http.get<PostDto[]>("/posts/feed", params),

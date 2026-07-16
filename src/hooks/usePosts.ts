@@ -96,6 +96,11 @@ export function useReels() {
  * `/search/explore` is the endpoint built for this grid (photos and videos
  * mixed, ranked); `/posts` is the plain "other people's posts" list we used
  * before it existed in our services.
+ *
+ * So `postService.getPosts` stays deliberately uncalled: it returns the same
+ * posts unranked, and no screenshot asks for a second, chronological grid.
+ * Switching this hook over — or inventing a "Recent" tab — would tick a box in
+ * API_MAP_V2 by making Explore worse.
  */
 export function useExplorePosts() {
   return useInfiniteQuery({

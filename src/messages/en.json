@@ -273,6 +273,9 @@
     "newHighlight": "New",
     "highlightTitle": "Highlight name",
     "highlightCreated": "Highlight created",
+    "editHighlight": "Edit highlight",
+    "highlightUpdated": "Highlight updated",
+    "editHighlightHint": "{count, plural, one {It holds # story. Picking stories replaces what is in it — pick none to just rename.} other {It holds # stories. Picking stories replaces what is in it — pick none to just rename.}}",
     "noArchivedStories": "No stories to add yet",
     "deleteHighlight": "Delete highlight",
     "deleteHighlightConfirm": "The highlight is removed from your profile. The stories inside it are kept in your archive.",
@@ -450,7 +453,9 @@
     "activity_SEARCH": "You searched",
     "fullName": "Name",
     "dobHint": "This won't be part of your public profile.",
-    "userNotFound": "Sorry, we couldn't find @{userName}."
+    "userNotFound": "Sorry, we couldn't find @{userName}.",
+    "reposts": "Reposts",
+    "noReposts": "No reposts yet"
   },
   "settings": {
     "title": "Settings",
@@ -500,6 +505,8 @@
   "errors": {
     "title": "Something went wrong",
     "description": "An unexpected error occurred. Please try again.",
+    "serviceDownTitle": "Instagram is having trouble",
+    "serviceDown": "This is on our side, not your connection. We are working on it — try again in a few minutes.",
     "notFound": "Page not found",
     "notFoundDescription": "The link you followed may be broken, or the page may have been removed.",
     "backHome": "Go back to Instagram",
@@ -526,7 +533,8 @@
     "hashtagSubtitle": "Posts with this hashtag",
     "hashtagEmpty": "No posts with #{name} yet",
     "locationNoFeed": "Posts from this place aren't available",
-    "locationNoFeedDescription": "The API has no \"posts by location\" endpoint yet, so this grid would be invented rather than real."
+    "locationNoFeedDescription": "The API has no \"posts by location\" endpoint yet, so this grid would be invented rather than real.",
+    "accountsOfTheWeek": "Accounts of the week"
   },
   "locations": {
     "title": "Locations",
@@ -659,6 +667,9 @@
     "goLiveSubtitle": "Your followers will see you as {userName}.",
     "titlePlaceholder": "Add a title (optional)",
     "goLiveNotice": "Video is not connected yet — your broadcast will open with comments, likes and viewers, but no picture.",
+    "addCover": "Add a cover",
+    "removeCover": "Remove cover",
+    "coverHint": "Shown whenever your camera is off.",
     "cameraOffMine": "Your camera is off"
   },
   "music": {

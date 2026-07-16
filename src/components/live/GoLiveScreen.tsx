@@ -2,12 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { LiveCoverPicker } from "@/components/live/LiveCoverPicker";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useStartLive } from "@/hooks/useLive";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import type { UploadedMediaDto } from "@/types/api.types";
 
 /**
  * The pre-flight screen: name the broadcast, then open the room.
@@ -23,6 +25,7 @@ export function GoLiveScreen() {
   const { data: profile } = useMyProfile();
   const start = useStartLive();
   const [title, setTitle] = useState("");
+  const [cover, setCover] = useState<UploadedMediaDto | null>(null);
 
   return (
     <div className="mx-auto w-full max-w-[400px] space-y-6 py-10 text-center">
@@ -43,14 +46,19 @@ export function GoLiveScreen() {
         className="bg-ig-button-secondary text-ig-text placeholder:text-ig-text-secondary h-11 w-full rounded-lg px-4 text-sm outline-none"
       />
 
+      <LiveCoverPicker cover={cover} onChange={setCover} />
+
       <p className="text-ig-text-secondary text-xs">{t("goLiveNotice")}</p>
 
       <button
         type="button"
         onClick={() =>
           start.mutate(
-            // An untitled broadcast is fine — send nothing rather than "".
-            title.trim() ? { title: title.trim() } : {},
+            // Both fields are optional — send neither rather than "".
+            {
+              ...(title.trim() ? { title: title.trim() } : {}),
+              ...(cover ? { coverUrl: cover.url } : {}),
+            },
             { onSuccess: ({ live }) => router.replace(ROUTES.live(live.id)) },
           )
         }

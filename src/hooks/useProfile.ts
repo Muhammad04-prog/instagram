@@ -111,11 +111,12 @@ export function useMyActivity() {
   });
 }
 
-export function useMyReposts() {
+export function useMyReposts(enabled = true) {
   return useInfiniteQuery({
     queryKey: queryKeys.profile.reposts(),
     queryFn: ({ pageParam }) => profileService.getMyReposts(cursorParams(pageParam, PAGE_SIZE)),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+    enabled,
   });
 }

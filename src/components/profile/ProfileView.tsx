@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { BookmarkIcon, GridIcon, TaggedIcon } from "@/components/icons";
+import { BookmarkIcon, GridIcon, RepostIcon, TaggedIcon } from "@/components/icons";
 import { PostGrid, PostGridSkeleton } from "@/components/profile/PostGrid";
 import { HighlightCircles } from "@/components/profile/HighlightCircles";
 import { PrivateAccountGate } from "@/components/profile/PrivateAccountGate";
@@ -11,7 +11,7 @@ import { ProfileHeaderSkeleton } from "@/components/profile/ProfileSkeleton";
 import { ProfileTabs, type ProfileTab } from "@/components/profile/ProfileTabs";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { useFavorites, useMyProfile, useUserProfile } from "@/hooks/useProfile";
+import { useFavorites, useMyProfile, useMyReposts, useUserProfile } from "@/hooks/useProfile";
 import { useMyPosts, useUserPosts, useUserReels, useUserTagged } from "@/hooks/usePosts";
 import type { PostDto } from "@/types/post.types";
 
@@ -37,12 +37,15 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   const reelsQuery = useUserReels(userId, tab === "reels");
   const taggedQuery = useUserTagged(userId, tab === "tagged");
   const favorites = useFavorites();
+  // /profile/me/reposts — my own only, so it never runs on someone else's page.
+  const repostsQuery = useMyReposts(isMe && tab === "reposts");
 
   const allPosts = useMemo(
     () => (isMe ? myPosts : otherPosts).data?.pages.flat() ?? [],
     [isMe, myPosts, otherPosts],
   );
   const reels = useMemo(() => reelsQuery.data?.pages.flat() ?? [], [reelsQuery.data]);
+  const reposts = useMemo(() => repostsQuery.data?.pages.flat() ?? [], [repostsQuery.data]);
   const tagged = useMemo(() => taggedQuery.data?.pages.flat() ?? [], [taggedQuery.data]);
   const savedPosts = useMemo(() => favorites.data?.pages.flat() ?? [], [favorites.data]);
 
@@ -84,6 +87,13 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
             items={reels}
             emptyIcon={<GridIcon className="size-8" />}
             emptyTitle={t("noReels")}
+          />
+        ) : tab === "reposts" ? (
+          <Panel
+            query={repostsQuery}
+            items={reposts}
+            emptyIcon={<RepostIcon className="size-8" />}
+            emptyTitle={t("noReposts")}
           />
         ) : tab === "saved" ? (
           <Panel

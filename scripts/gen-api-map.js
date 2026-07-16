@@ -174,6 +174,22 @@ lines.push("не сверен.");
 lines.push("");
 lines.push(`**Покрытие: ${done} / ${total}** endpoint'ов вызываются из UI.`);
 lines.push("");
+lines.push("Оставшиеся 4 не подключены **не потому, что не дошли руки** — каждый упирается в то,");
+lines.push("чего у фронта нет. Подробности и что нужно от бэкенда — в [`BACKEND_PROMPT.md`](./BACKEND_PROMPT.md).");
+lines.push("");
+lines.push("| Endpoint | Почему не подключён |");
+lines.push("| -------- | ------------------- |");
+lines.push(
+  "| `POST /chats/{id}/call` | Нет сигналинга: события сокета не описаны, а токен живёт в httpOnly-cookie и в JS не попадает. Звонок без сигналинга никуда не ведёт — кнопку не делаем. |",
+);
+lines.push(
+  "| `POST /live/requests/{id}/accept` | Хосту негде взять id заявки: списка заявок нет, `JoinRequestDto` уходит просившему, в `NotificationDto` нет `requestId`. |",
+);
+lines.push("| `POST /live/requests/{id}/decline` | То же самое. |");
+lines.push(
+  "| `GET /posts` | **Не блокер, а дубль:** сетку Explore питает `/search/explore` — ранжированный endpoint, сделанный ровно под неё. `/posts` отдаёт то же самое плоским списком. Отдельного экрана под него нет ни в одном скриншоте, и выдумывать его ради галочки в карте не стали. |",
+);
+lines.push("");
 
 for (const tag of Object.keys(byTag).sort()) {
   const rows = byTag[tag];

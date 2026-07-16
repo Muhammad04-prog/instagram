@@ -1,15 +1,15 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { BookmarkIcon, GridIcon, RepostIcon, TaggedIcon } from "@/components/icons";
+import { BookmarkIcon, GridIcon, ReelsIcon, RepostIcon, TaggedIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
-export type ProfileTab = "posts" | "saved" | "reels" | "tagged";
+export type ProfileTab = "posts" | "saved" | "reels" | "reposts" | "tagged";
 
 /**
  * Icon-only tab bar, in the order and style of docs/screenshots/img35 —
- * grid → saved → reposts → tagged, active one underlined. "Saved" exists on my
- * own profile only.
+ * grid → saved → reels → reposts → tagged, active one underlined. "Saved" and
+ * "Reposts" exist on my own profile only — both endpoints are /profile/me/*.
  */
 export function ProfileTabs({
   value,
@@ -25,7 +25,9 @@ export function ProfileTabs({
   const tabs: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
     { id: "posts", label: t("postsTab"), icon: <GridIcon /> },
     ...(showSaved ? [{ id: "saved" as const, label: t("saved"), icon: <BookmarkIcon /> }] : []),
-    { id: "reels", label: t("reels"), icon: <RepostIcon /> },
+    // Reels wore the repost arrow — RepostIcon — which is now where it belongs.
+    { id: "reels", label: t("reels"), icon: <ReelsIcon /> },
+    ...(showSaved ? [{ id: "reposts" as const, label: t("reposts"), icon: <RepostIcon /> }] : []),
     { id: "tagged", label: t("tagged"), icon: <TaggedIcon /> },
   ];
 
