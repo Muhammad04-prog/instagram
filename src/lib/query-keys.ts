@@ -91,6 +91,14 @@ export const queryKeys = {
     unreadCount: () => [...queryKeys.notifications.all, "unread-count"] as const,
     profileViews: () => [...queryKeys.notifications.all, "profile-views"] as const,
   },
+  live: {
+    all: ["live"] as const,
+    feed: () => [...queryKeys.live.all, "feed"] as const,
+    byUser: (userId: string) => [...queryKeys.live.all, "user", userId] as const,
+    detail: (id: string) => [...queryKeys.live.all, "detail", id] as const,
+    viewers: (id: string) => [...queryKeys.live.all, "viewers", id] as const,
+    stats: (id: string) => [...queryKeys.live.all, "stats", id] as const,
+  },
   locations: {
     all: ["locations"] as const,
     list: (q: string) => [...queryKeys.locations.all, "list", q] as const,

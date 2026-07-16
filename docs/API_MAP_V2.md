@@ -11,7 +11,7 @@
 Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
 не сверен.
 
-**Покрытие: 131 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 147 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 4/4
 
@@ -103,28 +103,28 @@
 | [ ] | PUT    | `/highlights/{id}`          | `highlight.update`            | Изменить актуальное (title / cover / состав историй) |
 | [x] | DELETE | `/highlights/{id}`          | `highlight.remove`            | Удалить актуальное (истории остаются)                |
 
-## live — 0/18
+## live — 16/18
 
-| ✓   | Метод | Путь                          | Сервис | Что делает                                                      |
-| --- | ----- | ----------------------------- | ------ | --------------------------------------------------------------- |
-| [ ] | POST  | `/live/start`                 | —      | Начать эфир → Live + LiveKit-комната + publisher-токен          |
-| [ ] | GET   | `/live/feed`                  | —      | Активные эфиры подписок (рейл историй)                          |
-| [ ] | GET   | `/live/user/{userId}`         | —      | Активный эфир пользователя (профиль → «В эфире»)                |
-| [ ] | POST  | `/live/requests/{id}/accept`  | —      | Хост принял заявку → гостю publisher-токен (split-экран)        |
-| [ ] | POST  | `/live/requests/{id}/decline` | —      | Хост отклонил заявку → гостю уведомление отказа                 |
-| [ ] | GET   | `/live/{id}`                  | —      | Один эфир                                                       |
-| [ ] | POST  | `/live/{id}/end`              | —      | Завершить эфир (статистика, комната закрывается)                |
-| [ ] | POST  | `/live/{id}/join`             | —      | Зайти зрителем → subscriber-токен (Block + Privacy)             |
-| [ ] | POST  | `/live/{id}/leave`            | —      | Покинуть эфир                                                   |
-| [ ] | GET   | `/live/{id}/viewers`          | —      | Текущие зрители эфира                                           |
-| [ ] | POST  | `/live/{id}/comment`          | —      | Комментарий в эфир                                              |
-| [ ] | POST  | `/live/{id}/like`             | —      | Лайк эфира (можно много раз — всплывающие сердечки)             |
-| [ ] | POST  | `/live/{id}/reaction`         | —      | Реакция-смайл (всплывает у всех)                                |
-| [ ] | POST  | `/live/{id}/request-join`     | —      | Заявка на участие → уведомление хосту                           |
-| [ ] | PUT   | `/live/{id}/camera`           | —      | Камера вкл/выкл (видео выкл → аватар/обложка, звук идёт всегда) |
-| [ ] | PUT   | `/live/{id}/audio`            | —      | Звук вкл/выкл                                                   |
-| [ ] | POST  | `/live/{id}/kick/{userId}`    | —      | Выгнать зрителя/гостя (только хост)                             |
-| [ ] | GET   | `/live/{id}/stats`            | —      | Статистика эфира                                                |
+| ✓   | Метод | Путь                          | Сервис                | Что делает                                                      |
+| --- | ----- | ----------------------------- | --------------------- | --------------------------------------------------------------- |
+| [x] | POST  | `/live/start`                 | `live.start`          | Начать эфир → Live + LiveKit-комната + publisher-токен          |
+| [x] | GET   | `/live/feed`                  | `live.getFeed`        | Активные эфиры подписок (рейл историй)                          |
+| [x] | GET   | `/live/user/{userId}`         | `live.getByUser`      | Активный эфир пользователя (профиль → «В эфире»)                |
+| [ ] | POST  | `/live/requests/{id}/accept`  | `live.acceptRequest`  | Хост принял заявку → гостю publisher-токен (split-экран)        |
+| [ ] | POST  | `/live/requests/{id}/decline` | `live.declineRequest` | Хост отклонил заявку → гостю уведомление отказа                 |
+| [x] | GET   | `/live/{id}`                  | `live.getById`        | Один эфир                                                       |
+| [x] | POST  | `/live/{id}/end`              | `live.end`            | Завершить эфир (статистика, комната закрывается)                |
+| [x] | POST  | `/live/{id}/join`             | `live.join`           | Зайти зрителем → subscriber-токен (Block + Privacy)             |
+| [x] | POST  | `/live/{id}/leave`            | `live.leave`          | Покинуть эфир                                                   |
+| [x] | GET   | `/live/{id}/viewers`          | `live.getViewers`     | Текущие зрители эфира                                           |
+| [x] | POST  | `/live/{id}/comment`          | `live.comment`        | Комментарий в эфир                                              |
+| [x] | POST  | `/live/{id}/like`             | `live.like`           | Лайк эфира (можно много раз — всплывающие сердечки)             |
+| [x] | POST  | `/live/{id}/reaction`         | `live.reaction`       | Реакция-смайл (всплывает у всех)                                |
+| [x] | POST  | `/live/{id}/request-join`     | `live.requestJoin`    | Заявка на участие → уведомление хосту                           |
+| [x] | PUT   | `/live/{id}/camera`           | `live.setCamera`      | Камера вкл/выкл (видео выкл → аватар/обложка, звук идёт всегда) |
+| [x] | PUT   | `/live/{id}/audio`            | `live.setAudio`       | Звук вкл/выкл                                                   |
+| [x] | POST  | `/live/{id}/kick/{userId}`    | `live.kick`           | Выгнать зрителя/гостя (только хост)                             |
+| [x] | GET   | `/live/{id}/stats`            | `live.getStats`       | Статистика эфира                                                |
 
 ## locations — 5/5
 

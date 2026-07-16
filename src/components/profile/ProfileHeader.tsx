@@ -7,7 +7,7 @@ import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowDialog, type FollowTab } from "@/components/profile/FollowDialog";
 import { MessageUserButton } from "@/components/profile/MessageUserButton";
 import { ProfileActionsMenu } from "@/components/profile/ProfileActionsMenu";
-import { UserAvatar } from "@/components/shared/UserAvatar";
+import { ProfileLiveAvatar } from "@/components/live/ProfileLiveAvatar";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -51,13 +51,7 @@ export function ProfileHeader({
     <header className="pt-4 pb-8 md:pt-8">
       <div className="flex gap-6 md:gap-8">
         <div className="flex shrink-0 justify-center md:w-[290px]">
-          <UserAvatar
-            src={profile.avatarUrl}
-            alt={profile.userName}
-            size={150}
-            priority
-            className="size-[77px] md:size-[150px]"
-          />
+          <ProfileLiveAvatar userId={userId} src={profile.avatarUrl} userName={profile.userName} />
         </div>
 
         <div className="min-w-0 flex-1">

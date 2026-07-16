@@ -64,6 +64,8 @@ export const ROUTES = {
   createPost: "/post/create",
   post: (postId: number | string) => `/post/${postId}`,
   stories: (userId: string) => `/stories/${userId}`,
+  live: (id: string) => `/live/${id}`,
+  goLive: "/live/start",
   hashtag: (name: string) => `/explore/tags/${encodeURIComponent(name)}`,
   location: (id: number) => `/explore/locations/${id}`,
   /**

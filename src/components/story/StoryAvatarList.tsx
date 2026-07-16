@@ -3,12 +3,14 @@
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { LiveRing } from "@/components/live/LiveRing";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { StoryRing } from "@/components/story/StoryRing";
 import { StoryUploadDialog } from "@/components/story/StoryUploadDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { useLiveFeed } from "@/hooks/useLive";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useMyStories, useStories } from "@/hooks/useStories";
 import { useRouter } from "@/i18n/navigation";
@@ -29,6 +31,7 @@ export function StoryAvatarList() {
   const { data: profile } = useMyProfile();
   const { data, isPending, isError, refetch } = useStories();
   const { data: myStories } = useMyStories();
+  const { data: lives } = useLiveFeed();
   const [uploadOpen, setUploadOpen] = useState(false);
 
   if (isPending) {
@@ -48,7 +51,14 @@ export function StoryAvatarList() {
 
   // The rail is other people; my own bubble is pinned first and driven by
   // `/stories/my`, so "Your story" is right regardless of what the rail says.
-  const others = data.filter((item) => item.author.id !== user?.id);
+  // Someone broadcasting right now outranks a story they posted hours ago: IG
+  // pins live hosts to the front and shows them once, as live.
+  const activeLives = (lives ?? []).filter((live) => live.host.id !== user?.id);
+  const liveHostIds = new Set(activeLives.map((live) => live.host.id));
+
+  const others = data.filter(
+    (item) => item.author.id !== user?.id && !liveHostIds.has(item.author.id),
+  );
   const hasMine = (myStories?.length ?? 0) > 0;
   const myAllViewed = data.find((item) => item.author.id === user?.id)?.allViewed ?? false;
 
@@ -80,6 +90,20 @@ export function StoryAvatarList() {
           </span>
           <span className="text-ig-text w-full truncate text-center text-xs">{t("yourStory")}</span>
         </button>
+
+        {activeLives.map((live) => (
+          <button
+            key={live.id}
+            type="button"
+            onClick={() => router.push(ROUTES.live(live.id))}
+            className="flex w-16 shrink-0 flex-col items-center gap-1"
+          >
+            <LiveRing src={live.host.avatarUrl ?? null} alt={live.host.userName} />
+            <span className="text-ig-text w-full truncate text-center text-xs">
+              {live.host.userName}
+            </span>
+          </button>
+        ))}
 
         {others.map((item) => (
           <button

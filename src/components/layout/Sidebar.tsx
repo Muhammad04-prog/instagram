@@ -16,6 +16,12 @@ import { InstagramGlyph, InstagramWordmark } from "@/components/icons/InstagramL
 import { MoreMenu } from "@/components/layout/MoreMenu";
 import { SidebarLabel } from "@/components/layout/SidebarLabel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useSidebarForcedCollapsed } from "@/hooks/useSidebarState";
@@ -38,6 +44,7 @@ import { useUiStore } from "@/store/ui.store";
  */
 export function Sidebar() {
   const t = useTranslations("nav");
+  const tLive = useTranslations("live");
   const pathname = usePathname();
   const { panel, togglePanel, closePanel } = useUiStore();
   const { data: profile } = useMyProfile();
@@ -140,14 +147,26 @@ export function Sidebar() {
             </span>
           }
         />
-        <Item
-          href={ROUTES.createPost}
-          label={t("create")}
-          wide={wide}
-          active={pathname.startsWith("/post/create")}
-          icon={() => <CreateIcon />}
-          onNavigate={closePanel}
-        />
+        {/* IG's Create is a menu, not a link — a post and a live video start in
+            very different places. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className={rowStyles} onClick={closePanel}>
+            <span className="[&_svg]:size-6 [&_svg]:shrink-0">
+              <CreateIcon />
+            </span>
+            <SidebarLabel wide={wide} bold={pathname.startsWith("/post/create")}>
+              {t("create")}
+            </SidebarLabel>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="right" className="w-48">
+            <DropdownMenuItem asChild>
+              <Link href={ROUTES.createPost}>{t("createPost")}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={ROUTES.goLive}>{tLive("goLive")}</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Item
           href={ROUTES.myProfile}
           label={t("profile")}
