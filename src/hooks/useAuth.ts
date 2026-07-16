@@ -3,8 +3,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useApiError } from "@/hooks/useApiError";
 import { useRouter } from "@/i18n/navigation";
-import { type ApiError } from "@/lib/axios";
 import { ROUTES } from "@/lib/constants";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
@@ -31,7 +31,8 @@ async function persistSession(tokens: TokensDto): Promise<SessionUser | null> {
 
 export function useAuth() {
   const router = useRouter();
-  const t = useTranslations("errors");
+  const t = useTranslations("auth");
+  const toMessage = useApiError();
   const { user, isAuth, isReady, setUser } = useAuthStore();
   const remember = useSavedAccountsStore((s) => s.remember);
 
@@ -58,7 +59,9 @@ export function useAuth() {
       router.replace(ROUTES.home);
       router.refresh();
     },
-    onError: (error: ApiError) => toast.error(error.message || t("network")),
+    // 401 here means wrong password / no such account — the backend is explicit
+    // that this is a 401 and not a 500, so it is safe to say so plainly.
+    onError: (error) => toast.error(toMessage(error, { 401: t("invalidCredentials") })),
   });
 
   /** Register signs you straight in — it answers with a token pair, not a bare id. */
@@ -72,7 +75,8 @@ export function useAuth() {
       router.replace(ROUTES.home);
       router.refresh();
     },
-    onError: (error: ApiError) => toast.error(error.message || t("network")),
+    // 409 = userName / email / phone already taken.
+    onError: (error) => toast.error(toMessage(error, { 409: t("accountTaken") })),
   });
 
   const logout = async () => {

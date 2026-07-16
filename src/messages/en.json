@@ -70,7 +70,12 @@
     "codeSent": "Code sent.",
     "day": "Day",
     "month": "Month",
-    "year": "Year"
+    "year": "Year",
+    "invalidCredentials": "The password you entered is incorrect, or that account doesn't exist.",
+    "accountTaken": "That username, email or phone is already taken.",
+    "oldPasswordWrong": "Your current password is incorrect.",
+    "codeInvalid": "That code is incorrect or has expired. Request a new one.",
+    "sessionExpired": "Your session has expired. Please log in again."
   },
   "footer": {
     "meta": "Meta",

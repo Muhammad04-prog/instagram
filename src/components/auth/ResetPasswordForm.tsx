@@ -7,8 +7,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
+import { useApiError } from "@/hooks/useApiError";
 import { useRouter } from "@/i18n/navigation";
-import type { ApiError } from "@/lib/axios";
 import { ROUTES } from "@/lib/constants";
 import { resetPasswordSchema, type ResetPasswordValues } from "@/lib/validators/auth.schema";
 import { authService } from "@/services/auth.service";
@@ -24,6 +24,7 @@ import { authService } from "@/services/auth.service";
 export function ResetPasswordForm({ resetToken }: { resetToken: string }) {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
+  const toMessage = useApiError();
   const router = useRouter();
 
   const {
@@ -43,7 +44,8 @@ export function ResetPasswordForm({ resetToken }: { resetToken: string }) {
       toast.success(t("passwordChanged"));
       router.replace(ROUTES.login);
     },
-    onError: (error: ApiError) => toast.error(error.message),
+    // The resetToken is single-use and expires in 15 minutes.
+    onError: (error) => toast.error(toMessage(error, { 400: t("codeInvalid") })),
   });
 
   return (

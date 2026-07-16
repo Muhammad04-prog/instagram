@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
-import type { ApiError } from "@/lib/axios";
+import { useApiError } from "@/hooks/useApiError";
 import { changePasswordSchema, type ChangePasswordValues } from "@/lib/validators/auth.schema";
 import { authService } from "@/services/auth.service";
 
@@ -15,6 +15,7 @@ import { authService } from "@/services/auth.service";
 export function ChangePasswordForm() {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
+  const toMessage = useApiError();
 
   const {
     register,
@@ -38,7 +39,9 @@ export function ChangePasswordForm() {
       toast.success(t("passwordChanged"));
       resetForm();
     },
-    onError: (error: ApiError) => toast.error(error.message),
+    // 401 here is "old password wrong", not "your session died" — saying
+    // "log in again" would be a lie that loses the form.
+    onError: (error) => toast.error(toMessage(error, { 401: t("oldPasswordWrong") })),
   });
 
   return (

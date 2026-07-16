@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useId, useMemo } from "react";
+import { useId, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -36,7 +36,27 @@ export function DobSelect({ value, onChange, error }: DobSelectProps) {
   const format = useFormatter();
   const errorId = useId();
 
-  const { year, month, day } = parse(value);
+  /**
+   * The three parts are held here, not derived from `value`.
+   *
+   * They cannot be derived: an incomplete date emits "", so reading the parts
+   * back out of `value` would erase whatever was picked first and the date could
+   * never be completed. `value` is still the source of truth once complete —
+   * a reset or a prefill flows back in through the effect below.
+   */
+  const [parts, setParts] = useState(() => parse(value));
+
+  // Adjusting state during render (React's documented pattern) rather than in an
+  // effect: an effect would render once with stale parts and then re-render.
+  // Only a *complete* value syncs back — "" is our own "still picking" signal and
+  // must not wipe the parts mid-selection.
+  const [lastValue, setLastValue] = useState(value);
+  if (value !== lastValue) {
+    setLastValue(value);
+    if (value) setParts(parse(value));
+  }
+
+  const { year, month, day } = parts;
 
   const thisYear = new Date().getFullYear();
   const years = useMemo(
@@ -62,8 +82,18 @@ export function DobSelect({ value, onChange, error }: DobSelectProps) {
     [daysInMonth],
   );
 
-  const emit = (next: { year?: string; month?: string; day?: string }) => {
-    const merged = { year, month, day, ...next };
+  const emit = (next: Partial<typeof parts>) => {
+    const merged = { ...parts, ...next };
+
+    // Shortening a month under a picked day (31 → Feb) must not emit Feb 31.
+    const max =
+      merged.year && merged.month
+        ? new Date(Number(merged.year), Number(merged.month), 0).getDate()
+        : 31;
+    if (Number(merged.day) > max) merged.day = String(max).padStart(2, "0");
+
+    setParts(merged);
+
     const complete = merged.year && merged.month && merged.day;
     onChange(complete ? `${merged.year}-${merged.month}-${merged.day}` : "");
   };

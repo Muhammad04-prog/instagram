@@ -11,8 +11,8 @@ import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { CodeInput } from "@/components/auth/CodeInput";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+import { useApiError } from "@/hooks/useApiError";
 import { Link } from "@/i18n/navigation";
-import type { ApiError } from "@/lib/axios";
 import { RESEND_CODE_COOLDOWN_S, ROUTES } from "@/lib/constants";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/validators/auth.schema";
 import { authService } from "@/services/auth.service";
@@ -41,6 +41,7 @@ export function ForgotPasswordForm() {
 function EmailStep({ onSent }: { onSent: (email: string) => void }) {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
+  const toMessage = useApiError();
 
   const {
     register,
@@ -59,7 +60,7 @@ function EmailStep({ onSent }: { onSent: (email: string) => void }) {
       toast.success(t("codeSent"));
       onSent(values.email);
     },
-    onError: (error: ApiError) => toast.error(error.message || t("findAccount")),
+    onError: (error) => toast.error(toMessage(error)),
   });
 
   return (
@@ -102,7 +103,7 @@ function CodeStep({
   onBack: () => void;
 }) {
   const t = useTranslations("auth");
-  const tv = useTranslations("validation");
+  const toMessage = useApiError();
   const [code, setCode] = useState("");
   const [cooldown, setCooldown] = useState(RESEND_CODE_COOLDOWN_S);
 
@@ -117,7 +118,9 @@ function CodeStep({
   const verify = useMutation({
     mutationFn: () => authService.verifyCode({ email, code }),
     onSuccess: (data) => onVerified(data.resetToken),
-    onError: (error: ApiError) => toast.error(error.message || tv("code")),
+    // A wrong or stale code is the expected failure here — the token it buys
+    // only lives 15 minutes.
+    onError: (error) => toast.error(toMessage(error, { 400: t("codeInvalid") })),
   });
 
   const resend = useMutation({
@@ -126,7 +129,9 @@ function CodeStep({
       toast.success(t("codeSent"));
       setCooldown(RESEND_CODE_COOLDOWN_S);
     },
-    onError: (error: ApiError) => toast.error(error.message),
+    // The 60s cooldown below normally prevents it, but the server is the
+    // authority on the limit (429) — e.g. a code already sent from another tab.
+    onError: (error) => toast.error(toMessage(error)),
   });
 
   return (
