@@ -91,6 +91,13 @@ export const queryKeys = {
     unreadCount: () => [...queryKeys.notifications.all, "unread-count"] as const,
     profileViews: () => [...queryKeys.notifications.all, "profile-views"] as const,
   },
+  music: {
+    all: ["music"] as const,
+    search: (q: string) => [...queryKeys.music.all, "search", q] as const,
+    trending: () => [...queryKeys.music.all, "trending"] as const,
+    detail: (id: number) => [...queryKeys.music.all, "detail", id] as const,
+    saved: () => [...queryKeys.music.all, "saved"] as const,
+  },
   live: {
     all: ["live"] as const,
     feed: () => [...queryKeys.live.all, "feed"] as const,

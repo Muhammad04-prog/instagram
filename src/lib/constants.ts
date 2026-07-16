@@ -66,6 +66,7 @@ export const ROUTES = {
   stories: (userId: string) => `/stories/${userId}`,
   live: (id: string) => `/live/${id}`,
   goLive: "/live/start",
+  music: "/music",
   hashtag: (name: string) => `/explore/tags/${encodeURIComponent(name)}`,
   location: (id: number) => `/explore/locations/${id}`,
   /**

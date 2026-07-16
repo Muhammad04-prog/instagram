@@ -36,12 +36,15 @@ export function AdminPanel() {
   return (
     <Tabs defaultValue="reports">
       {/* IG marks the active tab with a rule under it, not a filled block. */}
-      <TabsList className="border-ig-separator mb-4 h-auto w-full justify-start gap-8 rounded-none border-b bg-transparent p-0">
+      <TabsList
+        variant="line"
+        className="border-ig-separator mb-4 h-auto w-full justify-start gap-8 rounded-none border-b bg-transparent p-0"
+      >
         {(["reports", "users"] as const).map((tab) => (
           <TabsTrigger
             key={tab}
             value={tab}
-            className="text-ig-text-secondary data-[state=active]:text-ig-text data-[state=active]:border-b-ig-text flex-none rounded-none border-x-0 border-t-0 border-b border-b-transparent bg-transparent py-3 text-sm font-semibold data-[state=active]:border-x-0 data-[state=active]:border-t-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="text-ig-text-secondary data-active:text-ig-text data-active:border-b-ig-text flex-none rounded-none border-b-2 border-b-transparent py-3 text-sm font-semibold"
           >
             {t(tab)}
           </TabsTrigger>

@@ -23,6 +23,20 @@ export const musicService = {
 
   getById: (id: number) => http.get<MusicDto>(`/music/${id}`),
 
+  /**
+   * The URL an `<audio>` element can actually load the track from.
+   *
+   * **Not** `MusicDto.streamUrl`: that is an absolute link straight at the
+   * backend (the Swagger example even says `http://localhost:3000`), and our
+   * access token lives in an httpOnly cookie for *our* origin — a direct
+   * request carries no Authorization header and comes back 401.
+   *
+   * So we address our own proxy, which attaches the token server-side. It
+   * forwards `Range` and returns 206 untouched, so seeking works exactly as it
+   * would against the origin.
+   */
+  streamUrl: (id: number) => `/api/proxy/music/${id}/stream`,
+
   /** Idempotent. */
   save: (id: number) => http.post<SaveMusicDto>(`/music/${id}/save`),
 

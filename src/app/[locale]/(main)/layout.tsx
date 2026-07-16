@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ContentArea } from "@/components/layout/ContentArea";
+import { MusicPlayerBar } from "@/components/music/MusicPlayerBar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Navbar } from "@/components/layout/Navbar";
 import { NotificationsPanel } from "@/components/layout/NotificationsPanel";
@@ -24,6 +25,8 @@ export default function MainLayout({ children, modal }: { children: ReactNode; m
       <ContentArea>{children}</ContentArea>
 
       {modal}
+      {/* Mounted once, above the nav: a track must survive navigation. */}
+      <MusicPlayerBar />
       <MobileNav />
     </div>
   );

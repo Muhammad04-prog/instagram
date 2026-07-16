@@ -36,6 +36,22 @@ for (const svc of serviceFiles) {
 }
 
 /**
+ * A few endpoints are fetched by the browser itself, not by our http client: a
+ * media element is handed a proxy URL and does the GET on its own (audio
+ * streaming, which needs Range and cannot go through axios). The service still
+ * owns the URL, so pick those up — the endpoint is genuinely reached.
+ */
+for (const svc of serviceFiles) {
+  const re = /(\w+):\s*\([^)]*\)\s*=>\s*`\/api\/proxy([^`]+)`/g;
+  let m;
+  while ((m = re.exec(svc.text))) {
+    const [, method, url] = m;
+    const normalized = "/api" + url.replace(/\$\{[^}]+\}/g, "{id}");
+    wired.set(`GET ${normalized}`, { method, file: svc.file });
+  }
+}
+
+/**
  * Some endpoints are deliberately NOT reachable from a service: the token pair
  * never touches client JS, so refresh / logout / me are called with `fetch` on
  * the server (lib/auth-tokens.ts, the proxy, the session route). Pick those up

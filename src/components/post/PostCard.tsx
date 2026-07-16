@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { HeartIcon } from "@/components/icons";
+import { PostMusicStrip } from "@/components/music/PostMusicStrip";
 import { PostActions } from "@/components/post/PostActions";
 import { PostLikesDialog } from "@/components/post/PostLikesDialog";
 import { PostCarousel } from "@/components/post/PostCarousel";
@@ -84,6 +85,8 @@ export function PostCard({ post }: { post: PostDto }) {
           ) : null}
         </AnimatePresence>
       </div>
+
+      {post.music ? <PostMusicStrip music={post.music} /> : null}
 
       <PostActions post={post} className="pt-2" />
 

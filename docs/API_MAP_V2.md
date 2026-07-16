@@ -11,7 +11,7 @@
 Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
 не сверен.
 
-**Покрытие: 147 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 152 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 4/4
 
@@ -136,16 +136,16 @@
 | [x] | PUT    | `/locations/{id}` | `location.update`          | Обновить локацию (полная замена)             |
 | [x] | DELETE | `/locations/{id}` | `location.remove`          | Удалить локацию (у постов locationId → null) |
 
-## music — 2/6
+## music — 6/6
 
 | ✓   | Метод  | Путь                 | Сервис              | Что делает                                            |
 | --- | ------ | -------------------- | ------------------- | ----------------------------------------------------- |
 | [x] | GET    | `/music`             | `music.search`      | Поиск музыки (по title И artist, курсорная пагинация) |
 | [x] | GET    | `/music/trending`    | `music.getTrending` | В тренде                                              |
-| [ ] | GET    | `/music/{id}/stream` | —                   | Стриминг mp3 с поддержкой Range (перемотка)           |
-| [ ] | GET    | `/music/{id}`        | `music.getById`     | Трек по id                                            |
-| [ ] | POST   | `/music/{id}/save`   | `music.save`        | Сохранить трек (идемпотентно)                         |
-| [ ] | DELETE | `/music/{id}/save`   | `music.unsave`      | Убрать трек из сохранённых                            |
+| [x] | GET    | `/music/{id}/stream` | `music.streamUrl`   | Стриминг mp3 с поддержкой Range (перемотка)           |
+| [x] | GET    | `/music/{id}`        | `music.getById`     | Трек по id                                            |
+| [x] | POST   | `/music/{id}/save`   | `music.save`        | Сохранить трек (идемпотентно)                         |
+| [x] | DELETE | `/music/{id}/save`   | `music.unsave`      | Убрать трек из сохранённых                            |
 
 ## notes — 6/8
 
@@ -197,14 +197,14 @@
 | [x] | POST   | `/posts/{id}/comments`         | `post.addComment`        | Добавить комментарий                                            |
 | [x] | GET    | `/posts/{id}/comments`         | `post.getComments`       | Комментарии к публикации (корневые, cursor)                     |
 
-## profile — 12/14
+## profile — 13/14
 
 | ✓   | Метод  | Путь                             | Сервис                   | Что делает                                       |
 | --- | ------ | -------------------------------- | ------------------------ | ------------------------------------------------ |
 | [x] | GET    | `/profile/me`                    | `profile.getMyProfile`   | Мой профиль                                      |
 | [x] | GET    | `/profile/favorites`             | `profile.getFavorites`   | Сохранённое (только своё)                        |
 | [ ] | GET    | `/profile/me/reposts`            | `profile.getMyReposts`   | Мои репосты                                      |
-| [ ] | GET    | `/profile/me/saved-music`        | `profile.getSavedMusic`  | Сохранённая музыка                               |
+| [x] | GET    | `/profile/me/saved-music`        | `profile.getSavedMusic`  | Сохранённая музыка                               |
 | [x] | GET    | `/profile/me/activity`           | `profile.getMyActivity`  | Ваши действия                                    |
 | [x] | PUT    | `/profile`                       | `profile.update`         | Изменить профиль                                 |
 | [x] | PUT    | `/profile/privacy`               | `profile.setPrivacy`     | Закрытый аккаунт вкл/выкл                        |

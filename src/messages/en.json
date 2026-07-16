@@ -639,5 +639,26 @@
     "titlePlaceholder": "Add a title (optional)",
     "goLiveNotice": "Video is not connected yet — your broadcast will open with comments, likes and viewers, but no picture.",
     "cameraOffMine": "Your camera is off"
+  },
+  "music": {
+    "title": "Music",
+    "trending": "Trending",
+    "saved": "Saved",
+    "searchPlaceholder": "Search music",
+    "noTrending": "Nothing is trending right now",
+    "noSaved": "You have not saved any music yet",
+    "noResults": "No music for \"{term}\"",
+    "loadMore": "Show more",
+    "play": "Play",
+    "pause": "Pause",
+    "next": "Next track",
+    "previous": "Previous track",
+    "seek": "Seek",
+    "save": "Save",
+    "unsave": "Remove from saved",
+    "closePlayer": "Close player",
+    "playTrack": "Play {title}",
+    "uses": "{count} posts",
+    "savedState": "Saved"
   }
 }
