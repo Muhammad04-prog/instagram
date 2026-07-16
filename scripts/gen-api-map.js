@@ -55,11 +55,47 @@ for (const s of sources) {
   }
 }
 
-/** Does anything outside the service file itself call this method? */
+const isUiFile = (file) => file.startsWith("src/components/") || file.startsWith("src/app/");
+
+/** The exported function of `text` whose body contains `needle`. */
+function enclosingExport(text, needle) {
+  const at = text.indexOf(needle);
+  if (at === -1) return null;
+
+  const before = text.slice(0, at);
+  const matches = [...before.matchAll(/export function (\w+)/g)];
+  return matches.at(-1)?.[1] ?? null;
+}
+
+/**
+ * Is this endpoint reachable **by a user**?
+ *
+ * "Called outside its own service file" is not enough, and used not to be
+ * checked: a hook that calls the service counts as a caller even when no
+ * component ever calls the hook — so endpoints with a ready hook and no screen
+ * were reported as wired. They are not; nobody can reach them.
+ *
+ * So: a direct call from components/app counts, and a call from a hook counts
+ * only when that hook's exported function is itself used by components/app.
+ */
 function isCalledFromUi(methodName, serviceFile) {
-  return sources.some(
-    (s) => s.file !== serviceFile && new RegExp(`\\.${methodName}\\(`).test(s.text),
-  );
+  // Qualify by the service object, not just the method: `.getRequests(` alone
+  // matches BOTH chatService and followService, so chat's requests counted as
+  // wired purely because the *follow* hook exists.
+  // "src/services/chat.service.ts" -> "chatService".
+  const serviceVar = path.basename(serviceFile, ".service.ts").replace(/\..*/, "") + "Service";
+  const call = new RegExp(`\\b${serviceVar}\\.${methodName}\\(`);
+
+  const callers = sources.filter((s) => s.file !== serviceFile && call.test(s.text));
+  if (callers.some((s) => isUiFile(s.file))) return true;
+
+  return callers.some((caller) => {
+    const hookName = enclosingExport(caller.text, `${serviceVar}.${methodName}(`);
+    if (!hookName) return false;
+
+    const used = new RegExp(`\\b${hookName}\\b`);
+    return sources.some((s) => isUiFile(s.file) && used.test(s.text));
+  });
 }
 
 const swaggerToService = (p) => p.replace(/\{[^}]+\}/g, "{id}");
@@ -104,12 +140,20 @@ lines.push(
   "Файл **генерируется**: `node scripts/gen-api-map.js`. Колонки не проставляются вручную —",
 );
 lines.push(
-  "`Сервис` находится по литералу пути в `src/services/*.service.ts`, а `UI` = метод сервиса",
+  "`Сервис` находится по литералу пути в `src/services/*.service.ts`. `UI` = endpoint **достижим",
 );
 lines.push(
-  "вызывается хотя бы из одного файла вне самого сервиса. Это проверка проводки, **не** проверка",
+  "человеком**: вызов идёт из `components`/`app` напрямую, либо через хук, который сам используется",
 );
-lines.push("того, что экран работает: БД бэкенда лежит, живьём ни один ответ не сверен.");
+lines.push(
+  "в `components`/`app`. Готового хука без экрана **недостаточно** — до такого endpoint'а никто не",
+);
+lines.push("доберётся, и раньше карта именно это и завышала.");
+lines.push("");
+lines.push(
+  "Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ",
+);
+lines.push("не сверен.");
 lines.push("");
 lines.push(`**Покрытие: ${done} / ${total}** endpoint'ов вызываются из UI.`);
 lines.push("");

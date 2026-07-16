@@ -3,11 +3,15 @@
 **Swagger:** `https://backend-instagram-kvv4.onrender.com/api/docs-json` → копия в `docs/swagger-v2.json`.
 
 Файл **генерируется**: `node scripts/gen-api-map.js`. Колонки не проставляются вручную —
-`Сервис` находится по литералу пути в `src/services/*.service.ts`, а `UI` = метод сервиса
-вызывается хотя бы из одного файла вне самого сервиса. Это проверка проводки, **не** проверка
-того, что экран работает: БД бэкенда лежит, живьём ни один ответ не сверен.
+`Сервис` находится по литералу пути в `src/services/*.service.ts`. `UI` = endpoint **достижим
+человеком**: вызов идёт из `components`/`app` напрямую, либо через хук, который сам используется
+в `components`/`app`. Готового хука без экрана **недостаточно** — до такого endpoint'а никто не
+доберётся, и раньше карта именно это и завышала.
 
-**Покрытие: 122 / 170** endpoint'ов вызываются из UI.
+Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
+не сверен.
+
+**Покрытие: 112 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 0/4
 
@@ -34,20 +38,20 @@
 | [x] | POST  | `/auth/check-username`  | `auth.checkUsername`      | Свободен ли userName (live-валидация формы регистрации) |
 | [x] | GET   | `/auth/me`              | `route.ts (server)`       | Текущий пользователь + профиль                          |
 
-## chats — 18/20
+## chats — 13/20
 
 | ✓   | Метод  | Путь                            | Сервис                       | Что делает                                         |
 | --- | ------ | ------------------------------- | ---------------------------- | -------------------------------------------------- |
 | [x] | GET    | `/chats`                        | `chat.getChats`              | Список чатов                                       |
 | [x] | POST   | `/chats`                        | `chat.create`                | Начать чат (идемпотентно)                          |
-| [x] | PUT    | `/chats/messages/{id}`          | `chat.editMessage`           | Редактировать сообщение (≤15 мин, только своё)     |
+| [ ] | PUT    | `/chats/messages/{id}`          | `chat.editMessage`           | Редактировать сообщение (≤15 мин, только своё)     |
 | [x] | DELETE | `/chats/messages/{id}`          | `chat.deleteMessage`         | Удалить сообщение (OwnerGuard: только своё)        |
 | [ ] | POST   | `/chats/messages/bulk-delete`   | `chat.bulkDeleteMessages`    | Удалить несколько своих сообщений                  |
 | [x] | POST   | `/chats/messages/{id}/reaction` | `chat.reactToMessage`        | Реакция на сообщение                               |
 | [x] | DELETE | `/chats/messages/{id}/reaction` | `chat.removeMessageReaction` | Убрать реакцию                                     |
-| [x] | GET    | `/chats/requests`               | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
-| [x] | POST   | `/chats/requests/{id}/accept`   | `chat.acceptRequest`         | Принять запрос на переписку                        |
-| [x] | POST   | `/chats/requests/{id}/decline`  | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
+| [ ] | GET    | `/chats/requests`               | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
+| [ ] | POST   | `/chats/requests/{id}/accept`   | `chat.acceptRequest`         | Принять запрос на переписку                        |
+| [ ] | POST   | `/chats/requests/{id}/decline`  | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
 | [x] | GET    | `/chats/{id}`                   | `chat.getChatById`           | Детали чата                                        |
 | [x] | DELETE | `/chats/{id}`                   | `chat.remove`                | Удалить чат (выйти из него)                        |
 | [x] | GET    | `/chats/{id}/messages`          | `chat.getMessages`           | Сообщения чата (cursor)                            |
@@ -56,7 +60,7 @@
 | [x] | PUT    | `/chats/{id}/theme`             | `chat.setTheme`              | Тема чата                                          |
 | [x] | PUT    | `/chats/{id}/nickname`          | `chat.setNickname`           | Никнейм собеседника в чате                         |
 | [x] | PUT    | `/chats/{id}/mute`              | `chat.setMuted`              | Заглушить/включить уведомления чата                |
-| [x] | POST   | `/chats/{id}/report`            | `chat.report`                | Пожаловаться на чат                                |
+| [ ] | POST   | `/chats/{id}/report`            | `chat.report`                | Пожаловаться на чат                                |
 | [ ] | POST   | `/chats/{id}/call`              | `chat.startCall`             | Начать звонок (WebRTC-сигналинг через сокет)       |
 
 ## close-friends — 3/3
@@ -89,14 +93,14 @@
 | --- | ----- | --------- | ------ | ------------------------------- |
 | [ ] | GET   | `/health` | —      | Проверка API, БД, Redis и MinIO |
 
-## highlights — 5/5
+## highlights — 4/5
 
 | ✓   | Метод  | Путь                        | Сервис                        | Что делает                                           |
 | --- | ------ | --------------------------- | ----------------------------- | ---------------------------------------------------- |
 | [x] | POST   | `/highlights`               | `highlight.create`            | Создать «Актуальное»                                 |
 | [x] | GET    | `/highlights/user/{userId}` | `highlight.getUserHighlights` | Актуальное пользователя                              |
 | [x] | GET    | `/highlights/{id}`          | `highlight.getHighlight`      | Актуальное с историями                               |
-| [x] | PUT    | `/highlights/{id}`          | `highlight.update`            | Изменить актуальное (title / cover / состав историй) |
+| [ ] | PUT    | `/highlights/{id}`          | `highlight.update`            | Изменить актуальное (title / cover / состав историй) |
 | [x] | DELETE | `/highlights/{id}`          | `highlight.remove`            | Удалить актуальное (истории остаются)                |
 
 ## live — 0/18
@@ -193,13 +197,13 @@
 | [x] | POST   | `/posts/{id}/comments`         | `post.addComment`        | Добавить комментарий                                            |
 | [x] | GET    | `/posts/{id}/comments`         | `post.getComments`       | Комментарии к публикации (корневые, cursor)                     |
 
-## profile — 13/14
+## profile — 12/14
 
 | ✓   | Метод  | Путь                             | Сервис                   | Что делает                                       |
 | --- | ------ | -------------------------------- | ------------------------ | ------------------------------------------------ |
 | [x] | GET    | `/profile/me`                    | `profile.getMyProfile`   | Мой профиль                                      |
 | [x] | GET    | `/profile/favorites`             | `profile.getFavorites`   | Сохранённое (только своё)                        |
-| [x] | GET    | `/profile/me/reposts`            | `profile.getMyReposts`   | Мои репосты                                      |
+| [ ] | GET    | `/profile/me/reposts`            | `profile.getMyReposts`   | Мои репосты                                      |
 | [ ] | GET    | `/profile/me/saved-music`        | `profile.getSavedMusic`  | Сохранённая музыка                               |
 | [x] | GET    | `/profile/me/activity`           | `profile.getMyActivity`  | Ваши действия                                    |
 | [x] | PUT    | `/profile`                       | `profile.update`         | Изменить профиль                                 |
@@ -212,11 +216,11 @@
 | [x] | GET    | `/profile/{userId}/reels`        | `profile.getUserReels`   | Reels пользователя (закрытый аккаунт → 403)      |
 | [x] | GET    | `/profile/{userId}/tagged`       | `profile.getUserTagged`  | Отмеченные публикации (закрытый аккаунт → 403)   |
 
-## search — 2/4
+## search — 1/4
 
 | ✓   | Метод | Путь                     | Сервис              | Что делает                                                        |
 | --- | ----- | ------------------------ | ------------------- | ----------------------------------------------------------------- |
-| [x] | GET   | `/search`                | `search.search`     | Комбинированный поиск: аккаунты + хэштеги + локации одним ответом |
+| [ ] | GET   | `/search`                | `search.search`     | Комбинированный поиск: аккаунты + хэштеги + локации одним ответом |
 | [ ] | GET   | `/search/explore`        | `search.getExplore` | Сетка Explore: посты И видео вперемешку                           |
 | [ ] | GET   | `/search/top`            | `search.getTop`     | Тренды: популярные хэштеги + аккаунты недели                      |
 | [x] | GET   | `/search/hashtag/{name}` | `search.getHashtag` | Все посты с хэштегом (cursor)                                     |
@@ -229,7 +233,7 @@
 | [ ] | POST   | `/spotify/tracks/{spotifyId}/save` | —      | Сохранить трек из Spotify  |
 | [ ] | DELETE | `/spotify/tracks/{spotifyId}/save` | —      | Убрать трек из сохранённых |
 
-## stories — 12/12
+## stories — 11/12
 
 | ✓   | Метод  | Путь                     | Сервис                 | Что делает                                                            |
 | --- | ------ | ------------------------ | ---------------------- | --------------------------------------------------------------------- |
@@ -240,18 +244,18 @@
 | [x] | GET    | `/stories/user/{userId}` | `story.getUserStories` | Истории пользователя                                                  |
 | [x] | GET    | `/stories/{id}`          | `story.getStoryById`   | История по id                                                         |
 | [x] | DELETE | `/stories/{id}`          | `story.remove`         | Удалить свою историю                                                  |
-| [x] | POST   | `/stories/{id}/view`     | `story.view`           | Отметить просмотренной (считается на сервере, 1 раз/зритель)          |
+| [ ] | POST   | `/stories/{id}/view`     | `story.view`           | Отметить просмотренной (считается на сервере, 1 раз/зритель)          |
 | [x] | POST   | `/stories/{id}/like`     | `story.like`           | Лайк истории (toggle → { liked, likesCount })                         |
 | [x] | POST   | `/stories/{id}/reaction` | `story.react`          | Реакция emoji → уходит сообщением в чат (можно много раз)             |
 | [x] | POST   | `/stories/{id}/reply`    | `story.reply`          | Ответ на историю → сообщением в чат                                   |
 | [x] | GET    | `/stories/{id}/viewers`  | `story.getViewers`     | Список зрителей (только автору): кто смотрел + лайкнул + реакция      |
 
-## upload — 1/2
+## upload — 0/2
 
 | ✓   | Метод  | Путь            | Сервис          | Что делает                                    |
 | --- | ------ | --------------- | --------------- | --------------------------------------------- |
 | [ ] | POST   | `/upload`       | `upload.upload` | Загрузить до 10 файлов (фото / видео / аудио) |
-| [x] | DELETE | `/upload/{key}` | `upload.remove` | Удалить файл по ключу                         |
+| [ ] | DELETE | `/upload/{key}` | `upload.remove` | Удалить файл по ключу                         |
 
 ## users — 12/12
 
