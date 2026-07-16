@@ -11,16 +11,16 @@
 Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
 не сверен.
 
-**Покрытие: 123 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 131 / 170** endpoint'ов вызываются из UI.
 
-## admin — 0/4
+## admin — 4/4
 
-| ✓   | Метод  | Путь                          | Сервис | Что делает                          |
-| --- | ------ | ----------------------------- | ------ | ----------------------------------- |
-| [ ] | GET    | `/admin/users`                | —      | Список пользователей (ADMIN)        |
-| [ ] | DELETE | `/admin/users/{id}`           | —      | Удалить пользователя (мягко, ADMIN) |
-| [ ] | GET    | `/admin/reports`              | —      | Список жалоб (ADMIN, filter=open    | resolved) |
-| [ ] | POST   | `/admin/reports/{id}/resolve` | —      | Отметить жалобу решённой (ADMIN)    |
+| ✓   | Метод  | Путь                          | Сервис                | Что делает                          |
+| --- | ------ | ----------------------------- | --------------------- | ----------------------------------- |
+| [x] | GET    | `/admin/users`                | `admin.getUsers`      | Список пользователей (ADMIN)        |
+| [x] | DELETE | `/admin/users/{id}`           | `admin.deleteUser`    | Удалить пользователя (мягко, ADMIN) |
+| [x] | GET    | `/admin/reports`              | `admin.getReports`    | Список жалоб (ADMIN, filter=open    | resolved) |
+| [x] | POST   | `/admin/reports/{id}/resolve` | `admin.resolveReport` | Отметить жалобу решённой (ADMIN)    |
 
 ## auth — 11/11
 
@@ -274,11 +274,11 @@
 | [x] | DELETE | `/users/me`                       | `user.deleteMe`           | Удалить свой аккаунт (soft-delete)                            |
 | [x] | POST   | `/users/{id}/report`              | `user.report`             | Пожаловаться на пользователя                                  |
 
-## verification — 0/4
+## verification — 4/4
 
-| ✓   | Метод | Путь                        | Сервис | Что делает                                                         |
-| --- | ----- | --------------------------- | ------ | ------------------------------------------------------------------ |
-| [ ] | GET   | `/verification/status`      | —      | Статус верификации (TRIAL/ACTIVE/EXPIRED/CANCELED + дней осталось) |
-| [ ] | POST  | `/verification/start-trial` | —      | Начать бесплатный триал (7 дней, 1 раз на аккаунт)                 |
-| [ ] | POST  | `/verification/subscribe`   | —      | Оформить подписку ($1000/мес, mock-платёж MOCK/PAID)               |
-| [ ] | POST  | `/verification/cancel`      | —      | Отменить (галочка держится до конца оплаченного периода)           |
+| ✓   | Метод | Путь                        | Сервис                    | Что делает                                                         |
+| --- | ----- | --------------------------- | ------------------------- | ------------------------------------------------------------------ |
+| [x] | GET   | `/verification/status`      | `verification.getStatus`  | Статус верификации (TRIAL/ACTIVE/EXPIRED/CANCELED + дней осталось) |
+| [x] | POST  | `/verification/start-trial` | `verification.startTrial` | Начать бесплатный триал (7 дней, 1 раз на аккаунт)                 |
+| [x] | POST  | `/verification/subscribe`   | `verification.subscribe`  | Оформить подписку ($1000/мес, mock-платёж MOCK/PAID)               |
+| [x] | POST  | `/verification/cancel`      | `verification.cancel`     | Отменить (галочка держится до конца оплаченного периода)           |

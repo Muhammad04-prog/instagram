@@ -1,7 +1,19 @@
 "use client";
 
-import { Activity, Globe, KeyRound, Lock, MapPin, Star, Trash2, UserPen } from "lucide-react";
+import {
+  Activity,
+  BadgeCheck,
+  Globe,
+  KeyRound,
+  Lock,
+  MapPin,
+  Shield,
+  Star,
+  Trash2,
+  UserPen,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/hooks/useAuth";
 import { Link, usePathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -18,6 +30,7 @@ const GROUPS = [
       { href: ROUTES.editProfile, key: "editProfile", Icon: UserPen },
       { href: ROUTES.changePassword, key: "changePassword", Icon: KeyRound },
       { href: ROUTES.activity, key: "activity", Icon: Activity },
+      { href: ROUTES.verified, key: "verified", Icon: BadgeCheck },
     ],
   },
   {
@@ -40,12 +53,23 @@ const GROUPS = [
 export function SettingsNav() {
   const t = useTranslations("settings");
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  // The /admin endpoints are ADMIN-guarded server-side; hiding the row just
+  // avoids offering a door that answers 403.
+  const groups =
+    user?.role === "ADMIN"
+      ? [
+          ...GROUPS,
+          { label: "groupAdmin", items: [{ href: ROUTES.admin, key: "admin", Icon: Shield }] },
+        ]
+      : GROUPS;
 
   return (
     <nav className="w-full shrink-0 md:w-[350px]">
       <h1 className="text-ig-text px-3 pb-6 text-2xl font-bold">{t("title")}</h1>
 
-      {GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.label} className="mb-6">
           <p className="text-ig-text-secondary px-3 pb-2 text-xs font-semibold">{t(group.label)}</p>
           <ul className="space-y-1">

@@ -60,6 +60,15 @@ export const queryKeys = {
     byUser: (userId: string) => [...queryKeys.highlights.all, "user", userId] as const,
     detail: (id: string) => [...queryKeys.highlights.all, "detail", id] as const,
   },
+  verification: {
+    all: ["verification"] as const,
+    status: () => [...queryKeys.verification.all, "status"] as const,
+  },
+  admin: {
+    all: ["admin"] as const,
+    users: (q: string) => [...queryKeys.admin.all, "users", q] as const,
+    reports: (filter: string) => [...queryKeys.admin.all, "reports", filter] as const,
+  },
   notes: {
     all: ["notes"] as const,
     list: () => [...queryKeys.notes.all, "list"] as const,
