@@ -16,7 +16,7 @@ import { cursorParams, nextCursor } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
 import { postService, type CreatePostInput } from "@/services/post.service";
 import { profileService } from "@/services/profile.service";
-import type { PostDto } from "@/types/api.types";
+import type { PostDto, ReportPostDto, ShareDto } from "@/types/api.types";
 
 /**
  * `/` — the feed.
@@ -224,6 +224,83 @@ export function useDeletePost() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
     },
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Who liked a post (img13's likes list). */
+export function usePostLikes(postId: number, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.posts.likes(postId),
+    queryFn: ({ pageParam }) => postService.getLikes(postId, cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+    enabled: enabled && Number.isFinite(postId),
+  });
+}
+
+/**
+ * Share: into a chat (`toUserId`), into my story (`toStory`), or just a link.
+ *
+ * Sharing to a story used to mean re-uploading the post as a new story file —
+ * that was all softclub could do. This is one call, and the server builds the
+ * story itself.
+ */
+export function useSharePost(postId: number) {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (dto: ShareDto) => postService.share(postId, dto),
+    onSuccess: (_result, dto) => {
+      if (dto.toStory) void queryClient.invalidateQueries({ queryKey: queryKeys.stories.all });
+      if (dto.toUserId) void queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
+    },
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+export function useReportPost(postId: number) {
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (dto: ReportPostDto) => postService.report(postId, dto),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/**
+ * Archive / restore. Toggle → `{ isArchived }`.
+ *
+ * An archived post leaves the grid but is not deleted — softclub had no archive
+ * at all, so "Archive" simply did not exist as an option.
+ */
+export function useArchivePost() {
+  const patch = usePatchPost();
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ postId, archive }: { postId: number; archive: boolean }) =>
+      archive ? postService.archive(postId) : postService.unarchive(postId),
+    onSuccess: (result, { postId }) => {
+      patch(postId, (current) => ({ ...current, isArchived: result.isArchived }));
+      void queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
+    },
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Caption only — the server re-parses hashtags out of the new text. */
+export function useUpdatePost() {
+  const patch = usePatchPost();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ postId, caption }: { postId: number; caption: string }) =>
+      postService.update(postId, { caption }),
+    onSuccess: (updated) => patch(updated.id, () => updated),
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
 }

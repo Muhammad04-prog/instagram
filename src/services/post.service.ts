@@ -9,6 +9,7 @@ import type {
   FavoriteToggleDto,
   LikeToggleDto,
   PostDto,
+  ReportCreatedDto,
   ReportPostDto,
   ShareDto,
   ShareResultDto,
@@ -90,7 +91,8 @@ export const postService = {
   /** Share to a chat (`toUserId`), to a story (`toStory`), or as a link. */
   share: (id: number, dto: ShareDto) => http.post<ShareResultDto>(`/posts/${id}/share`, dto),
 
-  report: (id: number, dto: ReportPostDto) => http.post(`/posts/${id}/report`, dto),
+  report: (id: number, dto: ReportPostDto) =>
+    http.post<ReportCreatedDto>(`/posts/${id}/report`, dto),
 
   getComments: (id: number, params: CursorParams) =>
     http.get<CommentDto[]>(`/posts/${id}/comments`, params),

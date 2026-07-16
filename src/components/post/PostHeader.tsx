@@ -1,10 +1,10 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { useState } from "react";
 import { DotsIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { StoryUploadDialog } from "@/components/story/StoryUploadDialog";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import {
@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { useDeletePost } from "@/hooks/usePosts";
+import { useArchivePost, useDeletePost, useReportPost, useSharePost } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -35,8 +35,11 @@ export function PostHeader({
   const format = useFormatter();
   const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [shareStoryOpen, setShareStoryOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const remove = useDeletePost();
+  const archive = useArchivePost();
+  const report = useReportPost(post.id);
+  const share = useSharePost(post.id);
 
   const isMine = post.author.id === user?.id;
 
@@ -73,10 +76,40 @@ export function PostHeader({
           <DropdownMenuItem asChild>
             <Link href={ROUTES.post(post.id)}>{t("goToPost")}</Link>
           </DropdownMenuItem>
-          {/* AddStories takes an optional PostId — that is IG's "share to story". */}
-          <DropdownMenuItem onSelect={() => setShareStoryOpen(true)}>
+          {/* One call now: the server builds the story from the post itself. */}
+          <DropdownMenuItem
+            onSelect={() =>
+              share.mutate(
+                { toStory: true },
+                { onSuccess: () => toast.success(t("sharedToStory")) },
+              )
+            }
+          >
             {t("shareToStory")}
           </DropdownMenuItem>
+
+          {isMine ? (
+            <DropdownMenuItem
+              onSelect={() =>
+                archive.mutate(
+                  { postId: post.id, archive: !post.isArchived },
+                  {
+                    onSuccess: () => toast.success(post.isArchived ? t("restored") : t("archived")),
+                  },
+                )
+              }
+            >
+              {post.isArchived ? t("restorePost") : t("archivePost")}
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              onSelect={() => setReportOpen(true)}
+              className="text-ig-danger focus:text-ig-danger"
+            >
+              {t("reportPost")}
+            </DropdownMenuItem>
+          )}
+
           {isMine ? (
             <DropdownMenuItem
               onSelect={() => setConfirmOpen(true)}
@@ -88,7 +121,20 @@ export function PostHeader({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <StoryUploadDialog open={shareStoryOpen} onOpenChange={setShareStoryOpen} postId={post.id} />
+      <ConfirmDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        title={t("reportPost")}
+        description={t("reportPostDescription")}
+        confirmLabel={t("reportPost")}
+        onConfirm={() =>
+          report.mutate(
+            // `reason` is free text (3–500), not an enum — send a real sentence.
+            { reason: t("reportReasonDefault") },
+            { onSuccess: () => toast.success(t("reportSent")) },
+          )
+        }
+      />
 
       <ConfirmDialog
         open={confirmOpen}

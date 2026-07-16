@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { HeartIcon } from "@/components/icons";
 import { PostActions } from "@/components/post/PostActions";
+import { PostLikesDialog } from "@/components/post/PostLikesDialog";
 import { PostCarousel } from "@/components/post/PostCarousel";
 import { CommentForm } from "@/components/post/PostComments";
 import { PostHeader } from "@/components/post/PostHeader";
@@ -21,6 +22,7 @@ export function PostCard({ post }: { post: PostDto }) {
   const t = useTranslations("post");
   const [expanded, setExpanded] = useState(false);
   const [burst, setBurst] = useState(false);
+  const [likesOpen, setLikesOpen] = useState(false);
 
   const like = useLikePost();
   const viewPost = useViewPost();
@@ -84,10 +86,15 @@ export function PostCard({ post }: { post: PostDto }) {
 
       <PostActions post={post} className="pt-2" />
 
+      {/* The count opens the real list — softclub could only ever show a number. */}
       {post.likesCount > 0 ? (
-        <p className="text-ig-text pt-1 text-sm font-semibold">
+        <button
+          type="button"
+          onClick={() => setLikesOpen(true)}
+          className="text-ig-text block pt-1 text-sm font-semibold hover:opacity-60"
+        >
           {t("likes", { count: post.likesCount })}
-        </p>
+        </button>
       ) : null}
 
       {caption ? (
@@ -115,6 +122,8 @@ export function PostCard({ post }: { post: PostDto }) {
       ) : null}
 
       <CommentForm postId={post.id} className="border-ig-separator mt-1 border-t" />
+
+      <PostLikesDialog postId={post.id} open={likesOpen} onOpenChange={setLikesOpen} />
     </article>
   );
 }

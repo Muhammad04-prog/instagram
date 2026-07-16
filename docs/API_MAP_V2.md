@@ -7,7 +7,7 @@
 вызывается хотя бы из одного файла вне самого сервиса. Это проверка проводки, **не** проверка
 того, что экран работает: БД бэкенда лежит, живьём ни один ответ не сверен.
 
-**Покрытие: 93 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 97 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 0/4
 
@@ -166,7 +166,7 @@
 | [ ] | POST  | `/notifications/{id}/read`     | —      | Пометить прочитанным (всю группу)          |
 | [ ] | POST  | `/notifications/read-all`      | —      | Пометить всё прочитанным                   |
 
-## posts — 18/22
+## posts — 22/22
 
 | ✓   | Метод  | Путь                           | Сервис                   | Что делает                                                      |
 | --- | ------ | ------------------------------ | ------------------------ | --------------------------------------------------------------- |
@@ -183,13 +183,13 @@
 | [x] | PUT    | `/posts/{id}`                  | `post.update`            | Изменить подпись (хэштеги пересобираются)                       |
 | [x] | DELETE | `/posts/{id}`                  | `post.remove`            | Удалить публикацию (только свою)                                |
 | [x] | POST   | `/posts/{id}/archive`          | `post.archive`           | В архив                                                         |
-| [ ] | DELETE | `/posts/{id}/archive`          | `post.unarchive`         | Вернуть из архива                                               |
+| [x] | DELETE | `/posts/{id}/archive`          | `post.unarchive`         | Вернуть из архива                                               |
 | [x] | POST   | `/posts/{id}/like`             | `post.like`              | Лайк (toggle) → { liked, likesCount }                           |
-| [ ] | GET    | `/posts/{id}/likes`            | `post.getLikes`          | Кто лайкнул                                                     |
+| [x] | GET    | `/posts/{id}/likes`            | `post.getLikes`          | Кто лайкнул                                                     |
 | [x] | POST   | `/posts/{id}/view`             | `post.view`              | Просмотр (считается 1 раз на пользователя)                      |
 | [x] | POST   | `/posts/{id}/favorite`         | `post.favorite`          | Сохранить/убрать (toggle). collection — имя коллекции           |
-| [ ] | POST   | `/posts/{id}/share`            | `post.share`             | Поделиться: в чат (toUserId) / в историю (toStory) / ссылка     |
-| [ ] | POST   | `/posts/{id}/report`           | —                        | Пожаловаться на публикацию                                      |
+| [x] | POST   | `/posts/{id}/share`            | `post.share`             | Поделиться: в чат (toUserId) / в историю (toStory) / ссылка     |
+| [x] | POST   | `/posts/{id}/report`           | `post.report`            | Пожаловаться на публикацию                                      |
 | [x] | POST   | `/posts/{id}/comments`         | `post.addComment`        | Добавить комментарий                                            |
 | [x] | GET    | `/posts/{id}/comments`         | `post.getComments`       | Комментарии к публикации (корневые, cursor)                     |
 
