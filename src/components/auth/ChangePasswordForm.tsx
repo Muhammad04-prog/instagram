@@ -9,7 +9,7 @@ import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
 import type { ApiError } from "@/lib/axios";
 import { changePasswordSchema, type ChangePasswordValues } from "@/lib/validators/auth.schema";
-import { accountService } from "@/services/account.service";
+import { authService } from "@/services/auth.service";
 
 /** No screenshot for this screen — follows the register form's field style. */
 export function ChangePasswordForm() {
@@ -28,7 +28,12 @@ export function ChangePasswordForm() {
   });
 
   const change = useMutation({
-    mutationFn: (values: ChangePasswordValues) => accountService.changePassword(values),
+    mutationFn: (values: ChangePasswordValues) =>
+      // The API takes only old + new; "confirm" is a client-side guard.
+      authService.changePassword({
+        oldPassword: values.oldPassword,
+        newPassword: values.password,
+      }),
     onSuccess: () => {
       toast.success(t("passwordChanged"));
       resetForm();

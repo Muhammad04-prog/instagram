@@ -1,48 +1,63 @@
 import { http } from "@/lib/axios";
-import type { GetUsersParams, SearchHistory, User, UserSearchHistory } from "@/types/user.types";
+import type { CursorParams } from "@/lib/cursor";
+import type {
+  AccountDeletedDto,
+  AddSearchedUserDto,
+  AddSearchTextDto,
+  DeletedCountDto,
+  ReportCreatedDto,
+  ReportUserDto,
+  SearchedUserItemDto,
+  SearchHistoryItemDto,
+  SuggestionDto,
+  UserBriefDto,
+} from "@/types/api.types";
+
+export interface SearchUsersParams extends CursorParams {
+  /** Substring — matches userName AND fullName. */
+  q?: string;
+}
 
 /**
- * Swagger tag: User (10 endpoints).
+ * Swagger tag: users (12 endpoints).
  *
- * Swagger declares no response schema for any of these — every shape below was
- * read off the live API and is recorded in docs/API_REAL_DTO.md.
+ * Search history carries `createdAt` now, so "Recent" can be ordered
+ * chronologically — on softclub it had no timestamp and the two history kinds
+ * came from different id sequences, so the order had to be faked (bug #14).
+ *
+ * `DELETE /users/me` is a real soft-delete the owner may call; softclub's
+ * `delete-user` was admin-only and answered 403 to everyone (bug #13).
  */
 export const userService = {
-  /** `UserName` is a substring match and also matches fullName ("er" → "america"). */
-  getUsers: (params: GetUsersParams = {}) =>
-    http.get<User[]>("/User/get-users", {
-      UserName: params.userName,
-      Email: params.email,
-      PageNumber: params.pageNumber,
-      PageSize: params.pageSize,
-    }),
+  search: (params: SearchUsersParams) => http.get<UserBriefDto[]>("/users", params),
 
-  /** Empty `Text` → 400. Duplicates are de-duplicated server-side. */
-  addSearchHistory: (text: string) =>
-    http.post<boolean>("/User/add-search-history", undefined, { Text: text }),
+  getSuggestions: (params: CursorParams) => http.get<SuggestionDto[]>("/users/suggestions", params),
 
-  getSearchHistories: () => http.get<SearchHistory[]>("/User/get-search-histories"),
+  deleteMe: () => http.delete<AccountDeletedDto>("/users/me"),
 
-  /** Unknown id → 404 "Search history not found!". */
-  deleteSearchHistory: (id: number) => http.delete<boolean>("/User/delete-search-history", { id }),
+  report: (userId: string, dto: ReportUserDto) =>
+    http.post<ReportCreatedDto>(`/users/${userId}/report`, dto),
 
-  deleteSearchHistories: () => http.delete<boolean>("/User/delete-search-histories"),
+  /** Text query history. */
+  addSearchText: (dto: AddSearchTextDto) =>
+    http.post<SearchHistoryItemDto>("/users/search-history", dto),
 
-  addUserSearchHistory: (userSearchId: string) =>
-    http.post<boolean>("/User/add-user-search-history", undefined, {
-      UserSearchId: userSearchId,
-    }),
+  getSearchTexts: (params: CursorParams) =>
+    http.get<SearchHistoryItemDto[]>("/users/search-history", params),
 
-  getUserSearchHistories: () => http.get<UserSearchHistory[]>("/User/get-user-search-histories"),
+  clearSearchTexts: () => http.delete<DeletedCountDto>("/users/search-history"),
 
-  deleteUserSearchHistory: (id: number) =>
-    http.delete<boolean>("/User/delete-user-search-history", { id }),
+  removeSearchText: (id: string) => http.delete<DeletedCountDto>(`/users/search-history/${id}`),
 
-  deleteUserSearchHistories: () => http.delete<boolean>("/User/delete-user-search-histories"),
+  /** Visited-profile history. Re-adding an existing entry bumps it to the top. */
+  addSearchedUser: (dto: AddSearchedUserDto) =>
+    http.post<SearchedUserItemDto>("/users/search-history/user", dto),
 
-  /**
-   * ⚠️ Admin-only: answers **403 for every caller**, including a user deleting
-   * their own account (verified on throwaway accounts). See docs/BACKEND_BUGS.md #7.
-   */
-  deleteUser: (userId: string) => http.delete<boolean>("/User/delete-user", { userId }),
+  getSearchedUsers: (params: CursorParams) =>
+    http.get<SearchedUserItemDto[]>("/users/search-history/users", params),
+
+  clearSearchedUsers: () => http.delete<DeletedCountDto>("/users/search-history/users"),
+
+  removeSearchedUser: (id: string) =>
+    http.delete<DeletedCountDto>(`/users/search-history/user/${id}`),
 };

@@ -13,7 +13,7 @@ import { useRouter } from "@/i18n/navigation";
 import { cropImageToFile, type CropArea } from "@/lib/crop";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { isVideo } from "@/types/post.types";
+import { isVideoFile } from "@/types/post.types";
 
 const CAPTION_MAX = 2200;
 const ASPECTS = { square: 1, portrait: 4 / 5 } as const;
@@ -63,13 +63,15 @@ export function CreatePost() {
     const prepared = await Promise.all(
       files.map(async (file, position) => {
         const area = areas[position];
-        if (!area || isVideo(file.name)) return file;
+        if (!area || isVideoFile(file)) return file;
         return cropImageToFile(file, area);
       }),
     );
 
     addPost.mutate(
-      { title: "", content: caption, images: prepared },
+      // Location, music, tagged people and filters exist on this endpoint now;
+      // wiring them into the stepper (img31–img33) is Phase 14.
+      { media: prepared, caption },
       {
         onSuccess: () => {
           toast.success(t("published"));
@@ -142,7 +144,7 @@ export function CreatePost() {
         {step === "crop" && current && currentPreview ? (
           <div>
             <div className="relative h-[420px] bg-black">
-              {isVideo(current.name) ? (
+              {isVideoFile(current) ? (
                 <video src={currentPreview} controls className="size-full object-contain" />
               ) : (
                 <Cropper
@@ -219,7 +221,7 @@ export function CreatePost() {
         {step === "caption" && currentPreview ? (
           <div className="flex flex-col md:flex-row">
             <div className="bg-black md:w-[55%]">
-              {current && isVideo(current.name) ? (
+              {current && isVideoFile(current) ? (
                 <video src={currentPreview} controls className="size-full object-contain" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element -- blob: preview, never optimised
@@ -229,7 +231,7 @@ export function CreatePost() {
 
             <div className="flex-1 p-4">
               <div className="mb-3 flex items-center gap-3">
-                <UserAvatar src={profile?.image} size={28} />
+                <UserAvatar src={profile?.avatarUrl} size={28} />
                 <span className="text-ig-text text-sm font-semibold">{profile?.userName}</span>
               </div>
 

@@ -10,24 +10,33 @@ import { Loader } from "@/components/shared/Loader";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChat";
 import { usePathname } from "@/i18n/navigation";
-import { getChatPeer } from "@/types/chat.types";
+import { peerLabel } from "@/types/chat.types";
 
-/** Left column of /chat (img18): title + new-message button, filter, conversations. */
+/**
+ * Left column of /chat (img18): title + new-message button, filter, conversations.
+ *
+ * Sorted by `lastMessageAt` — real recency. Phase 9 had to sort by chat id and
+ * call it "the closest honest approximation", because softclub's chat rows
+ * carried no timestamp at all.
+ */
 export function ChatList() {
   const t = useTranslations("chat");
   const { user } = useAuth();
   const pathname = usePathname();
-  const { data: chats, isPending, isError, refetch } = useChats();
+  const { data, isPending, isError, refetch } = useChats();
   const [filter, setFilter] = useState("");
   const [newChatOpen, setNewChatOpen] = useState(false);
 
-  const myUserId = user?.userId ?? "";
-  const rows = (chats ?? [])
-    .map((chat) => ({ chat, peer: getChatPeer(chat, myUserId) }))
-    // The API cannot sort by recency (no timestamp on the chat), so newest chat
-    // id first is the closest honest approximation.
-    .sort((a, b) => b.chat.chatId - a.chat.chatId)
-    .filter(({ peer }) => peer.userName.toLowerCase().includes(filter.trim().toLowerCase()));
+  const needle = filter.trim().toLowerCase();
+  const chats = (data?.pages.flat() ?? [])
+    .filter((chat) => peerLabel(chat).toLowerCase().includes(needle))
+    .sort((a, b) => {
+      // A brand-new chat has no messages and therefore no date; keep it on top
+      // rather than sinking it below every old conversation.
+      const at = a.lastMessageAt ? Date.parse(a.lastMessageAt) : Number.POSITIVE_INFINITY;
+      const bt = b.lastMessageAt ? Date.parse(b.lastMessageAt) : Number.POSITIVE_INFINITY;
+      return bt - at;
+    });
 
   return (
     <div className="border-ig-border flex h-full w-full flex-col border-r md:w-[414px]">
@@ -63,17 +72,16 @@ export function ChatList() {
           <Loader className="py-10" />
         ) : isError ? (
           <ErrorState onRetry={() => void refetch()} />
-        ) : rows.length === 0 ? (
+        ) : chats.length === 0 ? (
           <p className="text-ig-text-secondary px-6 py-10 text-center text-sm">{t("noChats")}</p>
         ) : (
           <ul>
-            {rows.map(({ chat, peer }) => (
+            {chats.map((chat) => (
               <ChatListItem
-                key={chat.chatId}
+                key={chat.id}
                 chat={chat}
-                peer={peer}
-                myUserId={myUserId}
-                active={pathname === `/chat/${chat.chatId}`}
+                myUserId={user?.id ?? ""}
+                active={pathname === `/chat/${chat.id}`}
               />
             ))}
           </ul>

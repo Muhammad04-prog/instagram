@@ -10,13 +10,15 @@ import { ProfileTabs, type ProfileTab } from "@/components/profile/ProfileTabs";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { useFavorites, useMyProfile, useUserProfile } from "@/hooks/useProfile";
-import { useMyPosts, useUserPosts } from "@/hooks/usePosts";
-import { isVideo, type Post } from "@/types/post.types";
+import { useMyPosts, useUserPosts, useUserReels, useUserTagged } from "@/hooks/usePosts";
+import type { PostDto } from "@/types/post.types";
 
 /**
- * Shared by /profile/me and /profile/[userId]. My own profile reads
- * `get-my-profile` (it has no id), someone else's reads
- * `get-is-follow-user-profile-by-id`, which also carries the follow state.
+ * Shared by /profile/me and /profile/[userId].
+ *
+ * Reels and Tagged are their own endpoints now. Phase 4 had to derive the reels
+ * tab by filtering the grid for video files, and left Tagged as a placeholder —
+ * softclub had neither.
  */
 export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean }) {
   const t = useTranslations("profile");
@@ -26,21 +28,20 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   const other = useUserProfile(isMe ? "" : userId);
   const profileQuery = isMe ? mine : other;
 
-  // My own grid comes from get-my-posts; someone else's from get-posts?UserId
-  // (the only one of the two that can filter by user).
   const myPosts = useMyPosts(isMe);
   const otherPosts = useUserPosts(userId, !isMe);
   const posts = isMe ? myPosts : otherPosts;
+
+  const reelsQuery = useUserReels(userId, tab === "reels");
+  const taggedQuery = useUserTagged(userId, tab === "tagged");
   const favorites = useFavorites();
 
   const allPosts = useMemo(
-    () => (isMe ? (myPosts.data ?? []) : (otherPosts.data?.pages.flat() ?? [])),
-    [isMe, myPosts.data, otherPosts.data],
+    () => (isMe ? myPosts : otherPosts).data?.pages.flat() ?? [],
+    [isMe, myPosts, otherPosts],
   );
-  const reels = useMemo(
-    () => allPosts.filter((post) => post.images.some((file) => isVideo(file))),
-    [allPosts],
-  );
+  const reels = useMemo(() => reelsQuery.data?.pages.flat() ?? [], [reelsQuery.data]);
+  const tagged = useMemo(() => taggedQuery.data?.pages.flat() ?? [], [taggedQuery.data]);
   const savedPosts = useMemo(() => favorites.data?.pages.flat() ?? [], [favorites.data]);
 
   if (profileQuery.isPending) return <ProfileHeaderSkeleton />;
@@ -66,7 +67,7 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
           />
         ) : tab === "reels" ? (
           <Panel
-            query={posts}
+            query={reelsQuery}
             items={reels}
             emptyIcon={<GridIcon className="size-8" />}
             emptyTitle={t("noReels")}
@@ -80,10 +81,12 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
             emptyDescription={t("savedOnlyVisibleToYou")}
           />
         ) : (
-          <EmptyState
-            icon={<TaggedIcon className="size-8" />}
-            title={t("taggedTitle")}
-            description={t("taggedDescription")}
+          <Panel
+            query={taggedQuery}
+            items={tagged}
+            emptyIcon={<TaggedIcon className="size-8" />}
+            emptyTitle={t("taggedTitle")}
+            emptyDescription={t("taggedDescription")}
           />
         )}
       </div>
@@ -100,7 +103,7 @@ function Panel({
   emptyDescription,
 }: {
   query: { isPending: boolean; isError: boolean; refetch: () => unknown };
-  items: Post[];
+  items: PostDto[];
   emptyIcon: React.ReactNode;
   emptyTitle: string;
   emptyDescription?: string;

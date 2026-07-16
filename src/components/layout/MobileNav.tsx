@@ -43,7 +43,7 @@ export function MobileNav() {
       <Tab href={ROUTES.myProfile} label={t("profile")} active={pathname.startsWith("/profile")}>
         {(active) => (
           <UserAvatar
-            src={profile?.image}
+            src={profile?.avatarUrl}
             size={24}
             className={cn(active && "ring-ig-text ring-2")}
           />

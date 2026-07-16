@@ -1,18 +1,25 @@
-import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
-import { ACCESS_TOKEN_COOKIE, API_URL } from "@/lib/constants";
+import {
+  clearTokens,
+  readAccessToken,
+  readRefreshToken,
+  refreshTokens,
+  storeTokens,
+} from "@/lib/auth-tokens";
+import { API_URL } from "@/lib/constants";
+import { decodeJwt, isExpiring } from "@/lib/jwt";
+import type { TokensDto } from "@/types/api.types";
 
 /**
  * Server-side gateway to the backend.
  *
- * The JWT lives in an httpOnly cookie and is read *here*, on the server — the
- * browser never sees it, so an XSS cannot steal it. The client calls
- * /api/proxy/<Swagger path> and this handler re-issues the request with the
+ * The token pair lives in httpOnly cookies and is read *here*, on the server —
+ * the browser never sees it, so an XSS cannot steal it. The client calls
+ * /api/proxy/<resource> and this handler re-issues the request upstream with the
  * Authorization header attached.
  *
- * Bodies are streamed straight through, so multipart uploads (add-post,
- * send-message, update-user-image-profile) keep their original boundary and are
- * never buffered into memory here.
+ * Bodies are streamed straight through, so multipart uploads (posts, stories,
+ * avatars, chat files) keep their original boundary and are never buffered here.
  */
 
 // Hop-by-hop and host-specific headers must not be forwarded.
@@ -31,8 +38,52 @@ const STRIPPED_RESPONSE_HEADERS = new Set([
   "connection",
 ]);
 
+/**
+ * Refresh tokens ROTATE: the backend revokes the old one as soon as it issues a
+ * new pair. Two requests refreshing the same token in parallel would mean the
+ * loser presents an already-revoked token and gets logged out. So refreshes are
+ * de-duplicated by token value — concurrent callers await one flight and share
+ * its result.
+ */
+const inFlight = new Map<string, Promise<TokensDto | null>>();
+
+function refreshOnce(refreshToken: string): Promise<TokensDto | null> {
+  const existing = inFlight.get(refreshToken);
+  if (existing) return existing;
+
+  const flight = refreshTokens(refreshToken).finally(() => {
+    inFlight.delete(refreshToken);
+  });
+
+  inFlight.set(refreshToken, flight);
+  return flight;
+}
+
+/**
+ * Returns a usable access token, renewing it first when it is expired or about
+ * to be. Refreshing up-front (rather than reacting to a 401) is what lets us
+ * keep streaming request bodies: a streamed body cannot be replayed, so the
+ * request must be right the first time.
+ */
+async function currentAccessToken(): Promise<string | undefined> {
+  const access = await readAccessToken();
+  if (access && !isExpiring(decodeJwt(access))) return access;
+
+  const refresh = await readRefreshToken();
+  if (!refresh) return access;
+
+  const tokens = await refreshOnce(refresh);
+  if (!tokens) {
+    await clearTokens();
+    return undefined;
+  }
+
+  await storeTokens(tokens);
+  return tokens.accessToken;
+}
+
 async function forward(request: NextRequest, path: string[]): Promise<Response> {
-  const token = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
+  const token = await currentAccessToken();
 
   const target = `${API_URL}/${path.map(encodeURIComponent).join("/")}${request.nextUrl.search}`;
 
@@ -61,6 +112,11 @@ async function forward(request: NextRequest, path: string[]): Promise<Response> 
       { status: 502 },
     );
   }
+
+  // A 401 despite a proactively-renewed token means the session is genuinely
+  // gone (refresh revoked, account deleted). Drop the cookies so the client
+  // stops replaying a dead session.
+  if (upstream.status === 401) await clearTokens();
 
   const responseHeaders = new Headers();
   upstream.headers.forEach((value, key) => {

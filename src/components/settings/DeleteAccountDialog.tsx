@@ -22,24 +22,20 @@ import { userService } from "@/services/user.service";
 export function DeleteAccountDialog() {
   const t = useTranslations("settings");
   const tErrors = useTranslations("errors");
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [askOpen, setAskOpen] = useState(false);
   const [finalOpen, setFinalOpen] = useState(false);
 
+  // `DELETE /users/me` soft-deletes my own account and actually works.
+  // Softclub's delete-user was admin-only and answered 403 to everyone,
+  // including the account's owner (bug #13) — hence the old 403 special case.
   const deleteAccount = useMutation({
-    mutationFn: () => userService.deleteUser(user?.userId ?? ""),
+    mutationFn: () => userService.deleteMe(),
     onSuccess: () => {
       toast.success(t("deleteAccountDone"));
       void logout();
     },
-    // 403 is the *expected* answer here — the endpoint is admin-only — so it gets
-    // a real sentence instead of axios's "Request failed with status code 403".
-    onError: (error: ApiError) =>
-      toast.error(
-        error.statusCode === 403
-          ? t("deleteAccountForbidden")
-          : error.message || tErrors("network"),
-      ),
+    onError: (error: ApiError) => toast.error(error.message || tErrors("network")),
   });
 
   return (

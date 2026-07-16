@@ -22,6 +22,9 @@
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
   --ig-danger: #ed4956;
+  /* Positive confirmation (username available). IG greens this state; there was
+     no success token before because nothing in the old API could succeed softly. */
+  --ig-success: #00b74a;
   --ig-badge: #ff3040;
   --ig-story-gradient: linear-gradient(
     45deg,
@@ -105,6 +108,9 @@
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
   --ig-danger: #ed4956;
+  /* Positive confirmation (username available). IG greens this state; there was
+     no success token before because nothing in the old API could succeed softly. */
+  --ig-success: #00b74a;
   --ig-badge: #ff3040;
 
   /* Auth (sampled from docs/screenshots/img4, img6, img7) */
@@ -160,6 +166,7 @@
   --color-ig-primary: var(--ig-primary);
   --color-ig-primary-hover: var(--ig-primary-hover);
   --color-ig-danger: var(--ig-danger);
+  --color-ig-success: var(--ig-success);
   --color-ig-badge: var(--ig-badge);
 
   --color-auth-bg: var(--auth-bg);

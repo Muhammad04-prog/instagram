@@ -19,9 +19,10 @@ export function MessageUserButton({ userId }: { userId: string }) {
       type="button"
       disabled={createChat.isPending}
       onClick={() =>
-        createChat.mutate(userId, {
-          onSuccess: (chatId) => router.push(ROUTES.chatById(chatId)),
-        })
+        createChat.mutate(
+          { receiverUserId: userId },
+          { onSuccess: (chat) => router.push(ROUTES.chatById(chat.id)) },
+        )
       }
       className="bg-ig-button-secondary text-ig-text hover:bg-ig-button-secondary-hover flex-1 rounded-lg py-1.5 text-sm font-semibold disabled:opacity-50"
     >

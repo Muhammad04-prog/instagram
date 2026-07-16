@@ -4,18 +4,41 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
+import { CodeInput } from "@/components/auth/CodeInput";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Link } from "@/i18n/navigation";
 import type { ApiError } from "@/lib/axios";
-import { ROUTES } from "@/lib/constants";
+import { RESEND_CODE_COOLDOWN_S, ROUTES } from "@/lib/constants";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/validators/auth.schema";
-import { accountService } from "@/services/account.service";
+import { authService } from "@/services/auth.service";
 
-/** docs/screenshots/img6 — "Поиск аккаунта". API takes an email only. */
+/**
+ * Password reset, docs/screenshots/img6 ("Поиск аккаунта") extended into the
+ * three steps the API actually has:
+ *
+ *   email → 6-digit code (→ single-use resetToken, 15 min) → new password
+ *
+ * Softclub could only do this in two steps, and its mailer was broken anyway —
+ * a valid address answered with a raw MailKit stack trace (bug #22), so the
+ * screen could never be finished. It works here.
+ */
 export function ForgotPasswordForm() {
+  const [email, setEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
+
+  if (resetToken) return <ResetPasswordForm resetToken={resetToken} />;
+  if (email)
+    return <CodeStep email={email} onVerified={setResetToken} onBack={() => setEmail("")} />;
+  return <EmailStep onSent={setEmail} />;
+}
+
+/** Step 1 — where do we send the code. */
+function EmailStep({ onSent }: { onSent: (email: string) => void }) {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
 
@@ -30,17 +53,13 @@ export function ForgotPasswordForm() {
   });
 
   const forgot = useMutation({
-    mutationFn: (values: ForgotPasswordValues) => accountService.forgotPassword(values.email),
-    onSuccess: () => toast.success(t("resetLinkSent")),
-    // The server's mailer is broken: a *valid* email answers with a raw MailKit
-    // stack message ("Method not found: Void MailKit.MailTransport.Send…").
-    // Show a sentence instead of that — docs/BACKEND_BUGS.md #22.
-    onError: (error: ApiError) =>
-      toast.error(
-        /mailkit|method not found/i.test(error.message)
-          ? t("resetMailBroken")
-          : error.message || t("findAccount"),
-      ),
+    mutationFn: (values: ForgotPasswordValues) =>
+      authService.forgotPassword({ email: values.email }),
+    onSuccess: (_data, values) => {
+      toast.success(t("codeSent"));
+      onSent(values.email);
+    },
+    onError: (error: ApiError) => toast.error(error.message || t("findAccount")),
   });
 
   return (
@@ -68,6 +87,79 @@ export function ForgotPasswordForm() {
       <AuthButton type="submit" disabled={!isValid} loading={forgot.isPending}>
         {t("continue")}
       </AuthButton>
+    </form>
+  );
+}
+
+/** Step 2 — the emailed code, traded for a reset token. */
+function CodeStep({
+  email,
+  onVerified,
+  onBack,
+}: {
+  email: string;
+  onVerified: (resetToken: string) => void;
+  onBack: () => void;
+}) {
+  const t = useTranslations("auth");
+  const tv = useTranslations("validation");
+  const [code, setCode] = useState("");
+  const [cooldown, setCooldown] = useState(RESEND_CODE_COOLDOWN_S);
+
+  // The backend refuses a second code within a minute (429), so the button says
+  // when it will work instead of letting the user earn a rate-limit error.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const verify = useMutation({
+    mutationFn: () => authService.verifyCode({ email, code }),
+    onSuccess: (data) => onVerified(data.resetToken),
+    onError: (error: ApiError) => toast.error(error.message || tv("code")),
+  });
+
+  const resend = useMutation({
+    mutationFn: () => authService.resendCode({ email }),
+    onSuccess: () => {
+      toast.success(t("codeSent"));
+      setCooldown(RESEND_CODE_COOLDOWN_S);
+    },
+    onError: (error: ApiError) => toast.error(error.message),
+  });
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        verify.mutate();
+      }}
+      className="w-full max-w-[750px] space-y-6"
+    >
+      <button type="button" onClick={onBack} aria-label={t("back")} className="block">
+        <ChevronLeft className="text-ig-text size-6" />
+      </button>
+
+      <header className="space-y-2">
+        <h1 className="text-ig-text text-[28px] font-bold">{t("enterCode")}</h1>
+        <p className="text-ig-text-secondary text-[15px]">{t("enterCodeSubtitle", { email })}</p>
+      </header>
+
+      <CodeInput value={code} onChange={setCode} autoFocus />
+
+      <AuthButton type="submit" disabled={code.length < 6} loading={verify.isPending}>
+        {t("continue")}
+      </AuthButton>
+
+      <button
+        type="button"
+        onClick={() => resend.mutate()}
+        disabled={cooldown > 0 || resend.isPending}
+        className="text-ig-primary block w-full text-center text-sm font-semibold disabled:opacity-50"
+      >
+        {cooldown > 0 ? t("resendIn", { seconds: cooldown }) : t("resendCode")}
+      </button>
     </form>
   );
 }

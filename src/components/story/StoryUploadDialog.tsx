@@ -31,7 +31,9 @@ export function StoryUploadDialog({
   const onSubmit = () => {
     if (!file) return;
     add.mutate(
-      { image: file, postId },
+      // Multi-upload is supported (up to 10 → 10 separate stories); the dialog
+      // still takes one file, so this sends a one-item list.
+      { media: [file], fromPostId: postId },
       {
         onSuccess: () => {
           toast.success(t("storyAdded"));

@@ -10,7 +10,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn, formatCount } from "@/lib/utils";
-import { profileFullName, type UserProfile } from "@/types/profile.types";
+import type { ProfileDto } from "@/types/profile.types";
 
 /**
  * Profile header, measured off docs/screenshots/img35 (DPR 1.25): 150px avatar
@@ -23,18 +23,18 @@ export function ProfileHeader({
   isMe,
 }: {
   userId: string;
-  profile: UserProfile;
+  profile: ProfileDto;
   isMe: boolean;
 }) {
   const t = useTranslations("profile");
   const [followTab, setFollowTab] = useState<FollowTab>("followers");
   const [followOpen, setFollowOpen] = useState(false);
 
-  const fullName = profileFullName(profile);
+  const fullName = profile.fullName;
   // The word only — the number is rendered next to it, so it must not repeat.
-  const postsLabel = t("postsLabel", { count: profile.postCount });
-  const followersLabel = t("followersLabel", { count: profile.subscribersCount });
-  const followingLabel = t("followingLabel", { count: profile.subscriptionsCount });
+  const postsLabel = t("postsLabel", { count: profile.postsCount });
+  const followersLabel = t("followersLabel", { count: profile.followersCount });
+  const followingLabel = t("followingLabel", { count: profile.followingCount });
 
   const openFollowDialog = (tab: FollowTab) => {
     setFollowTab(tab);
@@ -46,7 +46,7 @@ export function ProfileHeader({
       <div className="flex gap-6 md:gap-8">
         <div className="flex shrink-0 justify-center md:w-[290px]">
           <UserAvatar
-            src={profile.image}
+            src={profile.avatarUrl}
             alt={profile.userName}
             size={150}
             priority
@@ -141,7 +141,7 @@ function Stats({
   followersLabel,
   followingLabel,
 }: {
-  profile: UserProfile;
+  profile: ProfileDto;
   className?: string;
   stacked?: boolean;
   onOpen: (tab: FollowTab) => void;
@@ -156,18 +156,18 @@ function Stats({
   return (
     <ul className={cn("flex gap-10", className)}>
       <li className={item}>
-        <span className={value}>{formatCount(profile.postCount)}</span>{" "}
+        <span className={value}>{formatCount(profile.postsCount)}</span>{" "}
         <span className={label}>{postsLabel}</span>
       </li>
       <li>
         <button type="button" onClick={() => onOpen("followers")} className={item}>
-          <span className={value}>{formatCount(profile.subscribersCount)}</span>{" "}
+          <span className={value}>{formatCount(profile.followersCount)}</span>{" "}
           <span className={label}>{followersLabel}</span>
         </button>
       </li>
       <li>
         <button type="button" onClick={() => onOpen("following")} className={item}>
-          <span className={value}>{formatCount(profile.subscriptionsCount)}</span>{" "}
+          <span className={value}>{formatCount(profile.followingCount)}</span>{" "}
           <span className={label}>{followingLabel}</span>
         </button>
       </li>
@@ -175,7 +175,7 @@ function Stats({
   );
 }
 
-function Bio({ profile, className }: { profile: UserProfile; className?: string }) {
+function Bio({ profile, className }: { profile: ProfileDto; className?: string }) {
   if (!profile.about && !profile.occupation) return null;
 
   return (

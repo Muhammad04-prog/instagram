@@ -12,6 +12,7 @@ import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeleteStory, useLikeStory, useMarkStorySeen, useUserStories } from "@/hooks/useStories";
+import { useUserProfile } from "@/hooks/useProfile";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn, getImageUrl } from "@/lib/utils";
@@ -31,8 +32,13 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const { user } = useAuth();
 
   const { data, isPending, isError, refetch } = useUserStories(userId);
+
+  // `StoryDto` carries the media, not the author — the old grouped-by-author
+  // response used to hand both over at once. The header reads the profile
+  // instead (cached, and usually already warm from the rail or the grid).
+  const { data: author } = useUserProfile(userId);
   const markSeen = useMarkStorySeen();
-  const likeStory = useLikeStory();
+  const likeStory = useLikeStory(userId);
   const deleteStory = useDeleteStory();
 
   const [index, setIndex] = useState(0);
@@ -42,9 +48,9 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [broken, setBroken] = useState(false);
 
-  const stories = data?.stories ?? [];
+  const stories = data ?? [];
   const current = stories[index];
-  const isMine = userId === user?.userId;
+  const isMine = userId === user?.id;
 
   const next = useCallback(() => {
     setProgress(0);
@@ -106,7 +112,7 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
     return <ErrorState title={t("noStories")} className="py-20" />;
   }
 
-  const url = getImageUrl(current.fileName) ?? "";
+  const url = getImageUrl(current.mediaUrl) ?? "";
 
   return (
     <div className="relative mx-auto flex h-[90vh] w-[420px] max-w-[95vw] flex-col overflow-hidden rounded-lg bg-black">
@@ -129,22 +135,22 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
       </div>
 
       <div className="absolute top-5 right-0 left-0 z-10 flex items-center gap-3 px-3 pt-2">
-        <Link href={ROUTES.profile(data.userId)} onClick={onClose}>
-          <UserAvatar src={data.userImage} alt={data.userName} size={32} />
+        <Link href={ROUTES.profile(userId)} onClick={onClose}>
+          <UserAvatar src={author?.avatarUrl ?? null} alt={author?.userName ?? ""} size={32} />
         </Link>
         <Link
-          href={ROUTES.profile(data.userId)}
+          href={ROUTES.profile(userId)}
           onClick={onClose}
           className="text-sm font-semibold text-white"
         >
-          {data.userName}
+          {author?.userName}
         </Link>
         <time
-          dateTime={current.createAt}
+          dateTime={current.createdAt}
           className="text-xs text-white/70"
           suppressHydrationWarning
         >
-          {format.relativeTime(new Date(current.createAt), new Date())}
+          {format.relativeTime(new Date(current.createdAt), new Date())}
         </time>
 
         <div className="ml-auto flex items-center gap-3">
@@ -225,14 +231,14 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
           <button
             type="button"
             aria-label={t("likeStory")}
-            aria-pressed={current.liked}
+            aria-pressed={current.isLiked}
             onClick={() => likeStory.mutate(current.id)}
             className={cn(
               "transition-transform active:scale-90",
-              current.liked ? "text-ig-danger" : "text-white",
+              current.isLiked ? "text-ig-danger" : "text-white",
             )}
           >
-            <HeartIcon filled={current.liked} className="size-7" />
+            <HeartIcon filled={current.isLiked} className="size-7" />
           </button>
         )}
       </div>

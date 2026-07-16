@@ -9,7 +9,7 @@ import { useCreateChat } from "@/hooks/useChat";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useUsers } from "@/hooks/useUserSearch";
 import { useRouter } from "@/i18n/navigation";
-import { ROUTES, SEARCH_PAGE_SIZE } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function NewChatDialog({
@@ -25,22 +25,23 @@ export function NewChatDialog({
   const [selected, setSelected] = useState<string | null>(null);
   const debounced = useDebounce(term.trim());
 
-  const { data: users, isFetching } = useUsers(
-    { userName: debounced, pageNumber: 1, pageSize: SEARCH_PAGE_SIZE },
-    debounced.length > 0,
-  );
+  const { data: users, isFetching } = useUsers(debounced, debounced.length > 0);
   const createChat = useCreateChat();
 
   const start = () => {
     if (!selected) return;
-    createChat.mutate(selected, {
-      onSuccess: (chatId) => {
-        onOpenChange(false);
-        setTerm("");
-        setSelected(null);
-        router.push(ROUTES.chatById(chatId));
+    // Idempotent: an existing chat with this peer comes back as `existed`.
+    createChat.mutate(
+      { receiverUserId: selected },
+      {
+        onSuccess: (chat) => {
+          onOpenChange(false);
+          setTerm("");
+          setSelected(null);
+          router.push(ROUTES.chatById(chat.id));
+        },
       },
-    });
+    );
   };
 
   return (
@@ -75,7 +76,7 @@ export function NewChatDialog({
                     onClick={() => setSelected(user.id)}
                     className="hover:bg-ig-bg-secondary flex w-full items-center gap-3 px-4 py-2 text-left"
                   >
-                    <UserAvatar src={user.avatar} size={44} />
+                    <UserAvatar src={user.avatarUrl ?? null} size={44} />
                     <span className="min-w-0 flex-1">
                       <span className="text-ig-text block truncate text-sm font-semibold">
                         {user.userName}

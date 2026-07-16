@@ -3,9 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
+import { DobSelect } from "@/components/auth/DobSelect";
+import { UsernameField } from "@/components/auth/UsernameField";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -13,9 +15,11 @@ import { registerSchema, type RegisterValues } from "@/lib/validators/auth.schem
 
 /**
  * Layout follows docs/screenshots/img4 + img5 (single centred column, filled
- * inputs, section labels). The screenshot's "Дата рождения" block is dropped —
- * Swagger's RegisterDto has no birthday — and "Confirm password" takes its place
- * because the API requires it.
+ * inputs, section labels).
+ *
+ * The screenshot's "Дата рождения" block is real now — the new RegisterDto
+ * requires `dob`. Phase 2 had to drop it because softclub had no such field.
+ * "Confirm password" stays: the API requires it too, so both blocks coexist.
  */
 export function RegisterForm() {
   const t = useTranslations("auth");
@@ -24,6 +28,7 @@ export function RegisterForm() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isValid },
   } = useForm<RegisterValues>({
@@ -31,10 +36,12 @@ export function RegisterForm() {
     mode: "onChange",
     defaultValues: {
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
       fullName: "",
       userName: "",
+      dob: "",
     },
   });
 
@@ -45,11 +52,14 @@ export function RegisterForm() {
           userName: values.userName,
           fullName: values.fullName,
           email: values.email,
+          // Optional — the field is left out entirely rather than sent empty.
+          ...(values.phone ? { phone: values.phone } : {}),
           password: values.password,
           confirmPassword: values.confirmPassword,
+          dob: values.dob,
         }),
       )}
-      className="w-full max-w-[700px] space-y-6"
+      className="w-full max-w-[560px] space-y-6"
     >
       <Link href={ROUTES.login} aria-label={t("login")} className="block">
         <ChevronLeft className="text-ig-text size-6" />
@@ -69,6 +79,17 @@ export function RegisterForm() {
           placeholder={t("emailPlaceholder")}
           autoComplete="email"
           error={errors.email?.message}
+        />
+      </Field>
+
+      <Field label={t("phone")}>
+        <AuthInput
+          {...register("phone")}
+          filled
+          type="tel"
+          placeholder={t("phone")}
+          autoComplete="tel"
+          error={errors.phone?.message}
         />
       </Field>
 
@@ -94,6 +115,19 @@ export function RegisterForm() {
         />
       </Field>
 
+      {/* Three dropdowns — Day / Month / Year — as in img4. */}
+      <fieldset className="block space-y-2">
+        <legend className="text-ig-text mb-2 text-[15px] font-semibold">{t("dob")}</legend>
+        <Controller
+          control={control}
+          name="dob"
+          render={({ field }) => (
+            <DobSelect value={field.value} onChange={field.onChange} error={errors.dob?.message} />
+          )}
+        />
+        <p className="text-ig-text-secondary text-[13px]">{t("dobHint")}</p>
+      </fieldset>
+
       <Field label={t("fullName")}>
         <AuthInput
           {...register("fullName")}
@@ -105,13 +139,7 @@ export function RegisterForm() {
       </Field>
 
       <Field label={t("userName")}>
-        <AuthInput
-          {...register("userName")}
-          filled
-          placeholder={t("userName")}
-          autoComplete="username"
-          error={errors.userName?.message}
-        />
+        <UsernameField control={control} error={errors.userName?.message} />
       </Field>
 
       <p className="text-ig-text-secondary text-[13px] leading-relaxed">{t("registerTerms")}</p>

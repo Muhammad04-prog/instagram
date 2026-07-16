@@ -10,11 +10,11 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscribers, useSubscriptions } from "@/hooks/useFollow";
+import { useFollowers, useFollowing } from "@/hooks/useFollow";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { FollowRelation } from "@/types/profile.types";
+import type { FollowerDto } from "@/types/api.types";
 
 export type FollowTab = "followers" | "following";
 
@@ -39,20 +39,20 @@ export function FollowDialog({
   const t = useTranslations("profile");
   const [query, setQuery] = useState("");
 
-  const subscribers = useSubscribers(userId, open && tab === "followers");
-  const subscriptions = useSubscriptions(userId, open && tab === "following");
-  const active = tab === "followers" ? subscribers : subscriptions;
+  const followers = useFollowers(userId, open && tab === "followers");
+  const following = useFollowing(userId, open && tab === "following");
+  const active = tab === "followers" ? followers : following;
 
+  // The rows are flat users now — softclub wrapped each one in a `userShortInfo`
+  // object (with a lowercase `fullname`) under a relation id.
   const rows = useMemo(() => {
-    const list = active.data ?? [];
+    const list = active.data?.pages.flat() ?? [];
     const needle = query.trim().toLowerCase();
     if (!needle) return list;
-    return list.filter((row) => {
-      const { userName, fullname } = row.userShortInfo;
-      return (
-        userName.toLowerCase().includes(needle) || (fullname ?? "").toLowerCase().includes(needle)
-      );
-    });
+    return list.filter(
+      (row) =>
+        row.userName.toLowerCase().includes(needle) || row.fullName.toLowerCase().includes(needle),
+    );
   }, [active.data, query]);
 
   return (
@@ -102,7 +102,7 @@ export function FollowDialog({
           ) : (
             <ul>
               {rows.map((row) => (
-                <PersonRow key={row.id} relation={row} onNavigate={() => onOpenChange(false)} />
+                <PersonRow key={row.id} person={row} onNavigate={() => onOpenChange(false)} />
               ))}
             </ul>
           )}
@@ -112,27 +112,28 @@ export function FollowDialog({
   );
 }
 
-function PersonRow({ relation, onNavigate }: { relation: FollowRelation; onNavigate: () => void }) {
+function PersonRow({ person, onNavigate }: { person: FollowerDto; onNavigate: () => void }) {
   const { user } = useAuth();
-  const { userId: personId, userName, userPhoto, fullname } = relation.userShortInfo;
-  const isMe = personId === user?.userId;
+  const isMe = person.id === user?.id;
 
   return (
     <li className="flex items-center gap-3 px-2 py-2">
-      <Link href={ROUTES.profile(personId)} onClick={onNavigate}>
-        <UserAvatar src={userPhoto} size={44} alt={userName} />
+      <Link href={ROUTES.profile(person.id)} onClick={onNavigate}>
+        <UserAvatar src={person.avatarUrl ?? null} size={44} alt={person.userName} />
       </Link>
       <div className="min-w-0 flex-1">
         <Link
-          href={ROUTES.profile(personId)}
+          href={ROUTES.profile(person.id)}
           onClick={onNavigate}
           className="text-ig-text block truncate text-sm font-semibold"
         >
-          {userName}
+          {person.userName}
         </Link>
-        {fullname ? <p className="text-ig-text-secondary truncate text-sm">{fullname}</p> : null}
+        {person.fullName ? (
+          <p className="text-ig-text-secondary truncate text-sm">{person.fullName}</p>
+        ) : null}
       </div>
-      {isMe ? null : <FollowButton userId={personId} userName={userName} variant="link" />}
+      {isMe ? null : <FollowButton userId={person.id} userName={person.userName} variant="link" />}
     </li>
   );
 }

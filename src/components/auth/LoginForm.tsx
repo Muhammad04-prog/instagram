@@ -12,11 +12,11 @@ import { ROUTES } from "@/lib/constants";
 import { loginSchema, type LoginValues } from "@/lib/validators/auth.schema";
 
 export function LoginForm({
-  prefillUserName = "",
+  prefillLogin = "",
   onBack,
 }: {
   /** Set when arriving from "Continue as …" — only the password is left to type. */
-  prefillUserName?: string;
+  prefillLogin?: string;
   /** Back to the saved-account card; absent when there is no card to go back to. */
   onBack?: () => void;
 } = {}) {
@@ -31,7 +31,7 @@ export function LoginForm({
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema(tv)),
     mode: "onChange",
-    defaultValues: { userName: prefillUserName, password: "" },
+    defaultValues: { login: prefillLogin, password: "" },
   });
 
   return (
@@ -53,11 +53,11 @@ export function LoginForm({
       </div>
 
       <AuthInput
-        {...register("userName")}
-        placeholder={t("userName")}
+        {...register("login")}
+        placeholder={t("loginPlaceholder")}
         autoComplete="username"
-        autoFocus={prefillUserName.length > 0 ? false : undefined}
-        error={errors.userName?.message}
+        autoFocus={prefillLogin.length > 0 ? false : undefined}
+        error={errors.login?.message}
       />
       <AuthInput
         {...register("password")}

@@ -12,12 +12,12 @@ import { useLikePost, useViewPost } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { formatCount } from "@/lib/utils";
-import type { Post } from "@/types/post.types";
+import type { PostDto } from "@/types/post.types";
 
 const CAPTION_CLAMP = 100;
 
 /** One feed post (docs/screenshots/img10, img11): header, media, actions, caption, comments. */
-export function PostCard({ post }: { post: Post }) {
+export function PostCard({ post }: { post: PostDto }) {
   const t = useTranslations("post");
   const [expanded, setExpanded] = useState(false);
   const [burst, setBurst] = useState(false);
@@ -34,7 +34,7 @@ export function PostCard({ post }: { post: Post }) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
-          viewPost(post.postId);
+          viewPost(post.id);
           observer.disconnect();
         }
       },
@@ -43,15 +43,15 @@ export function PostCard({ post }: { post: Post }) {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [post.postId, viewPost]);
+  }, [post.id, viewPost]);
 
   const onDoubleTap = () => {
     setBurst(true);
     window.setTimeout(() => setBurst(false), 700);
-    if (!post.postLike) like.mutate(post);
+    if (!post.isLiked) like.mutate(post);
   };
 
-  const caption = post.content ?? "";
+  const caption = post.caption ?? "";
   const isLong = caption.length > CAPTION_CLAMP;
   const shown = expanded || !isLong ? caption : `${caption.slice(0, CAPTION_CLAMP)}…`;
 
@@ -61,7 +61,7 @@ export function PostCard({ post }: { post: Post }) {
 
       <div className="relative">
         <PostCarousel
-          images={post.images}
+          media={post.media}
           alt={caption}
           onDoubleTap={onDoubleTap}
           className="overflow-hidden rounded-sm"
@@ -84,16 +84,16 @@ export function PostCard({ post }: { post: Post }) {
 
       <PostActions post={post} className="pt-2" />
 
-      {post.postLikeCount > 0 ? (
+      {post.likesCount > 0 ? (
         <p className="text-ig-text pt-1 text-sm font-semibold">
-          {t("likes", { count: post.postLikeCount })}
+          {t("likes", { count: post.likesCount })}
         </p>
       ) : null}
 
       {caption ? (
         <p className="text-ig-text pt-1 text-sm break-words whitespace-pre-line">
-          <Link href={ROUTES.profile(post.userId)} className="mr-1.5 font-semibold">
-            {post.userName}
+          <Link href={ROUTES.profile(post.author.id)} className="mr-1.5 font-semibold">
+            {post.author.userName}
           </Link>
           {shown}
           {isLong && !expanded ? (
@@ -108,13 +108,13 @@ export function PostCard({ post }: { post: Post }) {
         </p>
       ) : null}
 
-      {post.commentCount > 0 ? (
-        <Link href={ROUTES.post(post.postId)} className="text-ig-text-secondary mt-1 block text-sm">
-          {t("viewAllComments", { count: formatCount(post.commentCount) })}
+      {post.commentsCount > 0 ? (
+        <Link href={ROUTES.post(post.id)} className="text-ig-text-secondary mt-1 block text-sm">
+          {t("viewAllComments", { count: formatCount(post.commentsCount) })}
         </Link>
       ) : null}
 
-      <CommentForm postId={post.postId} className="border-ig-separator mt-1 border-t" />
+      <CommentForm postId={post.id} className="border-ig-separator mt-1 border-t" />
     </article>
   );
 }

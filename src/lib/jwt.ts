@@ -1,8 +1,10 @@
 import type { JwtPayload } from "@/types/auth.types";
 
 /**
- * Reads the JWT claims without verifying the signature — the backend is the
- * only authority; this is purely to know who is logged in on the client.
+ * Reads the JWT claims without verifying the signature — the backend is the only
+ * authority. We decode purely to know *when the token dies*, so the proxy can
+ * renew it before spending a request on a 401. Identity comes from
+ * `GET /auth/me`, never from parsing the token.
  */
 export function decodeJwt(token: string): JwtPayload | null {
   const payload = token.split(".")[1];
@@ -24,14 +26,9 @@ export function decodeJwt(token: string): JwtPayload | null {
     if (typeof claims !== "object" || claims === null) return null;
 
     const record = claims as Record<string, unknown>;
-    const sid = record.sid ?? record.nameid ?? record.sub;
-    if (typeof sid !== "string") return null;
 
     return {
-      sid,
-      name: typeof record.name === "string" ? record.name : "",
-      email: typeof record.email === "string" ? record.email : "",
-      role: record.role as JwtPayload["role"],
+      sub: typeof record.sub === "string" ? record.sub : "",
       exp: typeof record.exp === "number" ? record.exp : 0,
     };
   } catch {
@@ -39,6 +36,16 @@ export function decodeJwt(token: string): JwtPayload | null {
   }
 }
 
-export function isExpired(payload: JwtPayload): boolean {
-  return payload.exp > 0 && payload.exp * 1000 <= Date.now();
+/** Seconds of remaining life below which we renew rather than risk a 401 mid-flight. */
+const EXPIRY_SKEW_S = 30;
+
+/**
+ * True when the token is missing, unreadable, expired, or about to expire.
+ *
+ * An unreadable token counts as expiring, so the caller falls back to the
+ * refresh token instead of confidently sending garbage upstream.
+ */
+export function isExpiring(payload: JwtPayload | null): boolean {
+  if (!payload || payload.exp <= 0) return true;
+  return payload.exp * 1000 - EXPIRY_SKEW_S * 1000 <= Date.now();
 }

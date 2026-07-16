@@ -21,15 +21,17 @@ import {
   editProfileSchema,
   type EditProfileValues,
 } from "@/lib/validators/profile.schema";
-import { GENDER_VALUE, type Gender, type UserProfile } from "@/types/profile.types";
+import type { Gender, ProfileDto } from "@/types/profile.types";
 
 /**
- * docs/screenshots/img43 + img44, minus what the API has no field for: "Сайт",
- * the Threads / AI-author toggles and the recommendation switch are not part of
- * update-user-profile (it accepts `about` and `gender` only), so they are not
- * faked here.
+ * docs/screenshots/img43 + img44.
+ *
+ * The API now has every field the screenshots show — website, occupation, dob,
+ * the Threads / AI-author / suggestion toggles — where softclub accepted only
+ * `about` and `gender`. They are added in Phase 13; this pass just keeps the
+ * form working against the new enum.
  */
-export function EditProfileForm({ profile }: { profile: UserProfile }) {
+export function EditProfileForm({ profile }: { profile: ProfileDto }) {
   const t = useTranslations("profile");
   const tCommon = useTranslations("common");
   const tValidation = useTranslations("validation");
@@ -46,7 +48,7 @@ export function EditProfileForm({ profile }: { profile: UserProfile }) {
     resolver: zodResolver(editProfileSchema(tValidation)),
     defaultValues: {
       about: profile.about ?? "",
-      gender: profile.gender ?? "Male",
+      gender: profile.gender,
     },
   });
 
@@ -54,10 +56,10 @@ export function EditProfileForm({ profile }: { profile: UserProfile }) {
   const gender = useWatch({ control, name: "gender" });
 
   const onSubmit = handleSubmit((values) => {
-    // Gender is written as the enum ordinal (0 = Female, 1 = Male) — the string
-    // form the API returns on GET is rejected with 400 here.
+    // Symmetric enum: what we send is what GET returns. Softclub read "Male"
+    // but only accepted 0|1 on write (bug #12) — hence the old ordinal map.
     update.mutate(
-      { about: values.about, gender: GENDER_VALUE[values.gender] },
+      { about: values.about, gender: values.gender },
       {
         onSuccess: () => {
           toast.success(t("profileUpdated"));

@@ -139,7 +139,7 @@ export function Sidebar() {
           onNavigate={closePanel}
           icon={(active) => (
             <UserAvatar
-              src={profile?.image}
+              src={profile?.avatarUrl}
               size={24}
               priority
               className={cn(active && "ring-ig-text ring-2 ring-offset-1")}

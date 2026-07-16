@@ -1,5 +1,11 @@
-/** Real backend origin — used only on the server (Route Handlers). */
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://instagram-api.softclub.tj";
+/**
+ * Real backend origin — used only on the server (Route Handlers).
+ *
+ * NestJS + Prisma + PostgreSQL. Every route lives under /api, so this value
+ * already includes the prefix; services pass bare resource paths ("posts/feed").
+ */
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "https://backend-instagram-kvv4.onrender.com/api";
 
 /**
  * What the browser talks to. Every call is proxied through our Route Handler so
@@ -7,22 +13,35 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://instagram-api
  */
 export const PROXY_BASE_URL = "/api/proxy";
 
-/** Backend serves uploaded files from /images/{fileName}. */
-export const IMAGE_BASE = `${API_URL}/images`;
-
 /** Canonical origin, used by robots.ts / sitemap.ts / OG images. */
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
+/**
+ * Auth is a token *pair*. Both cookies are httpOnly — the browser never sees
+ * either. The access token is short-lived; when the backend rejects it with 401
+ * the proxy silently spends the refresh token and replays the request.
+ */
 export const ACCESS_TOKEN_COOKIE = "access_token";
+export const REFRESH_TOKEN_COOKIE = "refresh_token";
 
+/** Lists are cursor-paginated (`?cursor=&limit=`), never page numbers. */
 export const PAGE_SIZE = 12;
 export const FEED_PAGE_SIZE = 5;
 export const EXPLORE_PAGE_SIZE = 24;
 export const REELS_PAGE_SIZE = 5;
 export const SEARCH_DEBOUNCE_MS = 400;
 export const SEARCH_PAGE_SIZE = 10;
+export const COMMENTS_PAGE_SIZE = 20;
+export const MESSAGES_PAGE_SIZE = 30;
+export const NOTIFICATIONS_PAGE_SIZE = 20;
 
-/** No realtime hub on the backend (/chatHub → 404), so chats poll instead. */
+/** "Resend code" cooldown — the backend rejects a second code within a minute. */
+export const RESEND_CODE_COOLDOWN_S = 60;
+
+/**
+ * Chat still polls. This backend does have a socket (it signals calls and live
+ * rooms), but wiring it is Phase 17 — until then the Phase 9 poll stands.
+ */
 export const CHAT_POLL_MS = 5000;
 
 export const ROUTES = {

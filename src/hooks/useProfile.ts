@@ -11,44 +11,32 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { type ApiError } from "@/lib/axios";
 import { PAGE_SIZE } from "@/lib/constants";
+import { cursorParams, nextCursor } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
-import { userProfileService } from "@/services/userProfile.service";
-import type { UpdateProfileDto } from "@/types/profile.types";
+import { profileService } from "@/services/profile.service";
+import type { UpdatePrivacyDto, UpdateProfileDto } from "@/types/api.types";
 
 export function useMyProfile() {
   return useQuery({
     queryKey: queryKeys.profile.me(),
-    queryFn: () => userProfileService.getMyProfile(),
+    queryFn: () => profileService.getMyProfile(),
     staleTime: 5 * 60 * 1000,
   });
 }
 
 /**
- * Someone else's profile. `get-is-follow-user-profile-by-id` returns the profile
- * *and* `isSubscriber`, so this single request feeds both the header and the
- * follow button — no separate is-following call is needed.
+ * Someone else's profile.
+ *
+ * `OtherProfileDto` carries the whole relationship — `isFollowing`,
+ * `hasRequestPending`, `isBlocked`, `canViewContent` — so this one request feeds
+ * the header, the follow button and the private-account gate alike.
  */
 export function useUserProfile(userId: string) {
   return useQuery({
     queryKey: queryKeys.profile.byId(userId),
-    queryFn: () => userProfileService.getIsFollowProfile(userId),
+    queryFn: () => profileService.getProfileById(userId),
     enabled: Boolean(userId),
     placeholderData: keepPreviousData,
-  });
-}
-
-/**
- * Author of a comment. The Post DTO ships `comments[]` with `userName` and
- * `userImage` set to null (a backend quirk — see docs/BACKEND_BUGS.md), so the
- * name has to be resolved from the profile endpoint. Cached per user, shared by
- * every comment they wrote.
- */
-export function useProfileLite(userId: string, enabled = true) {
-  return useQuery({
-    queryKey: queryKeys.profile.lite(userId),
-    queryFn: () => userProfileService.getProfileById(userId),
-    enabled: enabled && Boolean(userId),
-    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -57,7 +45,19 @@ export function useUpdateProfile() {
   const t = useTranslations("errors");
 
   return useMutation({
-    mutationFn: (dto: UpdateProfileDto) => userProfileService.updateProfile(dto),
+    mutationFn: (dto: UpdateProfileDto) => profileService.update(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.profile.all }),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Private-account switch. Flipping it back to public auto-accepts nothing — pending requests stay pending. */
+export function useUpdatePrivacy() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (dto: UpdatePrivacyDto) => profileService.setPrivacy(dto),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.profile.all }),
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
@@ -68,34 +68,42 @@ export function useUpdateAvatar() {
   const t = useTranslations("errors");
 
   return useMutation({
-    mutationFn: (file: File) => userProfileService.updateImage(file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.profile.all }),
-    onError: (error: ApiError) => toast.error(error.message || t("network")),
-  });
-}
-
-export function useDeleteAvatar() {
-  const queryClient = useQueryClient();
-  const t = useTranslations("errors");
-
-  return useMutation({
-    mutationFn: () => userProfileService.deleteImage(),
+    mutationFn: (file: File) => profileService.uploadAvatar(file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.profile.all }),
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
 }
 
 /**
- * Saved posts. The endpoint's pagination envelope is stripped by the axios
- * interceptor, so a short page is what tells us we have reached the end.
+ * Deleting the avatar is safe here. On softclub it set `image` to null and then
+ * broke login with a 500 for that account (bug #4) — this backend just clears it.
  */
+export function useDeleteAvatar() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: () => profileService.deleteAvatar(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.profile.all }),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Saved posts — only ever your own. */
 export function useFavorites() {
   return useInfiniteQuery({
     queryKey: queryKeys.profile.favorites(),
-    queryFn: ({ pageParam }) =>
-      userProfileService.getFavorites({ pageNumber: pageParam, pageSize: PAGE_SIZE }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length < PAGE_SIZE ? undefined : allPages.length + 1,
+    queryFn: ({ pageParam }) => profileService.getFavorites(cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+  });
+}
+
+export function useMyReposts() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.profile.reposts(),
+    queryFn: ({ pageParam }) => profileService.getMyReposts(cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
   });
 }

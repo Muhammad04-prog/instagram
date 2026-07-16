@@ -17,8 +17,7 @@ import {
   useUserSearchHistories,
   useUsers,
 } from "@/hooks/useUserSearch";
-import { SEARCH_PAGE_SIZE } from "@/lib/constants";
-import type { User } from "@/types/user.types";
+import type { UserBriefDto } from "@/types/api.types";
 
 /**
  * The body shared by the sidebar SearchPanel and the /explore search dropdown:
@@ -46,10 +45,7 @@ export function SearchResults({
 
   const searching = debouncedTerm.length > 0;
 
-  const results = useUsers(
-    { userName: debouncedTerm, pageNumber: 1, pageSize: SEARCH_PAGE_SIZE },
-    searching,
-  );
+  const results = useUsers(debouncedTerm, searching);
   const textHistory = useSearchHistories();
   const userHistory = useUserSearchHistories();
 
@@ -60,7 +56,7 @@ export function SearchResults({
   const clearAll = useClearSearchHistories();
 
   /** Selecting an account records both the visit and the query that found it. */
-  const handleSelect = (user: User) => {
+  const handleSelect = (user: UserBriefDto) => {
     addUser.mutate(user.id);
     const text = term.trim();
     if (text) addText.mutate(text);
@@ -134,7 +130,7 @@ export function SearchResults({
           {accounts.map((row) => (
             <SearchUserRow
               key={`u${row.id}`}
-              user={row.users}
+              user={row.user}
               onSelect={handleSelect}
               onRemove={() => deleteUser.mutate(row.id)}
             />

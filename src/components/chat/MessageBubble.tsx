@@ -14,18 +14,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDeleteMessage } from "@/hooks/useChat";
 import { cn, getImageUrl } from "@/lib/utils";
-import type { Message } from "@/types/chat.types";
+import { isAttachment, type MessageDto } from "@/types/chat.types";
 
-const IMAGE_RE = /\.(png|jpe?g|gif|webp|avif)$/i;
-const VIDEO_RE = /\.(mp4|webm|mov)$/i;
-
-/** Mine: blue, right. Theirs: grey, left with avatar (img21). */
+/**
+ * Mine: blue, right. Theirs: grey, left with avatar (img21).
+ *
+ * `type` says what the attachment is, so the renderer no longer sniffs the file
+ * extension the way it had to on softclub.
+ */
 export function MessageBubble({
   message,
   mine,
   peerImage,
 }: {
-  message: Message;
+  message: MessageDto;
   mine: boolean;
   peerImage: string | null;
 }) {
@@ -34,15 +36,15 @@ export function MessageBubble({
   const deleteMessage = useDeleteMessage(message.chatId);
 
   // Negative id = optimistic, not yet acknowledged by the server.
-  const pending = message.messageId < 0;
-  const fileUrl = message.file ? getImageUrl(message.file) : null;
+  const pending = message.id < 0;
+  const fileUrl = message.mediaUrl ? getImageUrl(message.mediaUrl) : null;
 
   return (
     <div className={cn("group flex items-end gap-2", mine ? "justify-end" : "justify-start")}>
       {!mine ? <UserAvatar src={peerImage} size={28} /> : null}
 
-      {/* The "…" menu is only rendered for my own messages. The server does NOT
-          enforce this — it will delete anyone's message (BACKEND_BUGS #15). */}
+      {/* Own messages only — and the server agrees now: its OwnerGuard rejects
+          deleting someone else's. Softclub enforced nothing (bug #15). */}
       {mine && !pending ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -71,22 +73,22 @@ export function MessageBubble({
       <div
         className={cn(
           "max-w-[65%] overflow-hidden rounded-[22px]",
-          message.messageText ? "px-4 py-2" : "p-1",
+          message.text ? "px-4 py-2" : "p-1",
           mine ? "bg-ig-primary text-white" : "bg-ig-button-secondary text-ig-text",
           pending && "opacity-60",
         )}
       >
-        {fileUrl ? (
-          IMAGE_RE.test(message.file ?? "") ? (
+        {fileUrl && isAttachment(message) ? (
+          message.type === "IMAGE" ? (
             <Image
               src={fileUrl}
-              alt={message.messageText ?? ""}
+              alt={message.text ?? ""}
               width={240}
               height={240}
               className="mb-1 max-h-80 w-60 rounded-2xl object-cover"
               unoptimized
             />
-          ) : VIDEO_RE.test(message.file ?? "") ? (
+          ) : message.type === "VIDEO" ? (
             <video src={fileUrl} controls className="mb-1 w-60 rounded-2xl" />
           ) : (
             <a
@@ -100,8 +102,8 @@ export function MessageBubble({
           )
         ) : null}
 
-        {message.messageText ? (
-          <p className="text-sm break-words whitespace-pre-wrap">{message.messageText}</p>
+        {message.text ? (
+          <p className="text-sm break-words whitespace-pre-wrap">{message.text}</p>
         ) : null}
       </div>
 
@@ -111,7 +113,7 @@ export function MessageBubble({
         title={t("deleteMessage")}
         description={t("deleteMessageConfirm")}
         confirmLabel={t("deleteMessage")}
-        onConfirm={() => deleteMessage.mutate(message.messageId)}
+        onConfirm={() => deleteMessage.mutate(message.id)}
       />
     </div>
   );

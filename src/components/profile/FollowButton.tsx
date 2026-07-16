@@ -32,17 +32,20 @@ export function FollowButton({
   const { data: profile, isPending } = useUserProfile(userId);
   const toggle = useToggleFollow(userId);
 
-  const following = profile?.isSubscriber ?? false;
+  const following = profile?.isFollowing ?? false;
+  // Following a private account raises a request instead — the button has to
+  // say "Requested" rather than pretend the follow went through.
+  const requested = profile?.hasRequestPending ?? false;
 
   const onClick = () => {
-    if (following) {
+    if (following || requested) {
       setConfirmOpen(true);
       return;
     }
     toggle.mutate(true);
   };
 
-  const label = following ? t("followingButton") : t("follow");
+  const label = following ? t("followingButton") : requested ? t("requested") : t("follow");
 
   return (
     <>

@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "api:types": "openapi-typescript docs/swagger-v2.json -o src/types/api.gen.ts"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -58,6 +59,7 @@
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
+    "openapi-typescript": "^7.13.0",
     "playwright": "^1.61.1",
     "prettier": "^3.9.5",
     "prettier-plugin-tailwindcss": "^0.8.0",

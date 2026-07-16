@@ -59,7 +59,7 @@ export function LoginScreen() {
           className="w-full max-w-[420px]"
         >
           <LoginForm
-            prefillUserName={prefill}
+            prefillLogin={prefill}
             onBack={account ? () => setShowForm(false) : undefined}
           />
         </motion.div>

@@ -105,7 +105,7 @@ export function ReelsFeed() {
     >
       {reels.map((post) => (
         <ReelCard
-          key={post.postId}
+          key={post.id}
           post={post}
           muted={muted}
           onToggleMute={() => setMuted((value) => !value)}

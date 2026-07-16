@@ -56,7 +56,21 @@
     "removeProfilesHint": "Removing a profile only clears it from this browser. Your account and its data stay untouched.",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "resetMailBroken": "The server could not send the reset email — its mail service is down. Please try again later."
+    "resetMailBroken": "The server could not send the reset email — its mail service is down. Please try again later.",
+    "loginPlaceholder": "Phone number, username or email",
+    "phone": "Phone number (optional)",
+    "dob": "Date of birth",
+    "dobHint": "This won't be part of your public profile.",
+    "usernameTaken": "This username isn't available.",
+    "usernameFree": "Username is available.",
+    "enterCode": "Enter the code",
+    "enterCodeSubtitle": "We sent a 6-digit code to {email}.",
+    "resendCode": "Resend code",
+    "resendIn": "Resend code in {seconds}s",
+    "codeSent": "Code sent.",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year"
   },
   "footer": {
     "meta": "Meta",
@@ -104,7 +118,9 @@
     "switch": "Switch",
     "followerCount": "{count, plural, one {# follower} other {# followers}}",
     "empty": "No posts yet",
-    "emptyDescription": "Follow people to see their posts here."
+    "emptyDescription": "Follow people to see their posts here.",
+    "followedBy": "Followed by {user}{count, plural, =0 {} other { + # more}}",
+    "suggestedForYou": "Suggested for you"
   },
   "post": {
     "like": "Like",
@@ -135,7 +151,9 @@
     "discardDescription": "If you leave, your edits won't be saved.",
     "shareToStory": "Share to story",
     "mute": "Mute",
-    "unmute": "Unmute"
+    "unmute": "Unmute",
+    "viewReplies": "View replies ({count})",
+    "loadMoreComments": "Load more comments"
   },
   "story": {
     "yourStory": "Your story",
@@ -153,7 +171,9 @@
     "likeStory": "Like story",
     "deleteStoryConfirm": "This story will be removed for everyone.",
     "noStories": "No stories yet",
-    "mediaMissing": "This story's file is no longer on the server."
+    "mediaMissing": "This story's file is no longer on the server.",
+    "noViewers": "No views yet",
+    "reaction": "Reaction"
   },
   "reels": {
     "title": "Reels",
@@ -185,7 +205,9 @@
     "deleteMessageConfirm": "This message will be removed for everyone.",
     "messageOptions": "Message options",
     "chatOptions": "Chat options",
-    "deleteChatConfirm": "The conversation and all its messages will be deleted."
+    "deleteChatConfirm": "The conversation and all its messages will be deleted.",
+    "online": "Online",
+    "muted": "Muted"
   },
   "profile": {
     "posts": "posts",
@@ -231,7 +253,8 @@
     "followersTitle": "Followers",
     "followingTitle": "Following",
     "followingButton": "Following",
-    "removePhotoWarning": "Warning: due to a server bug, signing in to your account will break after the photo is removed, until you upload a new one."
+    "removePhotoWarning": "Warning: due to a server bug, signing in to your account will break after the photo is removed, until you upload a new one.",
+    "requested": "Requested"
   },
   "settings": {
     "title": "Settings",
@@ -278,7 +301,8 @@
     "notFoundDescription": "The link you followed may be broken, or the page may have been removed.",
     "backHome": "Go back to Instagram",
     "network": "Network error. Check your connection.",
-    "imageOnly": "Choose an image file."
+    "imageOnly": "Choose an image file.",
+    "rateLimited": "Too many attempts. Please wait a minute and try again."
   },
   "validation": {
     "required": "This field is required",
@@ -289,7 +313,9 @@
     "cityRequired": "City is required",
     "stateRequired": "State is required",
     "zipCodeRequired": "ZIP code is required",
-    "countryRequired": "Country is required"
+    "countryRequired": "Country is required",
+    "dob": "Enter a date as YYYY-MM-DD.",
+    "code": "Enter the 6-digit code."
   },
   "explore": {
     "title": "Explore",

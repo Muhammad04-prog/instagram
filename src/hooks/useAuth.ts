@@ -6,22 +6,22 @@ import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { type ApiError } from "@/lib/axios";
 import { ROUTES } from "@/lib/constants";
-import { accountService } from "@/services/account.service";
-import { userProfileService } from "@/services/userProfile.service";
+import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useSavedAccountsStore } from "@/store/savedAccounts.store";
-import type { LoginDto, RegisterDto, SessionUser } from "@/types/auth.types";
+import type { LoginDto, RegisterDto, TokensDto } from "@/types/api.types";
+import type { SessionUser } from "@/types/auth.types";
 
 /**
- * Hands the freshly-issued JWT to the server, which stores it in an httpOnly
- * cookie and returns only the claims. This is the single moment the token is in
- * client memory — it is never persisted there.
+ * Hands the freshly-issued token pair to the server, which stores both in
+ * httpOnly cookies and returns only the user. This is the single moment a token
+ * is in client memory — it is never persisted there.
  */
-async function persistSession(token: string): Promise<SessionUser | null> {
+async function persistSession(tokens: TokensDto): Promise<SessionUser | null> {
   const res = await fetch("/api/auth/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(tokens),
   });
 
   if (!res.ok) return null;
@@ -37,18 +37,17 @@ export function useAuth() {
 
   const login = useMutation({
     mutationFn: async (dto: LoginDto) => {
-      const token = await accountService.login(dto);
-      const sessionUser = await persistSession(token);
+      const tokens = await authService.login(dto);
+      const sessionUser = await persistSession(tokens);
 
       // Remember the account in this browser so the next visit can offer
-      // "Continue as …". The avatar is a nicety — a failure here must not
-      // break the login itself.
+      // "Continue as …". The avatar rides along on the login response now, so
+      // this no longer costs an extra profile request.
       if (sessionUser) {
-        const profile = await userProfileService.getMyProfile().catch(() => null);
         remember({
-          userId: sessionUser.userId,
+          userId: sessionUser.id,
           userName: sessionUser.userName,
-          image: profile?.image ?? null,
+          image: sessionUser.avatarUrl ?? null,
         });
       }
 
@@ -62,13 +61,22 @@ export function useAuth() {
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
 
+  /** Register signs you straight in — it answers with a token pair, not a bare id. */
   const register = useMutation({
-    mutationFn: (dto: RegisterDto) => accountService.register(dto),
-    onSuccess: () => router.push(ROUTES.login),
+    mutationFn: async (dto: RegisterDto) => {
+      const tokens = await authService.register(dto);
+      return persistSession(tokens);
+    },
+    onSuccess: (sessionUser) => {
+      setUser(sessionUser);
+      router.replace(ROUTES.home);
+      router.refresh();
+    },
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
 
   const logout = async () => {
+    // The session route revokes the refresh token upstream before clearing.
     await fetch("/api/auth/session", { method: "DELETE" });
     setUser(null);
     router.replace(ROUTES.login);

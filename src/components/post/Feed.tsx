@@ -59,7 +59,7 @@ export function Feed() {
   return (
     <div className="space-y-6">
       {posts.map((post) => (
-        <PostCard key={post.postId} post={post} />
+        <PostCard key={post.id} post={post} />
       ))}
       <div ref={sentinel} className="h-10" />
       {isFetchingNextPage ? <Loader /> : null}

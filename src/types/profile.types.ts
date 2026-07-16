@@ -1,61 +1,28 @@
+import type { OtherProfileDto, ProfileDto } from "@/types/api.types";
+
 /**
- * Shapes confirmed against the live API, not Swagger (see docs/API_REAL_DTO.md).
+ * Profile helpers.
  *
- * `get-my-profile` carries NO id — the current user's id comes from the JWT
- * claims (SessionUser.userId). Gender is READ as a string ("Male" | "Female")
- * but WRITTEN as the enum ordinal (0 = Female, 1 = Male); sending the string
- * to update-user-profile answers 400.
+ * The DTOs are generated (`api.types.ts`). Three long-standing workarounds die
+ * with this file:
+ *
+ * - `gender` is a symmetric enum (MALE | FEMALE | OTHER | HIDDEN). Softclub read
+ *   it as "Male" but only accepted `0|1` on write, so we kept a GENDER_VALUE map
+ *   to translate (bug #12). Gone — what you send is what you get back.
+ * - `id` is on the profile. Softclub's `get-my-profile` omitted it and the id had
+ *   to be dug out of the JWT claims.
+ * - `fullName` is one field, so `profileFullName()` joining firstName/lastName
+ *   is no longer needed.
  */
-export type Gender = "Male" | "Female";
 
-/** Wire values of Domain.Enums.Gender — verified by round-tripping the API. */
-export const GENDER_VALUE: Record<Gender, 0 | 1> = { Female: 0, Male: 1 };
+export type { OtherProfileDto, ProfileDto };
 
-export interface UserProfile {
-  userName: string;
-  image: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  about: string | null;
-  occupation: string | null;
-  gender: Gender | null;
-  dob: string | null;
-  locationId: number | null;
-  postCount: number;
-  subscribersCount: number;
-  subscriptionsCount: number;
-  dateUpdated: string;
-}
+/** Every gender the API accepts, in the order the picker lists them. */
+export const GENDERS = ["MALE", "FEMALE", "OTHER", "HIDDEN"] as const;
 
-/**
- * `get-is-follow-user-profile-by-id` does not answer a bare boolean: it returns
- * the whole profile plus `isSubscriber`, so a single call feeds both the header
- * and the follow button.
- */
-export interface FollowableUserProfile extends UserProfile {
-  isSubscriber: boolean;
-}
+export type Gender = ProfileDto["gender"];
 
-/** PUT /UserProfile/update-user-profile — the API accepts these two fields only. */
-export interface UpdateProfileDto {
-  about: string;
-  gender: 0 | 1;
-}
-
-/** Item of get-subscribers / get-subscriptions. Note the lowercase `fullname`. */
-export interface UserShortInfo {
-  userId: string;
-  userName: string;
-  userPhoto: string | null;
-  fullname: string | null;
-}
-
-export interface FollowRelation {
-  id: number;
-  userShortInfo: UserShortInfo;
-}
-
-/** Convenience: the profile has firstName/lastName, the UI wants one string. */
-export function profileFullName(profile: UserProfile): string {
-  return [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
+/** A profile the viewer may not be allowed to see the posts of. */
+export function isLocked(profile: OtherProfileDto): boolean {
+  return !profile.canViewContent;
 }

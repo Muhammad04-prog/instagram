@@ -17,7 +17,7 @@ import { useDeletePost } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Post } from "@/types/post.types";
+import type { PostDto } from "@/types/post.types";
 
 /** Avatar · username · relative time · «…» menu (docs/screenshots/img11, img13). */
 export function PostHeader({
@@ -25,7 +25,7 @@ export function PostHeader({
   onDeleted,
   className,
 }: {
-  post: Post;
+  post: PostDto;
   onDeleted?: () => void;
   className?: string;
 }) {
@@ -37,28 +37,28 @@ export function PostHeader({
   const [shareStoryOpen, setShareStoryOpen] = useState(false);
   const remove = useDeletePost();
 
-  const isMine = post.userId === user?.userId;
+  const isMine = post.author.id === user?.id;
 
   return (
     <div className={cn("flex items-center gap-3 py-3", className)}>
-      <Link href={ROUTES.profile(post.userId)}>
-        <UserAvatar src={post.userImage} alt={post.userName ?? ""} size={32} />
+      <Link href={ROUTES.profile(post.author.id)}>
+        <UserAvatar src={post.author.avatarUrl} alt={post.author.userName ?? ""} size={32} />
       </Link>
 
       <div className="flex min-w-0 flex-1 items-center gap-1 text-sm">
         <Link
-          href={ROUTES.profile(post.userId)}
+          href={ROUTES.profile(post.author.id)}
           className="text-ig-text truncate font-semibold hover:opacity-60"
         >
-          {post.userName}
+          {post.author.userName}
         </Link>
         <span className="text-ig-text-secondary">·</span>
         <time
-          dateTime={post.datePublished}
+          dateTime={post.createdAt}
           className="text-ig-text-secondary shrink-0"
           suppressHydrationWarning
         >
-          {format.relativeTime(new Date(post.datePublished), new Date())}
+          {format.relativeTime(new Date(post.createdAt), new Date())}
         </time>
       </div>
 
@@ -70,7 +70,7 @@ export function PostHeader({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-ig-elevated">
           <DropdownMenuItem asChild>
-            <Link href={ROUTES.post(post.postId)}>{t("goToPost")}</Link>
+            <Link href={ROUTES.post(post.id)}>{t("goToPost")}</Link>
           </DropdownMenuItem>
           {/* AddStories takes an optional PostId — that is IG's "share to story". */}
           <DropdownMenuItem onSelect={() => setShareStoryOpen(true)}>
@@ -87,11 +87,7 @@ export function PostHeader({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <StoryUploadDialog
-        open={shareStoryOpen}
-        onOpenChange={setShareStoryOpen}
-        postId={post.postId}
-      />
+      <StoryUploadDialog open={shareStoryOpen} onOpenChange={setShareStoryOpen} postId={post.id} />
 
       <ConfirmDialog
         open={confirmOpen}
@@ -99,7 +95,7 @@ export function PostHeader({
         title={t("deletePost")}
         description={t("deletePostConfirm")}
         confirmLabel={tCommon("delete")}
-        onConfirm={() => remove.mutate(post.postId, { onSuccess: () => onDeleted?.() })}
+        onConfirm={() => remove.mutate(post.id, { onSuccess: () => onDeleted?.() })}
       />
     </div>
   );

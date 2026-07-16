@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { BookmarkIcon, CommentIcon, HeartIcon, ShareIcon } from "@/components/icons";
 import { useLikePost, useSavePost } from "@/hooks/usePosts";
 import { cn } from "@/lib/utils";
-import type { Post } from "@/types/post.types";
+import type { PostDto } from "@/types/post.types";
 
 /** Like / comment / share on the left, save on the right (docs/screenshots/img11). */
 export function PostActions({
@@ -12,7 +12,7 @@ export function PostActions({
   onCommentClick,
   className,
 }: {
-  post: Post;
+  post: PostDto;
   onCommentClick?: () => void;
   className?: string;
 }) {
@@ -26,14 +26,14 @@ export function PostActions({
         <button
           type="button"
           aria-label={t("like")}
-          aria-pressed={post.postLike}
+          aria-pressed={post.isLiked}
           onClick={() => like.mutate(post)}
           className={cn(
             "transition-transform active:scale-90",
-            post.postLike ? "text-ig-danger" : "text-ig-text hover:opacity-60",
+            post.isLiked ? "text-ig-danger" : "text-ig-text hover:opacity-60",
           )}
         >
-          <HeartIcon filled={post.postLike} className="size-6" />
+          <HeartIcon filled={post.isLiked} className="size-6" />
         </button>
 
         <button
@@ -53,11 +53,11 @@ export function PostActions({
       <button
         type="button"
         aria-label={t("save")}
-        aria-pressed={post.postFavorite}
+        aria-pressed={post.isFavorited}
         onClick={() => save.mutate(post)}
         className="text-ig-text hover:opacity-60"
       >
-        <BookmarkIcon filled={post.postFavorite} className="size-6" />
+        <BookmarkIcon filled={post.isFavorited} className="size-6" />
       </button>
     </div>
   );
