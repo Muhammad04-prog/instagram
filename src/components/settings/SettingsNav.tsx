@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Globe, KeyRound, Lock, MapPin, Trash2, UserPen } from "lucide-react";
+import { Activity, Globe, KeyRound, Lock, MapPin, Star, Trash2, UserPen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -31,6 +31,7 @@ const GROUPS = [
     label: "groupControl",
     items: [
       { href: ROUTES.privacy, key: "privacy", Icon: Lock },
+      { href: ROUTES.closeFriends, key: "closeFriends", Icon: Star },
       { href: ROUTES.deleteAccount, key: "deleteAccount", Icon: Trash2 },
     ],
   },

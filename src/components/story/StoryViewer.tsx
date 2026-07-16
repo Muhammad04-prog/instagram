@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { HeartIcon } from "@/components/icons";
+import { StoryReplyBar } from "@/components/story/StoryReplyBar";
 import { StoryViewersSheet } from "@/components/story/StoryViewersSheet";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState } from "@/components/shared/ErrorState";
@@ -45,6 +46,8 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [viewersOpen, setViewersOpen] = useState(false);
+  // A reply bar in use must freeze the slide — see `paused` in the timer effect.
+  const [replying, setReplying] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [broken, setBroken] = useState(false);
 
@@ -76,7 +79,7 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   }, [current, markSeen]);
 
   useEffect(() => {
-    if (!current || paused || viewersOpen || confirmOpen) return;
+    if (!current || paused || viewersOpen || confirmOpen || replying) return;
 
     const timer = window.setInterval(() => {
       setProgress((value) => {
@@ -89,7 +92,7 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
     }, TICK_MS);
 
     return () => window.clearInterval(timer);
-  }, [current, paused, viewersOpen, confirmOpen, next]);
+  }, [current, paused, viewersOpen, confirmOpen, replying, next]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -246,6 +249,16 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
       {isMine ? (
         <StoryViewersSheet storyId={current.id} open={viewersOpen} onOpenChange={setViewersOpen} />
       ) : null}
+
+      {/* Only on someone else's story: replying to yourself is not a thing. */}
+      {isMine ? null : (
+        <StoryReplyBar
+          storyId={current.id}
+          authorName={author?.userName ?? ""}
+          onInteractionStart={() => setReplying(true)}
+          onInteractionEnd={() => setReplying(false)}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmOpen}

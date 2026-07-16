@@ -256,7 +256,19 @@
     "noStories": "Ҳанӯз ҳикоя нест",
     "mediaMissing": "Файли ин ҳикоя дигар дар сервер нест.",
     "noViewers": "Ҳанӯз намоишҳо нест",
-    "reaction": "Реаксия"
+    "reaction": "Реаксия",
+    "replyPlaceholder": "Ба {userName} ҷавоб диҳед…",
+    "replySent": "Ба {userName} фиристода шуд",
+    "reactionSent": "Реаксия ба {userName} фиристода шуд",
+    "send": "Фиристодан",
+    "react": "Реаксия",
+    "closeFriends": "Дӯстони наздик",
+    "closeFriendsError": "Рӯйхати дӯстони наздикро нав кардан нашуд.",
+    "closeFriendsHint": "Ҳикояҳои барои дӯстони наздикро танҳо одамони ин рӯйхат мебинанд. Ба онҳо хабар дода намешавад.",
+    "closeFriendsEmpty": "Рӯйхати дӯстони наздик холӣ аст",
+    "addCloseFriend": "Илова",
+    "removeCloseFriend": "Хориҷ",
+    "searchPeople": "Ҷустуҷӯ"
   },
   "reels": {
     "title": "Reels",
@@ -416,7 +428,8 @@
     "languageHint": "Забони интерфейс дар ҳамин браузер нигоҳ дошта мешавад.",
     "locations": "Ҷойҳо",
     "privacy": "Махфият",
-    "activity": "Амалҳои шумо"
+    "activity": "Амалҳои шумо",
+    "closeFriends": "Дӯстони наздик"
   },
   "search": {
     "placeholder": "Ҷустуҷӯ",

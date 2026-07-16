@@ -77,6 +77,7 @@ export const ROUTES = {
   settings: "/settings",
   changePassword: "/settings/change-password",
   privacy: "/settings/privacy",
+  closeFriends: "/settings/close-friends",
   locations: "/settings/locations",
   deleteAccount: "/settings/delete-account",
 } as const;

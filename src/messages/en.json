@@ -256,7 +256,19 @@
     "noStories": "No stories yet",
     "mediaMissing": "This story's file is no longer on the server.",
     "noViewers": "No views yet",
-    "reaction": "Reaction"
+    "reaction": "Reaction",
+    "replyPlaceholder": "Reply to {userName}…",
+    "replySent": "Sent to {userName}",
+    "reactionSent": "Reaction sent to {userName}",
+    "send": "Send",
+    "react": "React",
+    "closeFriends": "Close friends",
+    "closeFriendsError": "Couldn't update your close friends.",
+    "closeFriendsHint": "Only people on this list will see stories you share with close friends. They are never told.",
+    "closeFriendsEmpty": "Your close friends list is empty",
+    "addCloseFriend": "Add",
+    "removeCloseFriend": "Remove",
+    "searchPeople": "Search"
   },
   "reels": {
     "title": "Reels",
@@ -416,7 +428,8 @@
     "languageHint": "The interface language is remembered in this browser.",
     "locations": "Locations",
     "privacy": "Privacy",
-    "activity": "Your activity"
+    "activity": "Your activity",
+    "closeFriends": "Close friends"
   },
   "search": {
     "placeholder": "Search",

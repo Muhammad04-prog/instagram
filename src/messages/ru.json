@@ -256,7 +256,19 @@
     "noStories": "Историй пока нет",
     "mediaMissing": "Файла этой истории больше нет на сервере.",
     "noViewers": "Просмотров пока нет",
-    "reaction": "Реакция"
+    "reaction": "Реакция",
+    "replyPlaceholder": "Ответить {userName}…",
+    "replySent": "Отправлено — {userName}",
+    "reactionSent": "Реакция отправлена — {userName}",
+    "send": "Отправить",
+    "react": "Реакция",
+    "closeFriends": "Близкие друзья",
+    "closeFriendsError": "Не удалось обновить список близких друзей.",
+    "closeFriendsHint": "Истории для близких друзей увидят только люди из этого списка. Им об этом не сообщают.",
+    "closeFriendsEmpty": "Список близких друзей пуст",
+    "addCloseFriend": "Добавить",
+    "removeCloseFriend": "Убрать",
+    "searchPeople": "Поиск"
   },
   "reels": {
     "title": "Reels",
@@ -416,7 +428,8 @@
     "languageHint": "Язык интерфейса запоминается в этом браузере.",
     "locations": "Места",
     "privacy": "Конфиденциальность",
-    "activity": "Ваши действия"
+    "activity": "Ваши действия",
+    "closeFriends": "Близкие друзья"
   },
   "search": {
     "placeholder": "Поиск",
