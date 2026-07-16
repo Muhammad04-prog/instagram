@@ -9,7 +9,8 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChat";
-import { usePathname } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
 import { peerLabel } from "@/types/chat.types";
 
 /**
@@ -65,7 +66,12 @@ export function ChatList() {
         </div>
       </div>
 
-      <h2 className="text-ig-text px-6 pb-2 text-base font-bold">{t("title")}</h2>
+      <div className="flex items-center justify-between px-6 pb-2">
+        <h2 className="text-ig-text text-base font-bold">{t("title")}</h2>
+        <Link href={ROUTES.chatRequests} className="text-ig-primary text-sm font-semibold">
+          {t("requestsTitle")}
+        </Link>
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         {isPending ? (

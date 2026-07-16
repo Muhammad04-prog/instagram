@@ -327,7 +327,16 @@
     "muteChat": "Mute notifications",
     "muteChatHint": "You will still see the messages.",
     "react": "React",
-    "removeReaction": "Remove reaction"
+    "removeReaction": "Remove reaction",
+    "requestsTitle": "Requests",
+    "requestsHint": "Chats will appear here after you send or receive a message",
+    "requestsDescription": "These are messages from people you don't follow or have restricted. They won't know you've seen their request until you allow them to message you.",
+    "acceptRequest": "Accept",
+    "declineRequest": "Delete",
+    "loadMore": "Load more",
+    "back": "Back",
+    "deleteAllRequests": "Delete all {count}",
+    "deleteAllRequestsConfirm": "These requests will be deleted. The people who sent them are not told."
   },
   "profile": {
     "posts": "posts",

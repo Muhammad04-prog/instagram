@@ -73,6 +73,27 @@ export function useChatRequests() {
   });
 }
 
+/**
+ * Accept / decline a message request (img22).
+ *
+ * Accepting turns the request into an ordinary chat, so both the request queue
+ * and the chat list move.
+ */
+export function useAnswerChatRequest() {
+  const queryClient = useQueryClient();
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: ({ id, accept }: { id: string; accept: boolean }) =>
+      accept ? chatService.acceptRequest(id) : chatService.declineRequest(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.chats.requests() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.chats.list() });
+    },
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
 export function useCreateChat() {
   const queryClient = useQueryClient();
   const t = useTranslations("errors");

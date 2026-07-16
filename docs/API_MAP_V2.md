@@ -11,7 +11,7 @@
 Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
 не сверен.
 
-**Покрытие: 113 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 116 / 170** endpoint'ов вызываются из UI.
 
 ## admin — 0/4
 
@@ -38,7 +38,7 @@
 | [x] | POST  | `/auth/check-username`  | `auth.checkUsername`      | Свободен ли userName (live-валидация формы регистрации) |
 | [x] | GET   | `/auth/me`              | `route.ts (server)`       | Текущий пользователь + профиль                          |
 
-## chats — 13/20
+## chats — 16/20
 
 | ✓   | Метод  | Путь                            | Сервис                       | Что делает                                         |
 | --- | ------ | ------------------------------- | ---------------------------- | -------------------------------------------------- |
@@ -49,9 +49,9 @@
 | [ ] | POST   | `/chats/messages/bulk-delete`   | `chat.bulkDeleteMessages`    | Удалить несколько своих сообщений                  |
 | [x] | POST   | `/chats/messages/{id}/reaction` | `chat.reactToMessage`        | Реакция на сообщение                               |
 | [x] | DELETE | `/chats/messages/{id}/reaction` | `chat.removeMessageReaction` | Убрать реакцию                                     |
-| [ ] | GET    | `/chats/requests`               | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
-| [ ] | POST   | `/chats/requests/{id}/accept`   | `chat.acceptRequest`         | Принять запрос на переписку                        |
-| [ ] | POST   | `/chats/requests/{id}/decline`  | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
+| [x] | GET    | `/chats/requests`               | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
+| [x] | POST   | `/chats/requests/{id}/accept`   | `chat.acceptRequest`         | Принять запрос на переписку                        |
+| [x] | POST   | `/chats/requests/{id}/decline`  | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
 | [x] | GET    | `/chats/{id}`                   | `chat.getChatById`           | Детали чата                                        |
 | [x] | DELETE | `/chats/{id}`                   | `chat.remove`                | Удалить чат (выйти из него)                        |
 | [x] | GET    | `/chats/{id}/messages`          | `chat.getMessages`           | Сообщения чата (cursor)                            |

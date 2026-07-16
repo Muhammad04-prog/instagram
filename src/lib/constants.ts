@@ -60,6 +60,7 @@ export const ROUTES = {
   explore: "/explore",
   chat: "/chat",
   chatById: (chatId: number | string) => `/chat/${chatId}`,
+  chatRequests: "/chat/requests",
   createPost: "/post/create",
   post: (postId: number | string) => `/post/${postId}`,
   stories: (userId: string) => `/stories/${userId}`,

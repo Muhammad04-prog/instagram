@@ -99,7 +99,8 @@ export const chatService = {
   getRequests: (params: CursorParams) =>
     http.get<MessageRequestItemDto[]>("/chats/requests", params),
 
-  acceptRequest: (id: number) => http.post<OkDto>(`/chats/requests/${id}/accept`),
+  /** ⚠️ A request id is a **string** (uuid), unlike chat and message ids. */
+  acceptRequest: (id: string) => http.post<OkDto>(`/chats/requests/${id}/accept`),
 
-  declineRequest: (id: number) => http.post<OkDto>(`/chats/requests/${id}/decline`),
+  declineRequest: (id: string) => http.post<OkDto>(`/chats/requests/${id}/decline`),
 };
