@@ -11,7 +11,13 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
-import { useBulkDeleteMessages, useChat, useChatMessages, useMarkChatRead } from "@/hooks/useChat";
+import {
+  useBulkDeleteMessages,
+  useChat,
+  useChatMessages,
+  useChats,
+  useMarkChatRead,
+} from "@/hooks/useChat";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { chatAvatar, chatLabel, type MessageDto } from "@/types/chat.types";
@@ -55,7 +61,14 @@ export function ChatWindow({ chatId }: { chatId: number }) {
   const t = useTranslations("chat");
   const format = useFormatter();
   const { user } = useAuth();
-  const { data: chat } = useChat(chatId);
+  const { data: chatDetail } = useChat(chatId);
+  // ChatDetailDto never carries peerNickname — only ChatListItemDto does
+  // (a real gap in the backend's response shape) — so the open chat's own
+  // header could never reflect a nickname you'd just set. Borrow it from
+  // the list, which this same page already keeps warm.
+  const { data: chatsData } = useChats();
+  const peerNickname = flattenPages(chatsData).find((c) => c.id === chatId)?.peerNickname;
+  const chat = chatDetail && peerNickname ? { ...chatDetail, peerNickname } : chatDetail;
   const { data, isPending, isError, refetch } = useChatMessages(chatId);
   const bulkDelete = useBulkDeleteMessages(chatId);
 
