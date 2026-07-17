@@ -129,7 +129,7 @@ export function NoteComposer({
               className="absolute -top-2 left-1/2 size-2.5 -translate-x-1/2 rounded-full"
             />
 
-            <UserAvatar src={profile?.avatarUrl} size={176} priority />
+            <UserAvatar src={profile?.avatarUrl} size={192} priority />
           </span>
 
           <button
@@ -137,7 +137,7 @@ export function NoteComposer({
             onClick={() => setExtrasOpen((value) => !value)}
             aria-label={t("moreOptions")}
             aria-expanded={extrasOpen}
-            className="bg-ig-button-secondary text-ig-text flex size-9 items-center justify-center rounded-full"
+            className="bg-ig-button-secondary text-ig-text flex size-8 items-center justify-center rounded-full"
           >
             <SmilePlus className="size-5" />
           </button>
