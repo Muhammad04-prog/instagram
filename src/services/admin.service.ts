@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type { AdminOkDto, AdminReportDto, AdminUserDto } from "@/types/api.types";
 
 export interface AdminUsersParams extends CursorParams {
@@ -20,12 +20,13 @@ export interface AdminReportsParams extends CursorParams {
  * All the "report" buttons across the app (post / user / chat) land here.
  */
 export const adminService = {
-  getUsers: (params: AdminUsersParams) => http.get<AdminUserDto[]>("/admin/users", params),
+  getUsers: (params: AdminUsersParams) => http.get<Page<AdminUserDto>>("/admin/users", params),
 
   /** Soft delete — the row stays with `isDeleted`. */
   deleteUser: (id: string) => http.delete<AdminOkDto>(`/admin/users/${id}`),
 
-  getReports: (params: AdminReportsParams) => http.get<AdminReportDto[]>("/admin/reports", params),
+  getReports: (params: AdminReportsParams) =>
+    http.get<Page<AdminReportDto>>("/admin/reports", params),
 
   resolveReport: (id: string) => http.post<AdminOkDto>(`/admin/reports/${id}/resolve`),
 };

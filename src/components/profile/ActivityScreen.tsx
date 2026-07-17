@@ -10,6 +10,7 @@ import { useMyActivity } from "@/hooks/useProfile";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { ActivityItemDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * "Your activity" — what I liked, commented, viewed and searched for.
@@ -27,7 +28,7 @@ export function ActivityScreen() {
   if (isPending) return <Loader className="py-10" />;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const items = data?.pages.flat() ?? [];
+  const items = flattenPages(data);
   if (items.length === 0) {
     return (
       <EmptyState

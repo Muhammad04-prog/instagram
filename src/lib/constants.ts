@@ -5,7 +5,7 @@
  * already includes the prefix; services pass bare resource paths ("posts/feed").
  */
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "https://backend-instagram-kvv4.onrender.com/api";
+  process.env.NEXT_PUBLIC_API_URL ?? "https://backend-instagram-a4k6.onrender.com/api";
 
 /**
  * What the browser talks to. Every call is proxied through our Route Handler so

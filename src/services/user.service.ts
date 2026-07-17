@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   AccountDeletedDto,
   AddSearchedUserDto,
@@ -29,7 +29,7 @@ export interface SearchUsersParams extends CursorParams {
  * `delete-user` was admin-only and answered 403 to everyone (bug #13).
  */
 export const userService = {
-  search: (params: SearchUsersParams) => http.get<UserBriefDto[]>("/users", params),
+  search: (params: SearchUsersParams) => http.get<Page<UserBriefDto>>("/users", params),
 
   getSuggestions: (params: CursorParams) => http.get<SuggestionDto[]>("/users/suggestions", params),
 

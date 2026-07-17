@@ -60,7 +60,10 @@ export function MusicPlayerBar() {
     >
       <audio
         ref={audioRef}
-        src={musicService.streamUrl(track.id)}
+        // Our own mp3 streams through the proxy with Range, so it seeks. A track
+        // imported from an external catalogue has no full file here — only the
+        // catalogue's 30-second preview, which is all `isFullTrack: false` means.
+        src={track.isFullTrack ? musicService.streamUrl(track.id) : (track.previewUrl ?? undefined)}
         onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
         onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
         onEnded={() => next()}

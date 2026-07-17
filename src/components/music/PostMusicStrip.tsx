@@ -4,19 +4,19 @@ import { Music2, Pause } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { musicService } from "@/services/music.service";
 import { usePlayerStore } from "@/store/player.store";
-import type { PostMusicDto } from "@/types/api.types";
+import type { AttachedMusicDto } from "@/types/api.types";
 
 /**
  * The audio line on a post — what IG puts under the picture when a post has a
  * sound, and what nothing in this app showed before: `PostDto.music` was
  * arriving and being dropped on the floor.
  *
- * `PostMusicDto` is a trimmed track: it has no `duration`, `isSaved` or
+ * `AttachedMusicDto` is a trimmed track: it has no `duration`, `isSaved` or
  * `usesCount`, so it cannot feed the player as-is. Tapping fetches the full
  * `MusicDto` by id and hands *that* over — which is the only honest use for
  * `GET /music/{id}` in the app.
  */
-export function PostMusicStrip({ music }: { music: PostMusicDto }) {
+export function PostMusicStrip({ music }: { music: AttachedMusicDto }) {
   const t = useTranslations("music");
   const play = usePlayerStore((state) => state.play);
   const current = usePlayerStore((state) => state.track);

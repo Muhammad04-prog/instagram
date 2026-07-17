@@ -18,6 +18,10 @@ declare module "next-auth" {
     user: {
       id: string;
       userName?: string;
+      /** `USER` | `ADMIN` — what the admin panel gates on. Drawing only: the
+       *  backend re-checks it on every admin endpoint. */
+      role?: string;
+      isVerified?: boolean;
     } & DefaultSession["user"];
     /** Set when refresh failed — the UI should treat the session as dead. */
     error?: string;
@@ -25,6 +29,8 @@ declare module "next-auth" {
 
   interface User {
     userName?: string;
+    role?: string;
+    isVerified?: boolean;
     accessToken?: string;
     refreshToken?: string;
   }
@@ -34,6 +40,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     userId?: string;
     userName?: string;
+    role?: string;
+    isVerified?: boolean;
     /** Server-side only. Never copied into Session. */
     accessToken?: string;
     refreshToken?: string;

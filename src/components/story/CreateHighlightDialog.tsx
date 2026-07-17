@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useCreateHighlight } from "@/hooks/useHighlights";
 import { useMyStories, useStoryArchive } from "@/hooks/useStories";
 import { cn, getImageUrl } from "@/lib/utils";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * "New highlight": pick stories, name it.
@@ -39,7 +40,7 @@ export function CreateHighlightDialog({
   const create = useCreateHighlight();
 
   // Live stories first — they are the ones a person just posted and wants to keep.
-  const stories = [...(live ?? []), ...(archive.data?.pages.flat() ?? [])];
+  const stories = [...(live ?? []), ...flattenPages(archive.data)];
   const seen = new Set<number>();
   const unique = stories.filter((story) => !seen.has(story.id) && seen.add(story.id));
 

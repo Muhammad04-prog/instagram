@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReels } from "@/hooks/usePosts";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * /reels — one reel per viewport, CSS scroll-snap on the container.
@@ -86,7 +87,7 @@ export function ReelsFeed() {
 
   if (isError) return <ErrorState onRetry={() => void refetch()} className="py-20" />;
 
-  const reels = data.pages.flat();
+  const reels = flattenPages(data);
 
   if (reels.length === 0) {
     return (

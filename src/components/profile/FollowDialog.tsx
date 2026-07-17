@@ -17,6 +17,7 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { FollowerDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 export type FollowTab = "followers" | "following";
 
@@ -51,7 +52,7 @@ export function FollowDialog({
   // The rows are flat users now — softclub wrapped each one in a `userShortInfo`
   // object (with a lowercase `fullname`) under a relation id.
   const rows = useMemo(() => {
-    const list = active.data?.pages.flat() ?? [];
+    const list = flattenPages(active.data);
     const needle = query.trim().toLowerCase();
     if (!needle) return list;
     return list.filter(

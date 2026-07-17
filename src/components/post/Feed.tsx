@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { CompassIcon } from "@/components/icons";
 import { useFeed } from "@/hooks/usePosts";
+import { flattenPages } from "@/lib/cursor";
 
 /** `/` — posts of the people I follow, infinite scroll (docs/screenshots/img10). */
 export function Feed() {
@@ -44,7 +45,7 @@ export function Feed() {
 
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const posts = data.pages.flat();
+  const posts = flattenPages(data);
 
   if (posts.length === 0) {
     return (

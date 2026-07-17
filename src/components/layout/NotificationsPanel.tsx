@@ -19,6 +19,7 @@ import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/ui.store";
 import type { NotificationDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Slide-out notifications panel (docs/screenshots/img26–img28).
@@ -40,7 +41,7 @@ export function NotificationsPanel() {
     useNotifications(open);
   const markAllRead = useMarkAllNotificationsRead();
 
-  const items = data?.pages.flat() ?? [];
+  const items = flattenPages(data);
   const hasUnread = items.some((item) => !item.isRead);
 
   return (

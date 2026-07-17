@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type { MusicDto, SaveMusicDto } from "@/types/api.types";
 
 export interface SearchMusicParams extends CursorParams {
@@ -17,7 +17,7 @@ export interface SearchMusicParams extends CursorParams {
  * `streamUrl` supports Range requests, so seeking works with a plain <audio>.
  */
 export const musicService = {
-  search: (params: SearchMusicParams) => http.get<MusicDto[]>("/music", params),
+  search: (params: SearchMusicParams) => http.get<Page<MusicDto>>("/music", params),
 
   getTrending: (params: CursorParams) => http.get<MusicDto[]>("/music/trending", params),
 

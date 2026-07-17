@@ -14,6 +14,7 @@ import { ROUTES } from "@/lib/constants";
 import { filterCss } from "@/lib/filters";
 import { formatCount, getImageUrl } from "@/lib/utils";
 import { coverMedia, isCarousel, isVideo, mediaPoster, type PostDto } from "@/types/post.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * /explore — 4 columns of portrait (3:4) tiles with 4px gutters, exactly as in
@@ -56,7 +57,7 @@ export function ExploreGrid() {
 
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const posts = data.pages.flat();
+  const posts = flattenPages(data);
 
   if (posts.length === 0) return <EmptyState title={t("empty")} />;
 

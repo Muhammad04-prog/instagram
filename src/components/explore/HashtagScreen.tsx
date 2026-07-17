@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { EXPLORE_PAGE_SIZE } from "@/lib/constants";
-import { cursorParams, nextCursor } from "@/lib/cursor";
+import { cursorParams, nextCursor, flattenPages } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
 import { searchService } from "@/services/search.service";
 
@@ -43,7 +43,7 @@ export function HashtagScreen({ name }: { name: string }) {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const posts = data?.pages.flat() ?? [];
+  const posts = flattenPages(data);
 
   return (
     <div className="mx-auto max-w-[975px] px-4 py-6">

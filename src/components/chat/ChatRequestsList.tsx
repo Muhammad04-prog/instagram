@@ -12,6 +12,7 @@ import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import { useAnswerChatRequest, useChatRequests } from "@/hooks/useChat";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * «Запросы на переписку» — img22.
@@ -31,7 +32,7 @@ export function ChatRequestsList() {
     useChatRequests();
   const answer = useAnswerChatRequest();
 
-  const requests = data?.pages.flat() ?? [];
+  const requests = flattenPages(data);
 
   return (
     <div className="border-ig-border flex h-full w-full flex-col border-r md:w-[414px]">

@@ -14,7 +14,28 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBulkDeleteMessages, useChat, useChatMessages, useMarkChatRead } from "@/hooks/useChat";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import type { MessageDto } from "@/types/chat.types";
+import { chatAvatar, chatLabel, type MessageDto } from "@/types/chat.types";
+import { flattenPages } from "@/lib/cursor";
+
+/**
+ * The header's clickable part. A 1-on-1 header opens the peer's profile; a group
+ * has no profile behind it, so its header is plain text rather than a dead link.
+ */
+function ChatHeaderShell({
+  peerId,
+  children,
+}: {
+  peerId: string | undefined;
+  children: React.ReactNode;
+}) {
+  const className = "flex min-w-0 flex-1 items-center gap-3";
+  if (!peerId) return <div className={className}>{children}</div>;
+  return (
+    <Link href={ROUTES.profile(peerId)} className={className}>
+      {children}
+    </Link>
+  );
+}
 
 /** Groups messages (oldest → newest) under one heading per calendar day. */
 function groupByDay(messages: MessageDto[]): { day: string; items: MessageDto[] }[] {
@@ -49,7 +70,7 @@ export function ChatWindow({ chatId }: { chatId: number }) {
   const myUserId = user?.id ?? "";
 
   // The API returns newest first; the window reads oldest → newest.
-  const ordered = [...(data?.pages.flat() ?? [])].reverse();
+  const ordered = [...flattenPages(data)].reverse();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
@@ -69,25 +90,25 @@ export function ChatWindow({ chatId }: { chatId: number }) {
     <div className="flex h-full flex-1 flex-col">
       {chat ? (
         <div className="border-ig-border flex items-center gap-3 border-b px-6 py-3">
-          <Link
-            href={ROUTES.profile(chat.peer.id)}
-            className="flex min-w-0 flex-1 items-center gap-3"
-          >
-            <UserAvatar src={chat.peer.avatarUrl ?? null} size={44} />
+          {/* A group has no peer and so no profile to open — only its members. */}
+          <ChatHeaderShell peerId={chat.peer?.id}>
+            <UserAvatar src={chatAvatar(chat)} size={44} />
             <span className="min-w-0">
               <span className="text-ig-text block truncate text-base font-bold">
-                {chat.peer.userName}
+                {chatLabel(chat)}
               </span>
               {/* Presence is real data now — softclub had no online/last-seen at all. */}
               <span className="text-ig-text-secondary block text-xs">
-                {chat.isOnline
-                  ? t("online")
-                  : chat.lastSeenAt
-                    ? t("lastSeen", { time: format.relativeTime(new Date(chat.lastSeenAt)) })
-                    : ""}
+                {chat.isGroup
+                  ? t("members", { count: chat.participantsCount })
+                  : chat.isOnline
+                    ? t("online")
+                    : chat.lastSeenAt
+                      ? t("lastSeen", { time: format.relativeTime(new Date(chat.lastSeenAt)) })
+                      : ""}
               </span>
             </span>
-          </Link>
+          </ChatHeaderShell>
 
           <button
             type="button"
@@ -127,7 +148,7 @@ export function ChatWindow({ chatId }: { chatId: number }) {
                     key={message.id}
                     message={message}
                     mine={message.senderId === myUserId}
-                    peerImage={chat?.peer.avatarUrl ?? null}
+                    peerImage={chat ? chatAvatar(chat) : null}
                     theme={chat?.theme}
                     selecting={selecting}
                     selected={selected?.has(message.id) ?? false}

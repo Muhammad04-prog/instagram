@@ -6,7 +6,7 @@
 ---
 
 Ты работаешь в репозитории бэкенда Instagram-клона (NestJS + Prisma + Redis + MinIO +
-LiveKit), задеплоенного на Render: `https://backend-instagram-kvv4.onrender.com`,
+LiveKit), задеплоенного на Render: `https://backend-instagram-a4k6.onrender.com`,
 Swagger — `/api/docs-json`.
 
 Фронт (Next.js) уже переведён на этот API: **147 из 170 endpoint'ов вызываются из
@@ -41,7 +41,7 @@ Swagger — `/api/docs-json`.
 **Симптом:**
 
 ```bash
-curl -s https://backend-instagram-kvv4.onrender.com/api/health
+curl -s https://backend-instagram-a4k6.onrender.com/api/health
 {"data":{"status":"degraded","database":"down","redis":"down","storage":"down","uptimeSec":64,...}}
 ```
 

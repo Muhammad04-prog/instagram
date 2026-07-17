@@ -12,6 +12,7 @@ import { useBlockedUsers, useToggleBlock } from "@/hooks/useFollow";
 import { useMyProfile, useUpdatePrivacy } from "@/hooks/useProfile";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Settings → privacy: the private-account switch, incoming follow requests and
@@ -72,7 +73,7 @@ function BlockedList() {
   if (isPending) return <Loader className="py-6" />;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const blocked = data?.pages.flat() ?? [];
+  const blocked = flattenPages(data);
   if (blocked.length === 0) return <EmptyState title={t("blockedEmpty")} className="py-6" />;
 
   return (

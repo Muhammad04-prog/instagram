@@ -147,10 +147,10 @@ for (const [p, ops] of Object.entries(spec.paths)) {
 }
 
 const lines = [];
-lines.push("# API_MAP v2 — новый backend (NestJS), 170 endpoints");
+lines.push(`# API_MAP v2 — новый backend (NestJS), ${total} endpoints`);
 lines.push("");
 lines.push(
-  "**Swagger:** `https://backend-instagram-kvv4.onrender.com/api/docs-json` → копия в `docs/swagger-v2.json`.",
+  "**Swagger:** `https://backend-instagram-a4k6.onrender.com/api/docs-json` → копия в `docs/swagger-v2.json`.",
 );
 lines.push("");
 lines.push(
@@ -168,27 +168,31 @@ lines.push(
 lines.push("доберётся, и раньше карта именно это и завышала.");
 lines.push("");
 lines.push(
-  "Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ",
+  "Это проверка проводки, **не** проверка работоспособности: живьём ответы не сверены — любой",
 );
-lines.push("не сверен.");
+lines.push("запрос в БД отвечает 500 `DATABASE_ERROR`, хотя `/health` и рапортует `database: up`.");
 lines.push("");
 lines.push(`**Покрытие: ${done} / ${total}** endpoint'ов вызываются из UI.`);
 lines.push("");
-lines.push("Оставшиеся 4 не подключены **не потому, что не дошли руки** — каждый упирается в то,");
-lines.push("чего у фронта нет. Подробности и что нужно от бэкенда — в [`BACKEND_PROMPT.md`](./BACKEND_PROMPT.md).");
+lines.push(
+  `Не подключено ${total - done}. Это не «не дошли руки»: swagger вырос со 170 до ${total} —`,
+);
+lines.push(
+  "бэкенд закрыл то, что просил [`BACKEND_PROMPT.md`](./BACKEND_PROMPT.md) (`/socket/ticket`,",
+);
+lines.push(
+  "`/chats/calls/ice-servers`, `/live/{id}/requests`, `NotificationDto.requestId`), и заодно",
+);
+lines.push("принёс групповые чаты и внешний каталог музыки. Под фронт это отдельные фазы — см.");
+lines.push("[`ROADMAP_V2.md`](./ROADMAP_V2.md). Единственное сознательное исключение:");
 lines.push("");
 lines.push("| Endpoint | Почему не подключён |");
 lines.push("| -------- | ------------------- |");
 lines.push(
-  "| `POST /chats/{id}/call` | Нет сигналинга: события сокета не описаны, а токен живёт в httpOnly-cookie и в JS не попадает. Звонок без сигналинга никуда не ведёт — кнопку не делаем. |",
-);
-lines.push(
-  "| `POST /live/requests/{id}/accept` | Хосту негде взять id заявки: списка заявок нет, `JoinRequestDto` уходит просившему, в `NotificationDto` нет `requestId`. |",
-);
-lines.push("| `POST /live/requests/{id}/decline` | То же самое. |");
-lines.push(
   "| `GET /posts` | **Не блокер, а дубль:** сетку Explore питает `/search/explore` — ранжированный endpoint, сделанный ровно под неё. `/posts` отдаёт то же самое плоским списком. Отдельного экрана под него нет ни в одном скриншоте, и выдумывать его ради галочки в карте не стали. |",
 );
+lines.push("");
+lines.push("Полный список неподключённых — строки `[ ]` в таблицах ниже.");
 lines.push("");
 
 for (const tag of Object.keys(byTag).sort()) {

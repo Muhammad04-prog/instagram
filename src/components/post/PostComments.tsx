@@ -18,6 +18,7 @@ import { ROUTES } from "@/lib/constants";
 import { RichCaption } from "@/components/post/RichCaption";
 import { cn, formatCount } from "@/lib/utils";
 import type { CommentDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Comment list of the post modal / page (docs/screenshots/img12, right column).
@@ -33,7 +34,7 @@ export function CommentList({ postId, className }: { postId: number; className?:
 
   if (isPending) return <Loader className={className} />;
 
-  const comments = data?.pages.flat() ?? [];
+  const comments = flattenPages(data);
 
   if (comments.length === 0) {
     return (
@@ -199,7 +200,7 @@ function ReplyThread({
 }) {
   const tPost = useTranslations("post");
   const { data, isFetching } = useCommentReplies(comment.id, open);
-  const replies = data?.pages.flat() ?? [];
+  const replies = flattenPages(data);
 
   return (
     <div className="mt-2 ml-11 space-y-3">

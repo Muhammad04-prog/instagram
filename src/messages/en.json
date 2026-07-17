@@ -320,6 +320,7 @@
     "chatOptions": "Chat options",
     "deleteChatConfirm": "The conversation and all its messages will be deleted.",
     "online": "Online",
+    "members": "{count, plural, one {# member} other {# members}}",
     "muted": "Muted",
     "chatDetails": "Details",
     "theme": "Theme",

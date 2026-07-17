@@ -25,12 +25,15 @@ import { API_URL } from "@/lib/constants";
  * cookie, readable only on the server via `auth()`.
  */
 
+/** Mirrors `AuthUserDto` — what `/auth/login` and `/auth/refresh` both return. */
 interface BackendUser {
   id: string;
   userName: string;
   fullName?: string | null;
   email?: string | null;
   avatarUrl?: string | null;
+  role?: string | null;
+  isVerified?: boolean | null;
 }
 
 interface LoginEnvelope {
@@ -105,6 +108,8 @@ export const authConfig = {
           email: data.user.email ?? null,
           image: data.user.avatarUrl ?? null,
           userName: data.user.userName,
+          role: data.user.role ?? "USER",
+          isVerified: data.user.isVerified ?? false,
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
         };
@@ -123,11 +128,15 @@ export const authConfig = {
       if (user) {
         const u = user as typeof user & {
           userName?: string;
+          role?: string;
+          isVerified?: boolean;
           accessToken?: string;
           refreshToken?: string;
         };
         token.userId = u.id as string;
         token.userName = u.userName;
+        token.role = u.role;
+        token.isVerified = u.isVerified;
         token.accessToken = u.accessToken;
         token.refreshToken = u.refreshToken;
         token.accessTokenExpires = u.accessToken ? accessTokenExpiry(u.accessToken) : 0;
@@ -148,8 +157,17 @@ export const authConfig = {
         return { ...token, error: "RefreshFailed" };
       }
 
+      // `/auth/refresh` returns the user again, so re-read `role` here rather
+      // than trusting the copy made at sign-in. This is the standard JWT
+      // staleness problem — a token carries a snapshot, and a demoted admin
+      // would otherwise keep an ADMIN token until it expired. It is not a full
+      // fix (the window is one access-token lifetime, 15 min), but it is the
+      // only revocation point a stateless session has.
       return {
         ...token,
+        userName: data.user?.userName ?? token.userName,
+        role: data.user?.role ?? token.role,
+        isVerified: data.user?.isVerified ?? token.isVerified,
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
         accessTokenExpires: accessTokenExpiry(data.accessToken),
@@ -165,6 +183,12 @@ export const authConfig = {
       if (session.user) {
         session.user.id = (token.userId as string) ?? "";
         session.user.userName = token.userName as string | undefined;
+        // Safe to expose: `role` and `isVerified` are not secrets, and the UI
+        // gates on them (admin panel, blue tick). They are a hint for *drawing*,
+        // never the authority — every admin endpoint checks the role server-side
+        // too, and a forged session would still get 403 from the backend.
+        session.user.role = token.role as string | undefined;
+        session.user.isVerified = token.isVerified as boolean | undefined;
       }
       session.error = token.error as string | undefined;
       return session;

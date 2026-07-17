@@ -11,7 +11,7 @@ import { ReportChatDialog } from "@/components/chat/ReportChatDialog";
 import { useSetChatMuted, useSetChatNickname, useSetChatTheme } from "@/hooks/useChat";
 import { CHAT_THEMES } from "@/lib/chat-themes";
 import { cn } from "@/lib/utils";
-import type { ChatDetailDto } from "@/types/api.types";
+import { chatAvatar, chatLabel, type ChatDetailDto } from "@/types/chat.types";
 
 /**
  * Chat details: theme, the peer's nickname, mute.
@@ -20,6 +20,9 @@ import type { ChatDetailDto } from "@/types/api.types";
  *
  * The theme is a free string on the wire (max 30), so these presets only send a
  * name; see `lib/chat-themes.ts`.
+ *
+ * Nickname is a 1-on-1 affair — it renames *the peer*, and a group has none, so
+ * that section is hidden for groups rather than shown pointing at nobody.
  */
 export function ChatSettingsDialog({
   chat,
@@ -31,6 +34,8 @@ export function ChatSettingsDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("chat");
+  // Bound once so the null check below still holds inside the submit handler.
+  const peer = chat.peer;
   const setTheme = useSetChatTheme(chat.id);
   const setNickname = useSetChatNickname(chat.id);
   const setMuted = useSetChatMuted(chat.id);
@@ -49,8 +54,8 @@ export function ChatSettingsDialog({
 
         <div className="space-y-6 p-4">
           <div className="flex items-center gap-3">
-            <UserAvatar src={chat.peer.avatarUrl ?? null} alt={chat.peer.userName} size={44} />
-            <span className="text-ig-text text-sm font-semibold">{chat.peer.userName}</span>
+            <UserAvatar src={chatAvatar(chat)} alt={chatLabel(chat)} size={44} />
+            <span className="text-ig-text text-sm font-semibold">{chatLabel(chat)}</span>
           </div>
 
           <section className="space-y-3">
@@ -76,41 +81,43 @@ export function ChatSettingsDialog({
             </ul>
           </section>
 
-          <section className="space-y-2">
-            <h3 className="text-ig-text text-sm font-semibold">{t("nickname")}</h3>
-            {/* Only I see it — the peer is never told, so no confirm step. */}
-            <p className="text-ig-text-secondary text-xs">{t("nicknameHint")}</p>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setNickname.mutate(
-                  { userId: chat.peer.id, nickname: nickname.trim() },
-                  {
-                    onSuccess: () => {
-                      toast.success(t("nicknameSet"));
-                      setNicknameValue("");
+          {peer ? (
+            <section className="space-y-2">
+              <h3 className="text-ig-text text-sm font-semibold">{t("nickname")}</h3>
+              {/* Only I see it — the peer is never told, so no confirm step. */}
+              <p className="text-ig-text-secondary text-xs">{t("nicknameHint")}</p>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setNickname.mutate(
+                    { userId: peer.id, nickname: nickname.trim() },
+                    {
+                      onSuccess: () => {
+                        toast.success(t("nicknameSet"));
+                        setNicknameValue("");
+                      },
                     },
-                  },
-                );
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                value={nickname}
-                onChange={(event) => setNicknameValue(event.target.value.slice(0, 30))}
-                placeholder={chat.peer.userName}
-                aria-label={t("nickname")}
-                className="border-ig-border text-ig-text h-10 flex-1 rounded-lg"
-              />
-              <button
-                type="submit"
-                disabled={!nickname.trim() || setNickname.isPending}
-                className="text-ig-primary text-sm font-semibold disabled:opacity-40"
+                  );
+                }}
+                className="flex gap-2"
               >
-                {t("save")}
-              </button>
-            </form>
-          </section>
+                <Input
+                  value={nickname}
+                  onChange={(event) => setNicknameValue(event.target.value.slice(0, 30))}
+                  placeholder={peer.userName}
+                  aria-label={t("nickname")}
+                  className="border-ig-border text-ig-text h-10 flex-1 rounded-lg"
+                />
+                <button
+                  type="submit"
+                  disabled={!nickname.trim() || setNickname.isPending}
+                  className="text-ig-primary text-sm font-semibold disabled:opacity-40"
+                >
+                  {t("save")}
+                </button>
+              </form>
+            </section>
+          ) : null}
 
           <label className="flex cursor-pointer items-center gap-4">
             <span className="min-w-0 flex-1">

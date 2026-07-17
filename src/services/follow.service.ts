@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   BlockedUserDto,
   FollowerDto,
@@ -24,10 +24,10 @@ export const followService = {
   unfollow: (userId: string) => http.delete<FollowResultDto>(`/follow/${userId}`),
 
   getFollowers: (userId: string, params: CursorParams) =>
-    http.get<FollowerDto[]>(`/follow/${userId}/followers`, params),
+    http.get<Page<FollowerDto>>(`/follow/${userId}/followers`, params),
 
   getFollowing: (userId: string, params: CursorParams) =>
-    http.get<FollowerDto[]>(`/follow/${userId}/following`, params),
+    http.get<Page<FollowerDto>>(`/follow/${userId}/following`, params),
 
   /** Removes THEIR follow of me — I stay subscribed to them if I was. */
   removeFollower: (userId: string) => http.delete<OkMessageDto>(`/follow/followers/${userId}`),
@@ -36,10 +36,11 @@ export const followService = {
 
   unblock: (userId: string) => http.delete<OkMessageDto>(`/follow/${userId}/block`),
 
-  getBlocked: (params: CursorParams) => http.get<BlockedUserDto[]>("/follow/blocked", params),
+  getBlocked: (params: CursorParams) => http.get<Page<BlockedUserDto>>("/follow/blocked", params),
 
   /** Incoming follow requests — only a private account ever has these. */
-  getRequests: (params: CursorParams) => http.get<FollowRequestDto[]>("/follow/requests", params),
+  getRequests: (params: CursorParams) =>
+    http.get<Page<FollowRequestDto>>("/follow/requests", params),
 
   acceptRequest: (id: string) => http.post<OkMessageDto>(`/follow/requests/${id}/accept`),
 

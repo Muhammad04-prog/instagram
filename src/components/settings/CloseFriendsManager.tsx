@@ -13,6 +13,7 @@ import { useUsers } from "@/hooks/useUserSearch";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * The close-friends list: search to add, tap to remove.
@@ -29,7 +30,7 @@ export function CloseFriendsManager() {
   const { data: results } = useUsers(debounced, debounced.length > 0);
   const toggle = useToggleCloseFriend();
 
-  const friends = data?.pages.flat() ?? [];
+  const friends = flattenPages(data);
   const chosen = new Set(friends.map((friend) => friend.id));
 
   // While searching, show candidates; otherwise the list itself.

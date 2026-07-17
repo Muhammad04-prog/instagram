@@ -14,6 +14,7 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { useFavorites, useMyProfile, useMyReposts, useUserProfile } from "@/hooks/useProfile";
 import { useMyPosts, useUserPosts, useUserReels, useUserTagged } from "@/hooks/usePosts";
 import type { PostDto } from "@/types/post.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Shared by /profile/me and /profile/[userId].
@@ -41,13 +42,13 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   const repostsQuery = useMyReposts(isMe && tab === "reposts");
 
   const allPosts = useMemo(
-    () => (isMe ? myPosts : otherPosts).data?.pages.flat() ?? [],
+    () => flattenPages((isMe ? myPosts : otherPosts).data),
     [isMe, myPosts, otherPosts],
   );
-  const reels = useMemo(() => reelsQuery.data?.pages.flat() ?? [], [reelsQuery.data]);
-  const reposts = useMemo(() => repostsQuery.data?.pages.flat() ?? [], [repostsQuery.data]);
-  const tagged = useMemo(() => taggedQuery.data?.pages.flat() ?? [], [taggedQuery.data]);
-  const savedPosts = useMemo(() => favorites.data?.pages.flat() ?? [], [favorites.data]);
+  const reels = useMemo(() => flattenPages(reelsQuery.data), [reelsQuery.data]);
+  const reposts = useMemo(() => flattenPages(repostsQuery.data), [repostsQuery.data]);
+  const tagged = useMemo(() => flattenPages(taggedQuery.data), [taggedQuery.data]);
+  const savedPosts = useMemo(() => flattenPages(favorites.data), [favorites.data]);
 
   if (profileQuery.isPending) return <ProfileHeaderSkeleton />;
 

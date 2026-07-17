@@ -21,6 +21,7 @@ import { ROUTES } from "@/lib/constants";
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { AdminReportDto, AdminUserDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Admin: users and reports.
@@ -69,7 +70,7 @@ function ReportsTab() {
     useAdminReports(filter);
   const resolve = useResolveReport();
 
-  const reports = data?.pages.flat() ?? [];
+  const reports = flattenPages(data);
 
   return (
     <div className="space-y-4">
@@ -194,7 +195,7 @@ function UsersTab() {
     useAdminUsers(debounced);
   const remove = useAdminDeleteUser(debounced);
 
-  const users = data?.pages.flat() ?? [];
+  const users = flattenPages(data);
 
   return (
     <div className="space-y-4">

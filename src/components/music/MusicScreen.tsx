@@ -13,6 +13,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useMusicSearch, useSavedMusic, useTrendingMusic } from "@/hooks/useMusic";
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants";
 import type { MusicDto } from "@/types/api.types";
+import { flattenPages, type Page } from "@/lib/cursor";
 
 /**
  * Music: what is trending, what you searched for, and what you saved.
@@ -109,13 +110,18 @@ function SearchResults({ term }: { term: string }) {
 /**
  * Every list here is an infinite query over tracks. The page param is left
  * `unknown`: this component never touches it, only the hooks do.
+ *
+ * A page is `Page<MusicDto>` or a bare array depending on the source — `/music`
+ * paginates and answers with an envelope, `/music/trending` and
+ * `/profile/me/saved-music` return the rows outright. `flattenPages` reads both,
+ * so the list itself does not care which one it was handed.
  */
-type ListQuery = UseInfiniteQueryResult<InfiniteData<MusicDto[], unknown>, Error>;
+type ListQuery = UseInfiniteQueryResult<InfiniteData<Page<MusicDto> | MusicDto[], unknown>, Error>;
 
 /** All three lists are the same list with a different source. */
 function TrackList({ query, empty }: { query: ListQuery; empty: string }) {
   const t = useTranslations("music");
-  const tracks = query.data?.pages.flat() ?? [];
+  const tracks = flattenPages(query.data);
 
   if (query.isPending) return <Loader className="py-10" />;
   if (query.isError) return <ErrorState onRetry={() => void query.refetch()} />;

@@ -13,6 +13,7 @@ import { useNoteLikes, useNoteReplies } from "@/hooks/useNotes";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { UserBriefDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Who reacted to my note — author-only, which is what the endpoints enforce.
@@ -74,7 +75,7 @@ function LikesTab({ noteId, enabled }: { noteId: number; enabled: boolean }) {
   const format = useFormatter();
   const { data, isPending, isError, refetch } = useNoteLikes(noteId, enabled);
 
-  const likes = data?.pages.flat() ?? [];
+  const likes = flattenPages(data);
 
   if (isPending) return <Loader className="py-10" />;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
@@ -104,7 +105,7 @@ function RepliesTab({ noteId, enabled }: { noteId: number; enabled: boolean }) {
   const { data, isPending, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useNoteReplies(noteId, enabled);
 
-  const replies = data?.pages.flat() ?? [];
+  const replies = flattenPages(data);
 
   if (isPending) return <Loader className="py-10" />;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;

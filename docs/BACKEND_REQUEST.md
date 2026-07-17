@@ -6,7 +6,7 @@
 
 Фронт (Next.js) переведён на новый API, **106 из 170** endpoint'ов уже вызываются из UI.
 Но проверить хоть один ответ живьём **невозможно**: БД лежит. Ниже — только факты, снятые с
-`https://backend-instagram-kvv4.onrender.com`.
+`https://backend-instagram-a4k6.onrender.com`.
 
 ---
 
@@ -101,7 +101,7 @@ PostMusicDto.streamUrl → "http://localhost:3000/api/music/35/stream"
 Сокет **живой** — Socket.IO отвечает на handshake:
 
 ```
-GET https://backend-instagram-kvv4.onrender.com/socket.io/?EIO=4&transport=polling
+GET https://backend-instagram-a4k6.onrender.com/socket.io/?EIO=4&transport=polling
 0{"sid":"yE2e83YGYMDlqj6GAAAA","upgrades":["websocket"],"pingInterval":25000,...}
 ```
 

@@ -47,7 +47,15 @@ export function NoteComposer({
     const value = text.trim();
     if (!value) return;
 
-    const dto = { text: value, bgColor: color, ...(music ? { musicId: music.id } : {}) };
+    // `audience` is new and optional on the wire (the server defaults it to
+    // FOLLOWERS); we send it outright because there is no close-friends toggle
+    // in this composer yet, and a silent default is worth naming.
+    const dto = {
+      text: value,
+      bgColor: color,
+      audience: "FOLLOWERS" as const,
+      ...(music ? { musicId: music.id } : {}),
+    };
     const done = {
       onSuccess: () => {
         toast.success(note ? t("noteUpdated") : t("noteShared"));

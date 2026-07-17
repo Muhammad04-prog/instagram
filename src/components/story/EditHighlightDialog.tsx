@@ -12,6 +12,7 @@ import { useUpdateHighlight } from "@/hooks/useHighlights";
 import { useMyStories, useStoryArchive } from "@/hooks/useStories";
 import { cn, getImageUrl } from "@/lib/utils";
 import type { HighlightDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Rename a highlight and re-pick what is in it.
@@ -42,7 +43,7 @@ export function EditHighlightDialog({
   const { data: live } = useMyStories();
   const update = useUpdateHighlight();
 
-  const stories = [...(live ?? []), ...(archive.data?.pages.flat() ?? [])];
+  const stories = [...(live ?? []), ...flattenPages(archive.data)];
   const seen = new Set<number>();
   const unique = stories.filter((story) => !seen.has(story.id) && seen.add(story.id));
 

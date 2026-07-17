@@ -10,6 +10,7 @@ import { useAnswerFollowRequest, useFollowRequests } from "@/hooks/useFollow";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { FollowRequestDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Incoming follow requests — only a private account ever has any.
@@ -25,7 +26,7 @@ export function FollowRequestsList() {
   if (isPending) return <Loader className="py-10" />;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const requests = data?.pages.flat() ?? [];
+  const requests = flattenPages(data);
   if (requests.length === 0)
     return <EmptyState title={t("followRequestsEmpty")} className="py-10" />;
 

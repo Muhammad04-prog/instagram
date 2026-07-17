@@ -22,6 +22,17 @@ import type { TokensDto } from "@/types/api.types";
  * avatars, chat files) keep their original boundary and are never buffered here.
  */
 
+/**
+ * How long to wait for the backend before giving up.
+ *
+ * Measured 17.07.2026: a normal request answers in ~0.6s, and Render's free tier
+ * cold-starts in ~50s — so this has to clear 50s or the first request after a
+ * nap would fail. 90s does, while still cutting off the one path that genuinely
+ * hangs: anything writing media waits ~140s on dead storage before erroring.
+ * Without a timeout, a request that never comes back never comes back.
+ */
+const UPSTREAM_TIMEOUT_MS = 90_000;
+
 // Hop-by-hop and host-specific headers must not be forwarded.
 const STRIPPED_REQUEST_HEADERS = new Set([
   "host",
@@ -105,11 +116,21 @@ async function forward(request: NextRequest, path: string[]): Promise<Response> 
       ...(hasBody ? { duplex: "half" } : {}),
       redirect: "manual",
       cache: "no-store",
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     } as RequestInit & { duplex?: "half" });
-  } catch {
+  } catch (error) {
+    // A timeout is not the same failure as a refused connection, and the user
+    // deserves to be told which. Anything touching media currently hangs ~140s
+    // before the backend gives up on its storage (`/health` → `storage: down`),
+    // and without this the request would simply never come back.
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
     return NextResponse.json(
-      { data: null, errors: ["Upstream request failed"], statusCode: 502 },
-      { status: 502 },
+      {
+        data: null,
+        errors: [timedOut ? "Upstream timed out" : "Upstream request failed"],
+        statusCode: timedOut ? 504 : 502,
+      },
+      { status: timedOut ? 504 : 502 },
     );
   }
 

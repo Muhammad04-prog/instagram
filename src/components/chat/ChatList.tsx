@@ -12,7 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChat";
 import { Link, usePathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { peerLabel } from "@/types/chat.types";
+import { chatLabel } from "@/types/chat.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Left column of /chat (img18): title + new-message button, filter, conversations.
@@ -30,8 +31,8 @@ export function ChatList() {
   const [newChatOpen, setNewChatOpen] = useState(false);
 
   const needle = filter.trim().toLowerCase();
-  const chats = (data?.pages.flat() ?? [])
-    .filter((chat) => peerLabel(chat).toLowerCase().includes(needle))
+  const chats = flattenPages(data)
+    .filter((chat) => chatLabel(chat).toLowerCase().includes(needle))
     .sort((a, b) => {
       // A brand-new chat has no messages and therefore no date; keep it on top
       // rather than sinking it below every old conversation.

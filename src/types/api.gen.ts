@@ -210,7 +210,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Текущий пользователь + профиль */
+    /**
+     * Текущий пользователь
+     * @description Отдаёт ПЛОСКИЙ AuthUserDto — никакого конверта `{ user, profile }` нет и не было. Поля профиля, которые сюда входят, лежат на верхнем уровне (avatarUrl). Формулировка «пользователь + профиль» раньше читалась как конверт, из-за чего фронт разбирал оба варианта — вторая ветка не нужна. Полный профиль (счётчики, about, website) — GET /profile/me.
+     */
     get: operations["AuthController_me"];
     put?: never;
     post?: never;
@@ -269,6 +272,26 @@ export interface paths {
      * @description Курсорная пагинация. Заблокированные в выдачу не попадают.
      */
     get: operations["UsersController_search"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/users/by-username/{userName}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Профиль по точному userName (регистронезависимо)
+     * @description Для @упоминаний и ссылок /u/{userName}: search() ищет подстрокой и по fullName, поэтому точное совпадение им не получить. Заблокированные — 404, как и в поиске.
+     */
+    get: operations["UsersController_findByUserName"];
     put?: never;
     post?: never;
     delete?: never;
@@ -431,6 +454,26 @@ export interface paths {
     };
     /** Мой профиль */
     get: operations["ProfileController_me"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/profile/me/collections": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Мои коллекции сохранённого
+     * @description Имя коллекции — то же значение, что принимает POST /posts/{id}/favorite в поле `collection`, поэтому список можно показывать выбором вместо ввода руками. Посты вне коллекций сюда не входят — они в /profile/favorites.
+     */
+    get: operations["ProfileController_collections"];
     put?: never;
     post?: never;
     delete?: never;
@@ -852,6 +895,63 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/music/online/providers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Какие каталоги музыки сейчас доступны */
+    get: operations["OnlineMusicController_providers"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/music/online": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Поиск любой песни во внешнем каталоге
+     * @description Название/исполнитель → название, исполнитель, обложка, длительность и 30-сек превью. Полного трека внешние каталоги не отдают. `musicId` заполнен, если трек уже импортирован.
+     */
+    get: operations["OnlineMusicController_search"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/music/online/save": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Импортировать трек из каталога и сохранить себе
+     * @description Идемпотентно: повторный импорт того же трека не создаёт дубликат.
+     */
+    post: operations["OnlineMusicController_save"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/music": {
     parameters: {
       query?: never;
@@ -895,7 +995,7 @@ export interface paths {
     };
     /**
      * Стриминг mp3 с поддержкой Range (перемотка)
-     * @description Без Range → 200 и весь файл. С Range → 206 Partial Content + Content-Range. Плеер в браузере всегда шлёт Range — без 206 перемотка не работает.
+     * @description Без Range → 200 и весь файл. С Range → 206 Partial Content + Content-Range. Плеер в браузере всегда шлёт Range — без 206 перемотка не работает. Токен не нужен: роут публичный.
      */
     get: operations["MusicController_stream"];
     put?: never;
@@ -949,8 +1049,8 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Поиск треков в Spotify
-     * @description Название/исполнитель → название, артист, обложка альбома, превью. + isSaved.
+     * Поиск треков в Spotify (устарел — см. GET /music/online)
+     * @description Ищет ТОЛЬКО в Spotify. Пока у владельца Spotify-приложения нет Premium, отвечает 503. Для поиска любой песни мира используйте /music/online — он работает без подписок.
      */
     get: operations["SpotifyController_search"];
     put?: never;
@@ -972,7 +1072,7 @@ export interface paths {
     put?: never;
     /**
      * Сохранить трек из Spotify
-     * @description Импортирует трек в вашу музыку (дедуп по spotifyId) и помечает сохранённым. Дальше он доступен как обычный трек: в /profile/me/saved-music, в постах и историях.
+     * @description Импортирует трек в вашу музыку (дедуп по provider+externalId) и помечает сохранённым. Дальше он доступен как обычный трек: в /profile/me/saved-music, в постах и историях.
      */
     post: operations["SpotifyController_save"];
     /** Убрать трек из сохранённых */
@@ -1533,8 +1633,8 @@ export interface paths {
     get: operations["NotesController_feed"];
     put?: never;
     /**
-     * Создать заметку (text ≤60, musicId, bgColor; TTL 24ч)
-     * @description Одна активная заметка на юзера — новая заменяет прежнюю.
+     * Создать заметку (text ≤60, musicId/spotifyId, bgColor, audience; TTL 24ч)
+     * @description Одна активная заметка на юзера — новая заменяет прежнюю. audience: FOLLOWERS (всем подписчикам) или CLOSE_FRIENDS (только близким друзьям).
      */
     post: operations["NotesController_create"];
     delete?: never;
@@ -1550,7 +1650,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Заметка по id */
+    get: operations["NotesController_byId"];
     /** Изменить свою заметку */
     put: operations["NotesController_update"];
     post?: never;
@@ -1632,6 +1733,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/socket/ticket": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Одноразовый тикет для подключения сокета
+     * @description Обычный HTTP-запрос: httpOnly-кука с access-токеном сюда доедет, а в cross-origin сокет — нет. Тикет одноразовый, живёт 30 сек, сжигается при первом же подключении: io(url, { auth: { ticket } }). Повторный или просроченный → disconnect. Подключение с `auth.token` тоже работает — для серверных клиентов, у которых токен есть.
+     */
+    post: operations["SocketController_ticket"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/chats": {
     parameters: {
       query?: never;
@@ -1647,6 +1768,203 @@ export interface paths {
     put?: never;
     /** Начать чат (идемпотентно) */
     post: operations["ChatController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/group": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Создать групповой чат
+     * @description Создатель становится админом группы. Минимум 2 собеседника (иначе это обычный чат 1-на-1), максимум 32 участника. В отличие от 1-на-1, НЕ идемпотентно: две группы с одним составом — разные группы.
+     */
+    post: operations["ChatController_createGroup"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/{id}/participants": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Добавить участников в группу
+     * @description Добавлять может любой участник группы (как в IG).
+     */
+    post: operations["ChatController_addParticipants"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/{id}/participants/{userId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Удалить участника из группы
+     * @description Только админ (создатель группы). Себя удалить нельзя — для этого выход из группы.
+     */
+    delete: operations["ChatController_removeParticipant"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/{id}/leave": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Выйти из группы
+     * @description Может любой участник. Если вышел админ — админом становится самый давний из оставшихся. Вышел последний — группа удаляется.
+     */
+    post: operations["ChatController_leaveGroup"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/{id}/title": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Переименовать группу
+     * @description Может любой участник (как в IG).
+     */
+    put: operations["ChatController_updateGroupTitle"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/calls/ice-servers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * ICE-серверы (STUN/TURN) для WebRTC
+     * @description Отдать как есть в `new RTCPeerConnection({ iceServers })`. `hasTurn: false` — TURN не настроен, звонок между NAT может не соединиться.
+     */
+    get: operations["ChatController_iceServers"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/calls/{callId}/answer": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Взять трубку
+     * @description RINGING → ONGOING. Длительность считается от этого момента.
+     */
+    post: operations["ChatController_answerCall"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/calls/{callId}/decline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Сбросить входящий
+     * @description RINGING → DECLINED + строка в чате.
+     */
+    post: operations["ChatController_declineCall"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/calls/{callId}/end": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Завершить звонок
+     * @description ONGOING → ENDED (+ длительность). Если трубку так и не взяли — MISSED (пропущенный), а не разговор нулевой длины. Идемпотентно: обе стороны часто шлют end одновременно.
+     */
+    post: operations["ChatController_endCall"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/{id}/calls": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** История звонков чата (курсорная) */
+    get: operations["ChatController_calls"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -2100,6 +2418,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/locations/{id}/posts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Лента постов, снятых в этой локации
+     * @description Правила выдачи те же, что у /search/hashtag/{name} (общий PostsService.explore): посты закрытых аккаунтов видны только подписчикам, заблокированные исключены, свои посты в выдачу не попадают. Курсор — id последнего элемента.
+     */
+    get: operations["LocationsController_posts"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/verification/status": {
     parameters: {
       query?: never;
@@ -2406,6 +2744,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/live/{id}/comments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Комментарии эфира (новые → старые)
+     * @description Курсор — id последнего элемента предыдущей страницы. Доступ тот же, что у /live/{id}/join: блокировка и приватность действуют одинаково.
+     */
+    get: operations["LiveController_comments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/live/{id}/requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Заявки на участие в эфире (только хост)
+     * @description id из этого списка принимает POST /live/requests/{id}/accept | /decline. Без status отдаются все заявки.
+     */
+    get: operations["LiveController_requests"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/live/{id}/comment": {
     parameters: {
       query?: never;
@@ -2572,6 +2950,16 @@ export interface components {
       uptimeSec: number;
       /** @example 2026-07-14T10:00:00.000Z */
       timestamp: string;
+      /**
+       * @description Сабаби хатогии пайваст барои ҳар сервиси афтода. Танҳо вақте ҳаст, ки чизе «down» бошад. Парол, хост ва IP пеш аз ирсол пок карда мешаванд.
+       * @example {
+       *       "database": "Can't reach database server at `***`",
+       *       "redis": "connect ECONNREFUSED ***"
+       *     }
+       */
+      reasons?: {
+        [key: string]: string;
+      };
     };
     RegisterDto: {
       /** @example eraj_dev */
@@ -2669,7 +3057,9 @@ export interface components {
         | "STORY_REACTION"
         | "NOTE_REPLY"
         | "CALL"
-        | "LIVE_INVITE";
+        | "LIVE_INVITE"
+        | "SYSTEM"
+        | "MUSIC_SHARE";
       /** @description Фото/видео/голос/стикер */
       mediaUrl?: string | null;
       /** @description Секунды — для голосового/видео */
@@ -2679,6 +3069,10 @@ export interface components {
       sharedPostId?: number | null;
       /** @description Превью заметки (переживает её смерть) */
       noteSnapshot?: string | null;
+      /** @description Трек, если type=MUSIC_SHARE */
+      music?: components["schemas"]["MessageMusicDto"] | null;
+      /** @description Звонок, если type=CALL */
+      call?: components["schemas"]["MessageCallDto"] | null;
       reactions: components["schemas"]["MessageReactionDto"][];
       /**
        * Format: date-time
@@ -2925,6 +3319,17 @@ export interface components {
       /** @example 97 */
       followingCount: number;
     };
+    CollectionDto: {
+      /**
+       * @description Имя коллекции — оно же ключ при сохранении
+       * @example Путешествия
+       */
+      name: string;
+      /** @example 7 */
+      postsCount: number;
+      /** @description Превью последнего сохранённого поста (или явная обложка коллекции) */
+      coverUrl?: string | null;
+    };
     PostBriefDto: {
       /** @example 12 */
       id: number;
@@ -2952,6 +3357,11 @@ export interface components {
       savedAt: string;
     };
     ActivityItemDto: {
+      /**
+       * @description Составной id «ТИП:id строки». Список слит из четырёх таблиц, где id повторяются, поэтому простого id тут не существует. Для «показать ещё» используйте `at` (см. cursor).
+       * @example LIKE:12
+       */
+      id: string;
       /**
        * @example LIKE
        * @enum {string}
@@ -3158,6 +3568,64 @@ export interface components {
       /** Format: date-time */
       addedAt: string;
     };
+    OnlineProvidersDto: {
+      /**
+       * @description Каталоги, которые реально доступны сейчас. Spotify появится здесь, только когда его /search перестанет отвечать 403 (нужна Premium-подписка у владельца приложения).
+       * @example [
+       *       "DEEZER"
+       *     ]
+       */
+      providers: ("SPOTIFY" | "DEEZER")[];
+    };
+    OnlineTrackDto: {
+      /**
+       * @example DEEZER
+       * @enum {string}
+       */
+      provider: "SPOTIFY" | "DEEZER";
+      /**
+       * @description id трека в каталоге провайдера
+       * @example 908604612
+       */
+      externalId: string;
+      /** @example Blinding Lights */
+      title: string;
+      /** @example The Weeknd */
+      artist: string;
+      /**
+       * @description Обложка альбома
+       * @example https://.../cover.jpg
+       */
+      coverUrl: string;
+      /**
+       * @description Длительность трека, сек
+       * @example 200
+       */
+      duration: number;
+      /** @description 30-сек превью (mp3). Полного трека внешние каталоги не отдают — ни Spotify, ни Deezer. null — каталог не дал даже превью. */
+      previewUrl?: string | null;
+      /** @example https://www.deezer.com/track/908604612 */
+      pageUrl: string;
+      /** @description Наш Music.id, если трек уже импортирован. null — ещё не импортирован. */
+      musicId?: number | null;
+      /**
+       * @description Уже в моих сохранённых
+       * @example false
+       */
+      isSaved: boolean;
+    };
+    SaveOnlineTrackDto: {
+      /**
+       * @example DEEZER
+       * @enum {string}
+       */
+      provider: "SPOTIFY" | "DEEZER";
+      /**
+       * @description id трека в каталоге провайдера
+       * @example 908604612
+       */
+      externalId: string;
+    };
     MusicDto: {
       /** @example 7 */
       id: number;
@@ -3166,10 +3634,17 @@ export interface components {
       /** @example Coma-Media */
       artist: string;
       /**
-       * @description Ссылка на стриминг с поддержкой Range (перемотка)
+       * @description Наш стриминг с поддержкой Range (перемотка). Есть, только если mp3 лежит у нас. У трека из внешнего каталога — null: полного файла нет, и этот роут ответил бы 404.
        * @example http://localhost:3000/api/music/7/stream
        */
-      streamUrl: string;
+      streamUrl?: string | null;
+      /** @description Что реально играет у внешнего трека — 30-сек превью каталога. */
+      previewUrl?: string | null;
+      /**
+       * @description true — играется целиком (наш mp3); false — только 30-сек превью
+       * @example true
+       */
+      isFullTrack: boolean;
       /** @example http://localhost:9000/instagram/covers/2026/07/abc.webp */
       coverUrl: string;
       /**
@@ -3257,17 +3732,30 @@ export interface components {
       /** @example Tajikistan */
       country: string;
     };
-    PostMusicDto: {
+    AttachedMusicDto: {
       /** @example 35 */
       id: number;
-      /** @example Soundhelix song 1 */
+      /** @example Blinding Lights */
       title: string;
-      /** @example SoundHelix */
+      /** @example The Weeknd */
       artist: string;
-      /** @example http://localhost:3000/api/music/35/stream */
-      streamUrl: string;
-      /** @example http://localhost:9000/instagram/music/covers/x.webp */
+      /** @example https://.../cover.jpg */
       coverUrl: string;
+      /** @description Наш стриминг с Range (перемотка) — только если mp3 лежит у нас. У трека из внешнего каталога null: полного файла нет. */
+      streamUrl?: string | null;
+      /** @description Что играет у внешнего трека — 30-сек превью каталога. */
+      previewUrl?: string | null;
+      /**
+       * @description Каталог, откуда трек. null — наш локальный mp3
+       * @enum {string|null}
+       */
+      provider?: "SPOTIFY" | "DEEZER" | null;
+      externalId?: string | null;
+      /**
+       * @description true — играется целиком (наш mp3); false — только 30-сек превью
+       * @example true
+       */
+      isFullTrack: boolean;
     };
     PostDto: {
       /** @example 12 */
@@ -3281,7 +3769,7 @@ export interface components {
       author: components["schemas"]["UserBriefDto"];
       media: components["schemas"]["PostMediaDto"][];
       location?: components["schemas"]["PostLocationDto"] | null;
-      music?: components["schemas"]["PostMusicDto"] | null;
+      music?: components["schemas"]["AttachedMusicDto"] | null;
       /** @description Отмеченные на фото */
       taggedUsers: components["schemas"]["UserBriefDto"][];
       /**
@@ -3413,17 +3901,6 @@ export interface components {
       /** @example Спам */
       reason: string;
     };
-    StoryMusicDto: {
-      /** @example 35 */
-      id: number;
-      /** @example Soundhelix song 1 */
-      title: string;
-      /** @example SoundHelix */
-      artist: string;
-      streamUrl: string;
-      coverUrl?: string | null;
-      startSec?: number | null;
-    };
     StoryDto: {
       /** @example 12 */
       id: number;
@@ -3440,9 +3917,23 @@ export interface components {
        * @example 5
        */
       duration: number;
-      music?: components["schemas"]["StoryMusicDto"] | null;
-      /** @description overlays (JSON) */
-      overlays?: Record<string, never> | null;
+      music?: components["schemas"]["AttachedMusicDto"] | null;
+      /**
+       * @description Разобранный JSON: текст/стикеры/эффекты. ВНИМАНИЕ: на запись (POST /stories) это поле принимает СТРОКУ с JSON, а на чтение возвращается массивом.
+       * @example [
+       *       {
+       *         "type": "text",
+       *         "value": "Привет!",
+       *         "x": 0.5,
+       *         "y": 0.3
+       *       }
+       *     ]
+       */
+      overlays?:
+        | {
+            [key: string]: unknown;
+          }[]
+        | null;
       filter?: string | null;
       /** @example false */
       closeFriendsOnly: boolean;
@@ -3524,6 +4015,8 @@ export interface components {
       text: string;
     };
     StoryViewerDto: {
+      /** @description id записи просмотра (StoryView) — ключ строки в списке */
+      id: string;
       user: components["schemas"]["UserBriefDto"];
       /** @example true */
       viewed: boolean;
@@ -3596,8 +4089,24 @@ export interface components {
       title: string;
       /** @example SoundHelix */
       artist: string;
-      streamUrl: string;
+      /** @description Наш стриминг с Range — только у локальных mp3. У треков из Spotify null: полного файла у нас нет, Spotify его не отдаёт. */
+      streamUrl?: string | null;
+      /** @description Что реально играет: наш mp3 либо 30-сек preview из Spotify. */
+      previewUrl?: string | null;
+      /** @description Обложка альбома */
       coverUrl?: string | null;
+      /**
+       * @description Каталог, откуда трек. null — наш локальный mp3
+       * @enum {string|null}
+       */
+      provider?: "SPOTIFY" | "DEEZER" | null;
+      /** @description id трека в каталоге */
+      externalId?: string | null;
+      /**
+       * @description true — играется целиком; false — только превью
+       * @example true
+       */
+      isFullTrack: boolean;
     };
     NoteDto: {
       /** @example 7 */
@@ -3609,6 +4118,12 @@ export interface components {
       music?: components["schemas"]["NoteMusicDto"] | null;
       /** @example #FFB6C1 */
       bgColor?: string | null;
+      /**
+       * @description Кому видна: подписчикам или только близким друзьям
+       * @example FOLLOWERS
+       * @enum {string}
+       */
+      audience: "FOLLOWERS" | "CLOSE_FRIENDS";
       /** @example 2 */
       likesCount: number;
       /**
@@ -3629,13 +4144,32 @@ export interface components {
     CreateNoteDto: {
       /** @example Слушаю музыку 🎧 */
       text: string;
-      /** @example 35 */
+      /**
+       * @description Трек из нашей библиотеки
+       * @example 35
+       */
       musicId?: number;
+      /**
+       * @description Каталог найденного трека (из /music/online). Идёт в паре с externalId.
+       * @enum {string}
+       */
+      provider?: "SPOTIFY" | "DEEZER";
+      /**
+       * @description id трека в каталоге (из /music/online) — импортируем в Music и прикрепим вместе с обложкой и названием. Не добавляет трек в «сохранённые».
+       * @example 908604612
+       */
+      externalId?: string;
       /**
        * @description Цвет фона заметки (hex)
        * @example #FFB6C1
        */
       bgColor?: string;
+      /**
+       * @description Кому видна заметка: FOLLOWERS — всем подписчикам, CLOSE_FRIENDS — только близким друзьям.
+       * @default FOLLOWERS
+       * @enum {string}
+       */
+      audience: "FOLLOWERS" | "CLOSE_FRIENDS";
     };
     UpdateNoteDto: {
       /** @example Новый текст */
@@ -3683,11 +4217,42 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    SocketTicketDto: {
+      /**
+       * @description Одноразовый тикет для io(url, { auth: { ticket } })
+       * @example 3f1c0a5e-8b2d-4c7a-9f10-5e6d7c8b9a01
+       */
+      ticket: string;
+      /**
+       * @description Сколько секунд тикет действителен
+       * @example 30
+       */
+      expiresInSec: number;
+    };
     ChatListItemDto: {
       /** @example 5 */
       id: number;
-      /** @description Собеседник (для 1-на-1) */
-      peer: components["schemas"]["UserBriefDto"];
+      /**
+       * @description true — групповой чат
+       * @example false
+       */
+      isGroup: boolean;
+      /** @description Название группы (null у 1-на-1 и у групп без имени) */
+      title?: string | null;
+      /** @description Собеседник. У группы — null: там нет «собеседника», есть participants. */
+      peer?: components["schemas"]["UserBriefDto"] | null;
+      /** @description Участники, кроме меня. У 1-на-1 — один человек (тот же, что peer). */
+      participants: components["schemas"]["UserBriefDto"][];
+      /**
+       * @description Сколько всего участников, включая меня
+       * @example 4
+       */
+      participantsCount: number;
+      /**
+       * @description Я админ (создатель) этой группы
+       * @example false
+       */
+      isAdmin: boolean;
       /** @description Никнейм собеседника в этом чате */
       peerNickname?: string | null;
       /** @example default */
@@ -3735,14 +4300,36 @@ export interface components {
        */
       isRequest: boolean;
     };
-    EditMessageDto: {
-      /** @example Исправленный текст */
-      text: string;
+    CreateGroupChatDto: {
+      /**
+       * @description Название группы. Если не задано — клиент показывает имена участников (как в IG).
+       * @example Дӯстон
+       */
+      title?: string;
+      /**
+       * @description Кого добавить (кроме себя). Минимум 2 — иначе это обычный чат 1-на-1.
+       * @example [
+       *       "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+       *       "2b1c4d55-1111-4562-b3fc-2c963f66afa7"
+       *     ]
+       */
+      userIds: string[];
     };
-    MessageReactionDto: {
-      userId: string;
-      /** @example ❤️ */
-      emoji: string;
+    GroupCreatedDto: {
+      /** @example 7 */
+      id: number;
+      /** @example true */
+      isGroup: boolean;
+      title?: string | null;
+      /**
+       * @description Участников всего, включая создателя
+       * @example 4
+       */
+      participantsCount: number;
+    };
+    AddParticipantsDto: {
+      /** @description Кого добавить в группу */
+      userIds: string[];
     };
     OkDto: {
       /** @example true */
@@ -3752,6 +4339,124 @@ export interface components {
        * @example 3
        */
       updated?: number;
+    };
+    UpdateGroupTitleDto: {
+      /** @example Наши */
+      title: string;
+    };
+    IceServerDto: {
+      /**
+       * @example [
+       *       "stun:stun.l.google.com:19302"
+       *     ]
+       */
+      urls: string[];
+      /** @description Только для TURN */
+      username?: string;
+      /** @description Только для TURN */
+      credential?: string;
+    };
+    IceServersDto: {
+      /** @description Отдать как есть в `new RTCPeerConnection({ iceServers })` */
+      iceServers: components["schemas"]["IceServerDto"][];
+      /**
+       * @description false — TURN не настроен: звонок между двумя NAT (мобильный интернет) может не соединиться. Настраивается через TURN_URLS / TURN_USERNAME / TURN_PASSWORD в .env
+       * @example false
+       */
+      hasTurn: boolean;
+    };
+    CallStateDto: {
+      callId: string;
+      /** @example 5 */
+      chatId: number;
+      /** @description Кто звонил */
+      callerId: string;
+      /**
+       * @example VIDEO
+       * @enum {string}
+       */
+      type: "AUDIO" | "VIDEO";
+      /**
+       * @description RINGING → ONGOING → ENDED. Не взяли трубку и завершили — MISSED (пропущенный), сбросили — DECLINED.
+       * @example ENDED
+       * @enum {string}
+       */
+      status: "RINGING" | "ONGOING" | "ENDED" | "MISSED" | "DECLINED";
+      /**
+       * Format: date-time
+       * @description Когда начали звонить
+       */
+      startedAt: string;
+      /**
+       * Format: date-time
+       * @description Когда взяли трубку. null — не ответили
+       */
+      answeredAt?: string | null;
+      /** Format: date-time */
+      endedAt?: string | null;
+      /**
+       * @description Длительность РАЗГОВОРА в секундах (от ответа до конца). Не дозвонились → 0
+       * @example 332
+       */
+      durationSec: number;
+    };
+    EditMessageDto: {
+      /** @example Исправленный текст */
+      text: string;
+    };
+    MessageMusicDto: {
+      /** @example 12 */
+      id: number;
+      /** @example Blinding Lights */
+      title: string;
+      /** @example The Weeknd */
+      artist: string;
+      /** @example https://.../cover.jpg */
+      coverUrl: string;
+      /**
+       * @description Длительность трека, сек
+       * @example 200
+       */
+      duration: number;
+      /** @description Наш стриминг с поддержкой Range — есть только у локальных mp3. У треков из Spotify null: полного файла у нас нет. */
+      streamUrl?: string | null;
+      /** @description Что реально играет: для локального трека — наш mp3, для Spotify — 30-сек preview (а если Spotify не дал preview — ссылка на Spotify, играть её нельзя). */
+      previewUrl?: string | null;
+      /**
+       * @description Каталог, откуда трек. null — наш локальный mp3
+       * @enum {string|null}
+       */
+      provider?: "SPOTIFY" | "DEEZER" | null;
+      /** @description id трека в каталоге */
+      externalId?: string | null;
+      /**
+       * @description true — играется целиком (наш mp3); false — только превью Spotify
+       * @example true
+       */
+      isFullTrack: boolean;
+    };
+    MessageCallDto: {
+      id: string;
+      /**
+       * @example AUDIO
+       * @enum {string}
+       */
+      type: "AUDIO" | "VIDEO";
+      /**
+       * @example ENDED
+       * @enum {string}
+       */
+      status: "RINGING" | "ONGOING" | "ENDED" | "MISSED" | "DECLINED";
+      /**
+       * @description Секунды разговора; пропущенный/отклонённый → 0
+       * @example 332
+       */
+      durationSec: number;
+    };
+    MessageReactionDto: {
+      userId: string;
+      /** @example ❤️ */
+      emoji: string;
     };
     BulkDeleteDto: {
       /**
@@ -3774,15 +4479,61 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    ChatParticipantDto: {
+      id: string;
+      /** @example eraj */
+      userName: string;
+      /** @example Eraj Karimov */
+      fullName: string;
+      avatarUrl?: string | null;
+      /** @example false */
+      isVerified: boolean;
+      /** @example false */
+      isPrivate: boolean;
+      /** @description Лакаб в этом чате */
+      nickname?: string | null;
+      /**
+       * @description Админ группы (создатель)
+       * @example false
+       */
+      isAdmin: boolean;
+      /**
+       * @description Сейчас в сети
+       * @example true
+       */
+      isOnline: boolean;
+      /**
+       * Format: date-time
+       * @description «был(а) в сети …». null — если сейчас онлайн
+       */
+      lastSeenAt?: string | null;
+    };
     ChatDetailDto: {
       /** @example 5 */
       id: number;
-      peer: components["schemas"]["UserBriefDto"];
+      /** @example false */
+      isGroup: boolean;
+      /** @description Название группы */
+      title?: string | null;
+      /** @description null у группы */
+      peer?: components["schemas"]["UserBriefDto"] | null;
+      /** @description Участники, кроме меня — каждый со своим «в сети / был в сети» */
+      participants: components["schemas"]["ChatParticipantDto"][];
+      /** @example 4 */
+      participantsCount: number;
+      /**
+       * @description Я админ (создатель) группы
+       * @example false
+       */
+      isAdmin: boolean;
       /** @example default */
       theme: string;
       /** @example false */
       isMuted: boolean;
-      /** @example true */
+      /**
+       * @description У группы всегда false — онлайн считается по peer
+       * @example true
+       */
       isOnline: boolean;
       /** Format: date-time */
       lastSeenAt?: string | null;
@@ -3868,6 +4619,15 @@ export interface components {
       commentId?: number | null;
       storyId?: number | null;
       noteId?: number | null;
+      /** @description id эфира для LIVE_* — без него по уведомлению некуда перейти */
+      liveId?: string | null;
+      /**
+       * @description id заявки в эфир (LIVE_JOIN_REQUEST). Именно его принимает POST /live/requests/{id}/accept | /decline
+       * @example 42
+       */
+      requestId?: number | null;
+      /** @description Миниатюра поста (первое медиа) — картинка справа в строке уведомления */
+      postThumbUrl?: string | null;
       /** @example false */
       isRead: boolean;
       /** @description id всех уведомлений группы — для пометки прочитанными */
@@ -3880,6 +4640,8 @@ export interface components {
       count: number;
     };
     ProfileViewDto: {
+      /** @description id строки — курсор для следующей страницы */
+      id: string;
       viewer: components["schemas"]["UserBriefDto"];
       /** Format: date-time */
       viewedAt: string;
@@ -4074,10 +4836,6 @@ export interface components {
       /** Format: date-time */
       joinedAt: string;
     };
-    LiveCommentInputDto: {
-      /** @example Огонь! 🔥 */
-      text: string;
-    };
     LiveCommentDto: {
       id: number;
       user: components["schemas"]["UserBriefDto"];
@@ -4085,6 +4843,18 @@ export interface components {
       text: string;
       /** Format: date-time */
       createdAt: string;
+    };
+    JoinRequestDto: {
+      id: number;
+      user: components["schemas"]["UserBriefDto"];
+      /** @enum {string} */
+      status: "PENDING" | "ACCEPTED" | "DECLINED";
+      /** Format: date-time */
+      createdAt: string;
+    };
+    LiveCommentInputDto: {
+      /** @example Огонь! 🔥 */
+      text: string;
     };
     LiveLikeResultDto: {
       /** @example 341 */
@@ -4096,14 +4866,6 @@ export interface components {
        * @example ❤️
        */
       emoji: string;
-    };
-    JoinRequestDto: {
-      id: number;
-      user: components["schemas"]["UserBriefDto"];
-      /** @enum {string} */
-      status: "PENDING" | "ACCEPTED" | "DECLINED";
-      /** Format: date-time */
-      createdAt: string;
     };
     CameraDto: {
       /**
@@ -4523,6 +5285,34 @@ export interface operations {
       };
     };
   };
+  UsersController_findByUserName: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userName: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserBriefDto"];
+        };
+      };
+      /** @description Пользователь не найден */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   UsersController_suggestions: {
     parameters: {
       query?: never;
@@ -4765,6 +5555,25 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ProfileDto"];
+        };
+      };
+    };
+  };
+  ProfileController_collections: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CollectionDto"][];
         };
       };
     };
@@ -5394,6 +6203,73 @@ export interface operations {
       };
     };
   };
+  OnlineMusicController_providers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OnlineProvidersDto"];
+        };
+      };
+    };
+  };
+  OnlineMusicController_search: {
+    parameters: {
+      query: {
+        /** @description Название или исполнитель */
+        q: string;
+        limit?: number;
+        /** @description Искать в конкретном каталоге. По умолчанию — в первом доступном. */
+        provider?: "SPOTIFY" | "DEEZER";
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OnlineTrackDto"][];
+        };
+      };
+    };
+  };
+  OnlineMusicController_save: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SaveOnlineTrackDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MusicDto"];
+        };
+      };
+    };
+  };
   MusicController_search: {
     parameters: {
       query?: {
@@ -5611,6 +6487,8 @@ export interface operations {
         limit?: components["schemas"]["Object"];
         /** @description Фильтр по хэштегу (без #) */
         hashtag?: string;
+        /** @description Фильтр по локации (id) */
+        locationId?: number;
       };
       header?: never;
       path?: never;
@@ -6598,6 +7476,34 @@ export interface operations {
       };
     };
   };
+  NotesController_byId: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NoteDto"];
+        };
+      };
+      /** @description Не найдена, истекла или это заметка «только для близких друзей», а вы не в списке */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   NotesController_update: {
     parameters: {
       query?: never;
@@ -6753,6 +7659,25 @@ export interface operations {
       };
     };
   };
+  SocketController_ticket: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SocketTicketDto"];
+        };
+      };
+    };
+  };
   ChatController_list: {
     parameters: {
       query?: never;
@@ -6791,6 +7716,243 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ChatCreatedDto"];
+        };
+      };
+    };
+  };
+  ChatController_createGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateGroupChatDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupCreatedDto"];
+        };
+      };
+      /** @description Меньше 2 собеседников / больше 32 участников */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ChatController_addParticipants: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AddParticipantsDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OkDto"];
+        };
+      };
+    };
+  };
+  ChatController_removeParticipant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OkDto"];
+        };
+      };
+      /** @description Вы не админ группы */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ChatController_leaveGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OkDto"];
+        };
+      };
+    };
+  };
+  ChatController_updateGroupTitle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateGroupTitleDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OkDto"];
+        };
+      };
+    };
+  };
+  ChatController_iceServers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["IceServersDto"];
+        };
+      };
+    };
+  };
+  ChatController_answerCall: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        callId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CallStateDto"];
+        };
+      };
+    };
+  };
+  ChatController_declineCall: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        callId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CallStateDto"];
+        };
+      };
+    };
+  };
+  ChatController_endCall: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        callId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CallStateDto"];
+        };
+      };
+    };
+  };
+  ChatController_calls: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CallStateDto"][];
         };
       };
     };
@@ -7547,6 +8709,31 @@ export interface operations {
       };
     };
   };
+  LocationsController_posts: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"][];
+        };
+      };
+    };
+  };
   VerificationController_status: {
     parameters: {
       query?: never;
@@ -7950,6 +9137,62 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["LiveViewerDto"][];
         };
+      };
+    };
+  };
+  LiveController_comments: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LiveCommentDto"][];
+        };
+      };
+    };
+  };
+  LiveController_requests: {
+    parameters: {
+      query?: {
+        /** @description Фильтр по статусу. Обычно PENDING — те, что ждут решения хоста. */
+        status?: "PENDING" | "ACCEPTED" | "DECLINED";
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["JoinRequestDto"][];
+        };
+      };
+      /** @description Только хост эфира может это делать */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

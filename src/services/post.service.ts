@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   ArchiveDto,
   CommentDto,
@@ -48,13 +48,13 @@ export const postService = {
    * the same posts ranked; see `useExplorePosts`. Kept because the endpoint
    * exists, but nothing calls it.
    */
-  getPosts: (params: CursorParams) => http.get<PostDto[]>("/posts", params),
+  getPosts: (params: CursorParams) => http.get<Page<PostDto>>("/posts", params),
 
-  getFeed: (params: CursorParams) => http.get<PostDto[]>("/posts/feed", params),
+  getFeed: (params: CursorParams) => http.get<Page<PostDto>>("/posts/feed", params),
 
-  getReels: (params: CursorParams) => http.get<PostDto[]>("/posts/reels", params),
+  getReels: (params: CursorParams) => http.get<Page<PostDto>>("/posts/reels", params),
 
-  getMyPosts: (params: CursorParams) => http.get<PostDto[]>("/posts/my", params),
+  getMyPosts: (params: CursorParams) => http.get<Page<PostDto>>("/posts/my", params),
 
   getPostById: (id: number) => http.get<PostDto>(`/posts/${id}`),
 
@@ -85,7 +85,7 @@ export const postService = {
   like: (id: number) => http.post<LikeToggleDto>(`/posts/${id}/like`),
 
   getLikes: (id: number, params: CursorParams) =>
-    http.get<UserBriefDto[]>(`/posts/${id}/likes`, params),
+    http.get<Page<UserBriefDto>>(`/posts/${id}/likes`, params),
 
   /** Counted once per user server-side — safe to fire on every impression. */
   view: (id: number) => http.post<ViewDto>(`/posts/${id}/view`),
@@ -101,7 +101,7 @@ export const postService = {
     http.post<ReportCreatedDto>(`/posts/${id}/report`, dto),
 
   getComments: (id: number, params: CursorParams) =>
-    http.get<CommentDto[]>(`/posts/${id}/comments`, params),
+    http.get<Page<CommentDto>>(`/posts/${id}/comments`, params),
 
   addComment: (id: number, dto: CreateCommentDto) =>
     http.post<CommentDto>(`/posts/${id}/comments`, dto),
@@ -116,5 +116,5 @@ export const postService = {
     http.post<CommentDto>(`/posts/comments/${commentId}/reply`, dto),
 
   getCommentReplies: (commentId: number, params: CursorParams) =>
-    http.get<CommentDto[]>(`/posts/comments/${commentId}/replies`, params),
+    http.get<Page<CommentDto>>(`/posts/comments/${commentId}/replies`, params),
 };

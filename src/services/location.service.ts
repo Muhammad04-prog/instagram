@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   CreateLocationDto,
   DeletedDto,
@@ -20,7 +20,7 @@ export interface GetLocationsParams extends CursorParams {
  * a location no longer strands posts either: their `locationId` becomes null.
  */
 export const locationService = {
-  getLocations: (params: GetLocationsParams) => http.get<LocationDto[]>("/locations", params),
+  getLocations: (params: GetLocationsParams) => http.get<Page<LocationDto>>("/locations", params),
 
   getLocationById: (id: number) => http.get<LocationDto>(`/locations/${id}`),
 

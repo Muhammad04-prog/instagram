@@ -1,7 +1,7 @@
 # ROADMAP v2 — Миграция на новый backend (NestJS)
 
-**Новый API:** `https://backend-instagram-kvv4.onrender.com/api`
-**Swagger:** `/api/docs-json` — **170 endpoints** против 57 у softclub.
+**Новый API:** `https://backend-instagram-a4k6.onrender.com/api`
+**Swagger:** `/api/docs-json` — **190 endpoints** против 57 у softclub.
 Конверт ответа тот же: `{ data, errors, statusCode }` → `lib/axios.ts` unwrap **остаётся**.
 
 Этот бэкенд написан как **замена** softclub: в его же описаниях полей стоят ссылки на наши баги
@@ -13,43 +13,48 @@
 
 ---
 
-## Где мы сейчас — 160/170
+## Где мы сейчас — 166/190
 
 Числа берутся из `docs/API_MAP_V2.md` (генерируется, не проставляется руками). «Проведён» = endpoint
 **достижим человеком**: вызов из `components`/`app` напрямую или через хук, который там используется.
 Готовый хук без экрана **не считается**.
 
-⚠️ **Ни один из 160 не подтверждён живым ответом** — БД бэкенда лежит всё время миграции
-(`docs/BACKEND_REQUEST.md`).
+⚠️ **Ни один из 166 не подтверждён живым ответом** — БД нерабочая всю миграцию и **остаётся**
+такой: `/health` рапортует `database: up`, но любой запрос в базу → 500 `DATABASE_ERROR`
+(проверено curl'ом 17.07.2026, см. § Блокеры).
+
+📌 17.07.2026 swagger обновлён: 170 → **190**, хост `kvv4` → **`a4k6`**. Новые 20 endpoint'ов
+не проведены и разложены по Фазам 22–25 внизу.
 
 | Тег           |    Готово | Фаза  | Что осталось                                                |
 | ------------- | --------: | ----- | ----------------------------------------------------------- |
 | auth          | **11/11** | 12 ✅ | —                                                           |
-| users         | **12/12** | 13 ✅ | —                                                           |
+| users         |     12/13 | 13    | `by-username/{userName}` — новый (Фаза 25)                  |
 | follow        | **11/11** | 13 ✅ | —                                                           |
 | posts         |     21/22 | 14    | `GET /posts` — не нужен: `/search/explore` даёт ту же сетку |
 | notifications |   **5/5** | 15 ✅ | —                                                           |
 | stories       | **12/12** | 16 ✅ | музыка/стикеры в истории (не endpoint)                      |
 | close-friends |   **3/3** | 16 ✅ | —                                                           |
-| locations     |   **5/5** | 10/13 | —                                                           |
-| highlights    |       4/5 | 16    | `PUT /highlights/{id}` — хук есть, UI нет                   |
-| profile       |     13/14 | 13    | `me/reposts` (хук есть), `me/saved-music` (Фаза 18)         |
-| chats         |     16/20 | 17 🚧 | звонок 🔴 (сокет), правка, bulk-delete, жалоба              |
-| music         |       2/6 | 18 🚧 | плеер, сохранённое (поиск/тренды — уже есть)                |
-| spotify       |       0/3 | 18 🚧 | целиком                                                     |
-| notes         |       6/8 | 18 🚧 | `{id}/likes`, `{id}/replies` — экранов нет                  |
-| search        |       3/4 | 19 🚧 | `/search/top` — тренды (хук есть, экрана нет)               |
-| upload        |       0/2 | —     | сервис есть, ни один экран его не просит                    |
+| locations     |       5/6 | 10/13 | `{id}/posts` — новый (Фаза 25)                              |
+| highlights    |   **5/5** | 16 ✅ | —                                                           |
+| profile       |     14/15 | 13    | `me/collections` — новый (Фаза 25)                          |
+| chats         |     19/30 | 17 🚧 | группы (Фаза 23), звонки + сокет (Фаза 22)                  |
+| music         |       6/9 | 18    | внешний каталог `online/*` — новый (Фаза 24)                |
+| spotify       |   **3/3** | 18 ✅ | —                                                           |
+| notes         |       8/9 | 18    | `GET /notes/{id}` — новый (Фаза 25)                         |
+| search        |   **4/4** | 19 ✅ | —                                                           |
+| upload        |   **2/2** | 11 ✅ | —                                                           |
 | verification  |   **4/4** | 20 ✅ | —                                                           |
 | admin         |   **4/4** | 20 ✅ | —                                                           |
-| live          |     16/18 | 21    | видео (LiveKit) 🔴 + accept/decline заявки 🔴               |
-| health        |       0/1 | —     | нечего показывать пользователю                              |
+| live          |     16/20 | 21    | видео (LiveKit) 🔴 + заявки: разблокированы (Фаза 25)       |
+| socket        |       0/1 | 22    | `POST /socket/ticket` — ключ к звонкам и realtime           |
+| health        |   **1/1** | 19 ✅ | —                                                           |
 
 ## Что ломается (главное)
 
 | Что             | Было (softclub)                     | Стало (NestJS)                                                                                   |
 | --------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Базовый URL     | `instagram-api.softclub.tj`         | `backend-instagram-kvv4.onrender.com/api`                                                        |
+| Базовый URL     | `instagram-api.softclub.tj`         | `backend-instagram-a4k6.onrender.com/api`                                                        |
 | Роуты           | `/Post/get-posts` (Pascal, глаголы) | `/posts`, `/posts/feed` (REST, ресурсы)                                                          |
 | Auth            | 1 access-токен                      | **access + refresh** (ротация) + `role`, `isVerified`                                            |
 | Login           | `userName` + `password`             | `login` = userName **ИЛИ** email **ИЛИ** phone                                                   |
@@ -75,7 +80,7 @@
 
 ## Фаза 11 — Фундамент нового API (ядро; без неё ничего не работает) ✅
 
-- [x] `.env` + `lib/constants.ts` → `https://backend-instagram-kvv4.onrender.com/api`; `next.config.ts` — `remotePatterns`
+- [x] `.env` + `lib/constants.ts` → `https://backend-instagram-a4k6.onrender.com/api`; `next.config.ts` — `remotePatterns`
 - [x] `types/api.gen.ts` (openapi-typescript) + `types/api.types.ts` — **123 DTO плоскими именами**; `npm run api:types`
 - [x] `lib/auth-tokens.ts` + прокси — **refresh-флоу**: токен обновляется **до** запроса (по `exp`), гонка сводится в один промис (`inFlight` по значению токена)
 - [x] `app/api/auth/session/route.ts` — пара токенов в httpOnly; личность из **`GET /auth/me`**, а не из парсинга JWT
@@ -530,29 +535,90 @@
 
 ---
 
+## Swagger v3 (17.07.2026) — бэкенд ответил на `BACKEND_PROMPT.md`
+
+Хост переехал: `kvv4` → **`a4k6`** (`kvv4` отдаёт 404, фронт всё это время смотрел в мёртвый бэкенд).
+Swagger: **170 → 190**, удалённых endpoint'ов нет. Три из четырёх блокеров закрыты бэкендом:
+
+| Было заблокировано | Чем закрыто                                                                 |
+| ------------------ | --------------------------------------------------------------------------- |
+| токен для сокета   | `POST /socket/ticket` — одноразовый тикет, httpOnly-cookie можно не трогать |
+| WebRTC без ICE     | `GET /chats/calls/ice-servers` + `answer` / `decline` / `end`               |
+| id заявки в эфир   | `GET /live/{id}/requests` + `requestId` и `liveId` в `NotificationDto`      |
+
+🔴 **Но сокет всё ещё не собрать:** подключиться теперь есть чем, а **имён событий нет
+нигде** — Swagger описывает только HTTP. В это упирается Фаза 22, а с ней и звонки:
+`answer`/`decline`/`end` есть, но узнать о входящем нечем (`BACKEND_PROMPT.md` §3.2).
+
+Ломающие изменения DTO разобраны в `API_REAL_DTO.md` (§ Swagger v3).
+
+## Фаза 22 — Сокет + звонки (7) — 🔴 ЗАБЛОКИРОВАНА: имён событий нет
+
+Тикет есть, ICE есть, `answer`/`decline`/`end` есть — но Swagger описывает только HTTP,
+ни одного имени события (`message:new`, `call:incoming`, …) нигде нет. Угадывать не будем:
+это гарантированно молчащий сокет. **До ответа бэкенда фазу не начинать.**
+
+- [ ] `POST /socket/ticket` → подключение сокета, presence/typing/входящие события
+- [ ] `GET /chats/calls/ice-servers` → WebRTC-конфиг
+- [ ] `POST /chats/{id}/call` (уже в сервисе, кнопки нет) + `answer` / `decline` / `end`
+- [ ] `GET /chats/{id}/calls` — история звонков; `MessageDto.call` рисует плашку звонка в ленте
+
+## Фаза 23 — Групповые чаты (5)
+
+- [ ] `POST /chats/group`, `PUT /chats/{id}/title`, `POST/DELETE /chats/{id}/participants`, `POST /chats/{id}/leave`
+- [ ] `peer` у группы = `null` — типы и экраны уже это переживают (`chatLabel` / `chatAvatar`),
+      но UI группы (список участников, админ-права, «вы вышли») ещё нет
+
+## Фаза 24 — Внешний каталог музыки (3)
+
+- [ ] `GET /music/online/providers`, `GET /music/online`, `POST /music/online/save`
+- [ ] `isFullTrack: false` → играет только 30-сек превью (`previewUrl`), `streamUrl` = `null`
+
+## Фаза 25 — Хвосты (8)
+
+- [ ] `GET /live/{id}/comments` (чужие комментарии эфира), `GET /live/{id}/requests` + accept/decline
+- [ ] `GET /profile/me/collections` — коллекции сохранённого
+- [ ] `GET /users/by-username/{userName}` — **удаляет костыль**: `UserNameResolver` (`/u/{userName}`)
+      ищет ник через `/users?q=` и угадывает совпадение, потому что lookup'а не было. Теперь есть —
+      это самая дешёвая правка из всех оставшихся
+- [ ] `GET /locations/{id}/posts` — лента локации; `GET /notes/{id}`
+- [ ] `NoteDto.audience` (`FOLLOWERS` / `CLOSE_FRIENDS`) — переключатель в `NoteComposer`
+
 ## Итог
 
-| Модуль              | Было   | Стало   | Фаза |
-| ------------------- | ------ | ------- | ---- |
-| auth                | 5      | 11      | 12   |
-| profile+follow      | 11     | 25      | 13   |
-| posts               | 12     | 22      | 14   |
-| notifications       | 0      | 5       | 15   |
-| stories(+hl,cf)     | 8      | 20      | 16   |
-| chats               | 6      | 20      | 17   |
-| music+notes+spotify | 0      | 17      | 18   |
-| search+locations    | 15     | 9       | 19   |
-| verification+admin  | 0      | 8       | 20   |
-| live                | 0      | 18      | 21   |
-| upload+health       | 0      | 3       | 11   |
-| **Всего**           | **57** | **170** | —    |
+| Модуль              | Было   | Стало   | Фаза      |
+| ------------------- | ------ | ------- | --------- |
+| auth                | 5      | 11      | 12        |
+| profile+follow      | 11     | 26      | 13, 25    |
+| posts               | 12     | 22      | 14        |
+| notifications       | 0      | 5       | 15        |
+| stories(+hl,cf)     | 8      | 20      | 16        |
+| chats               | 6      | 30      | 17, 22–23 |
+| music+notes+spotify | 0      | 21      | 18, 24    |
+| search+locations    | 15     | 10      | 19, 25    |
+| verification+admin  | 0      | 8       | 20        |
+| live                | 0      | 20      | 21, 25    |
+| socket              | 0      | 1       | 22        |
+| users               | 9      | 13      | 13, 25    |
+| upload+health       | 0      | 3       | 11        |
+| **Всего**           | **57** | **190** | —         |
 
 ## Блокеры
 
-- 🔴 **БД сейчас лежит.** `/api/health` → `{ status: "degraded", database: "down", redis: "down", storage: "down" }`;
-  `check-username` → 500. Валидация работает (`register` → 400 «dob: дата в формате YYYY-MM-DD»), т.е. жив
-  только слой Nest, данных нет. **Пока БД лежит — правило «живой API авторитетнее Swagger» не проверить**,
-  а на этом проекте оно ловило баги в 8 фазах из 10. Верстать можно, сверять DTO — нет.
+- ✅ **БД поднялась — 17.07.2026, во второй половине дня.** `register` → 201 с реальной
+  парой токенов, `login`, `chats`, `messages` — всё живое. Утром того же дня всё ещё
+  было 500 `DATABASE_ERROR`, так что чинили на нашей памяти.
+
+  **И правило «живой API авторитетнее Swagger» немедленно окупилось**, как и в 8 фазах
+  из 10 на прошлом бэкенде: первый же живой ответ вскрыл, что **все cursor-списки
+  отдают envelope `{items, nextCursor, hasMore}`, а Swagger объявляет голый массив**.
+  Лента падала (`post.id === undefined`). Разбор и карта форм — `API_REAL_DTO.md`.
+
+  Остальные DTO ниже Фазы 11 **всё ещё не сверены живьём** — теперь это наконец
+  возможно, и стоит пройти по фазам заново.
+
+- 🔴 **`storage: down`** — `/health` пишет «пайваст дар 3000 мс ҷавоб надод (timeout)».
+  Загрузка медиа (`POST /upload`, аватар, пост, история) живьём не проверяется.
 - ⚠️ **LiveKit / Spotify** требуют ключей и SDK вне зафиксированного стека (Фаза 21, 18).
 - ⚠️ Render free tier — холодный старт ~50 сек на первый запрос.
 </content>

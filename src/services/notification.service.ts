@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type { NotificationDto, OkDto, ProfileViewDto, UnreadCountDto } from "@/types/api.types";
 
 /**
@@ -13,7 +13,8 @@ import type { NotificationDto, OkDto, ProfileViewDto, UnreadCountDto } from "@/t
  * with `othersCount` and `groupIds` — so the client never de-duplicates.
  */
 export const notificationService = {
-  getNotifications: (params: CursorParams) => http.get<NotificationDto[]>("/notifications", params),
+  getNotifications: (params: CursorParams) =>
+    http.get<Page<NotificationDto>>("/notifications", params),
 
   getUnreadCount: () => http.get<UnreadCountDto>("/notifications/unread-count"),
 
@@ -24,5 +25,5 @@ export const notificationService = {
 
   /** "Who viewed your profile". */
   getProfileViews: (params: CursorParams) =>
-    http.get<ProfileViewDto[]>("/notifications/profile-views", params),
+    http.get<Page<ProfileViewDto>>("/notifications/profile-views", params),
 };

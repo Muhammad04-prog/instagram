@@ -6,12 +6,14 @@ import { MAX_LIMIT } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
 import { userService } from "@/services/user.service";
 import type { SearchedUserItemDto, SearchHistoryItemDto } from "@/types/api.types";
+import { pageItems } from "@/lib/cursor";
 
 /** `q` is a substring and matches fullName too ("er" → "eraj", "america"). */
 export function useUsers(q: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.users.search(q),
     queryFn: () => userService.search({ q, limit: SEARCH_PAGE_SIZE }),
+    select: pageItems,
     enabled: enabled && q.length > 0,
   });
 }

@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   BulkDeleteDto,
   CallStartedDto,
@@ -51,7 +51,7 @@ export const chatService = {
   remove: (id: number) => http.delete<DeletedDto>(`/chats/${id}`),
 
   getMessages: (id: number, params: CursorParams) =>
-    http.get<MessageDto[]>(`/chats/${id}/messages`, params),
+    http.get<Page<MessageDto>>(`/chats/${id}/messages`, params),
 
   send: (id: number, input: SendMessageInput) => {
     if (!input.file) return http.post<MessageDto>(`/chats/${id}/messages`, input);

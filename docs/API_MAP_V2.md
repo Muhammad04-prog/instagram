@@ -1,6 +1,6 @@
-# API_MAP v2 — новый backend (NestJS), 170 endpoints
+# API_MAP v2 — новый backend (NestJS), 190 endpoints
 
-**Swagger:** `https://backend-instagram-kvv4.onrender.com/api/docs-json` → копия в `docs/swagger-v2.json`.
+**Swagger:** `https://backend-instagram-a4k6.onrender.com/api/docs-json` → копия в `docs/swagger-v2.json`.
 
 Файл **генерируется**: `node scripts/gen-api-map.js`. Колонки не проставляются вручную —
 `Сервис` находится по литералу пути в `src/services/*.service.ts`. `UI` = endpoint **достижим
@@ -8,20 +8,22 @@
 в `components`/`app`. Готового хука без экрана **недостаточно** — до такого endpoint'а никто не
 доберётся, и раньше карта именно это и завышала.
 
-Это проверка проводки, **не** проверка работоспособности: БД бэкенда лежит, живьём ни один ответ
-не сверен.
+Это проверка проводки, **не** проверка работоспособности: живьём ответы не сверены — любой
+запрос в БД отвечает 500 `DATABASE_ERROR`, хотя `/health` и рапортует `database: up`.
 
-**Покрытие: 166 / 170** endpoint'ов вызываются из UI.
+**Покрытие: 166 / 190** endpoint'ов вызываются из UI.
 
-Оставшиеся 4 не подключены **не потому, что не дошли руки** — каждый упирается в то,
-чего у фронта нет. Подробности и что нужно от бэкенда — в [`BACKEND_PROMPT.md`](./BACKEND_PROMPT.md).
+Не подключено 24. Это не «не дошли руки»: swagger вырос со 170 до 190 —
+бэкенд закрыл то, что просил [`BACKEND_PROMPT.md`](./BACKEND_PROMPT.md) (`/socket/ticket`,
+`/chats/calls/ice-servers`, `/live/{id}/requests`, `NotificationDto.requestId`), и заодно
+принёс групповые чаты и внешний каталог музыки. Под фронт это отдельные фазы — см.
+[`ROADMAP_V2.md`](./ROADMAP_V2.md). Единственное сознательное исключение:
 
-| Endpoint                           | Почему не подключён                                                                                                                                                                                                                                                 |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /chats/{id}/call`            | Нет сигналинга: события сокета не описаны, а токен живёт в httpOnly-cookie и в JS не попадает. Звонок без сигналинга никуда не ведёт — кнопку не делаем.                                                                                                            |
-| `POST /live/requests/{id}/accept`  | Хосту негде взять id заявки: списка заявок нет, `JoinRequestDto` уходит просившему, в `NotificationDto` нет `requestId`.                                                                                                                                            |
-| `POST /live/requests/{id}/decline` | То же самое.                                                                                                                                                                                                                                                        |
-| `GET /posts`                       | **Не блокер, а дубль:** сетку Explore питает `/search/explore` — ранжированный endpoint, сделанный ровно под неё. `/posts` отдаёт то же самое плоским списком. Отдельного экрана под него нет ни в одном скриншоте, и выдумывать его ради галочки в карте не стали. |
+| Endpoint     | Почему не подключён                                                                                                                                                                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /posts` | **Не блокер, а дубль:** сетку Explore питает `/search/explore` — ранжированный endpoint, сделанный ровно под неё. `/posts` отдаёт то же самое плоским списком. Отдельного экрана под него нет ни в одном скриншоте, и выдумывать его ради галочки в карте не стали. |
+
+Полный список неподключённых — строки `[ ]` в таблицах ниже.
 
 ## admin — 4/4
 
@@ -46,32 +48,42 @@
 | [x] | POST  | `/auth/reset-password`  | `auth.resetPassword`      | Задать новый пароль по resetToken                       |
 | [x] | PUT   | `/auth/change-password` | `auth.changePassword`     | Сменить пароль (нужен старый)                           |
 | [x] | POST  | `/auth/check-username`  | `auth.checkUsername`      | Свободен ли userName (live-валидация формы регистрации) |
-| [x] | GET   | `/auth/me`              | `route.ts (server)`       | Текущий пользователь + профиль                          |
+| [x] | GET   | `/auth/me`              | `route.ts (server)`       | Текущий пользователь                                    |
 
-## chats — 19/20
+## chats — 19/30
 
-| ✓   | Метод  | Путь                            | Сервис                       | Что делает                                         |
-| --- | ------ | ------------------------------- | ---------------------------- | -------------------------------------------------- |
-| [x] | GET    | `/chats`                        | `chat.getChats`              | Список чатов                                       |
-| [x] | POST   | `/chats`                        | `chat.create`                | Начать чат (идемпотентно)                          |
-| [x] | PUT    | `/chats/messages/{id}`          | `chat.editMessage`           | Редактировать сообщение (≤15 мин, только своё)     |
-| [x] | DELETE | `/chats/messages/{id}`          | `chat.deleteMessage`         | Удалить сообщение (OwnerGuard: только своё)        |
-| [x] | POST   | `/chats/messages/bulk-delete`   | `chat.bulkDeleteMessages`    | Удалить несколько своих сообщений                  |
-| [x] | POST   | `/chats/messages/{id}/reaction` | `chat.reactToMessage`        | Реакция на сообщение                               |
-| [x] | DELETE | `/chats/messages/{id}/reaction` | `chat.removeMessageReaction` | Убрать реакцию                                     |
-| [x] | GET    | `/chats/requests`               | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
-| [x] | POST   | `/chats/requests/{id}/accept`   | `chat.acceptRequest`         | Принять запрос на переписку                        |
-| [x] | POST   | `/chats/requests/{id}/decline`  | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
-| [x] | GET    | `/chats/{id}`                   | `chat.getChatById`           | Детали чата                                        |
-| [x] | DELETE | `/chats/{id}`                   | `chat.remove`                | Удалить чат (выйти из него)                        |
-| [x] | GET    | `/chats/{id}/messages`          | `chat.getMessages`           | Сообщения чата (cursor)                            |
-| [x] | POST   | `/chats/{id}/messages`          | `chat.send`                  | Отправить сообщение                                |
-| [x] | POST   | `/chats/{id}/read`              | `chat.markRead`              | Отметить чат прочитанным («Просмотрено»)           |
-| [x] | PUT    | `/chats/{id}/theme`             | `chat.setTheme`              | Тема чата                                          |
-| [x] | PUT    | `/chats/{id}/nickname`          | `chat.setNickname`           | Никнейм собеседника в чате                         |
-| [x] | PUT    | `/chats/{id}/mute`              | `chat.setMuted`              | Заглушить/включить уведомления чата                |
-| [x] | POST   | `/chats/{id}/report`            | `chat.report`                | Пожаловаться на чат                                |
-| [ ] | POST   | `/chats/{id}/call`              | `chat.startCall`             | Начать звонок (WebRTC-сигналинг через сокет)       |
+| ✓   | Метод  | Путь                                | Сервис                       | Что делает                                         |
+| --- | ------ | ----------------------------------- | ---------------------------- | -------------------------------------------------- |
+| [x] | GET    | `/chats`                            | `chat.getChats`              | Список чатов                                       |
+| [x] | POST   | `/chats`                            | `chat.create`                | Начать чат (идемпотентно)                          |
+| [ ] | POST   | `/chats/group`                      | —                            | Создать групповой чат                              |
+| [ ] | POST   | `/chats/{id}/participants`          | —                            | Добавить участников в группу                       |
+| [ ] | DELETE | `/chats/{id}/participants/{userId}` | —                            | Удалить участника из группы                        |
+| [ ] | POST   | `/chats/{id}/leave`                 | —                            | Выйти из группы                                    |
+| [ ] | PUT    | `/chats/{id}/title`                 | —                            | Переименовать группу                               |
+| [ ] | GET    | `/chats/calls/ice-servers`          | —                            | ICE-серверы (STUN/TURN) для WebRTC                 |
+| [ ] | POST   | `/chats/calls/{callId}/answer`      | —                            | Взять трубку                                       |
+| [ ] | POST   | `/chats/calls/{callId}/decline`     | —                            | Сбросить входящий                                  |
+| [ ] | POST   | `/chats/calls/{callId}/end`         | —                            | Завершить звонок                                   |
+| [ ] | GET    | `/chats/{id}/calls`                 | —                            | История звонков чата (курсорная)                   |
+| [x] | PUT    | `/chats/messages/{id}`              | `chat.editMessage`           | Редактировать сообщение (≤15 мин, только своё)     |
+| [x] | DELETE | `/chats/messages/{id}`              | `chat.deleteMessage`         | Удалить сообщение (OwnerGuard: только своё)        |
+| [x] | POST   | `/chats/messages/bulk-delete`       | `chat.bulkDeleteMessages`    | Удалить несколько своих сообщений                  |
+| [x] | POST   | `/chats/messages/{id}/reaction`     | `chat.reactToMessage`        | Реакция на сообщение                               |
+| [x] | DELETE | `/chats/messages/{id}/reaction`     | `chat.removeMessageReaction` | Убрать реакцию                                     |
+| [x] | GET    | `/chats/requests`                   | `chat.getRequests`           | Запросы на переписку (от неподписанных)            |
+| [x] | POST   | `/chats/requests/{id}/accept`       | `chat.acceptRequest`         | Принять запрос на переписку                        |
+| [x] | POST   | `/chats/requests/{id}/decline`      | `chat.declineRequest`        | Отклонить запрос (строка обновляется, не плодится) |
+| [x] | GET    | `/chats/{id}`                       | `chat.getChatById`           | Детали чата                                        |
+| [x] | DELETE | `/chats/{id}`                       | `chat.remove`                | Удалить чат (выйти из него)                        |
+| [x] | GET    | `/chats/{id}/messages`              | `chat.getMessages`           | Сообщения чата (cursor)                            |
+| [x] | POST   | `/chats/{id}/messages`              | `chat.send`                  | Отправить сообщение                                |
+| [x] | POST   | `/chats/{id}/read`                  | `chat.markRead`              | Отметить чат прочитанным («Просмотрено»)           |
+| [x] | PUT    | `/chats/{id}/theme`                 | `chat.setTheme`              | Тема чата                                          |
+| [x] | PUT    | `/chats/{id}/nickname`              | `chat.setNickname`           | Никнейм собеседника в чате                         |
+| [x] | PUT    | `/chats/{id}/mute`                  | `chat.setMuted`              | Заглушить/включить уведомления чата                |
+| [x] | POST   | `/chats/{id}/report`                | `chat.report`                | Пожаловаться на чат                                |
+| [ ] | POST   | `/chats/{id}/call`                  | `chat.startCall`             | Начать звонок (WebRTC-сигналинг через сокет)       |
 
 ## close-friends — 3/3
 
@@ -113,7 +125,7 @@
 | [x] | PUT    | `/highlights/{id}`          | `highlight.update`            | Изменить актуальное (title / cover / состав историй) |
 | [x] | DELETE | `/highlights/{id}`          | `highlight.remove`            | Удалить актуальное (истории остаются)                |
 
-## live — 16/18
+## live — 16/20
 
 | ✓   | Метод | Путь                          | Сервис                | Что делает                                                      |
 | --- | ----- | ----------------------------- | --------------------- | --------------------------------------------------------------- |
@@ -127,6 +139,8 @@
 | [x] | POST  | `/live/{id}/join`             | `live.join`           | Зайти зрителем → subscriber-токен (Block + Privacy)             |
 | [x] | POST  | `/live/{id}/leave`            | `live.leave`          | Покинуть эфир                                                   |
 | [x] | GET   | `/live/{id}/viewers`          | `live.getViewers`     | Текущие зрители эфира                                           |
+| [ ] | GET   | `/live/{id}/comments`         | —                     | Комментарии эфира (новые → старые)                              |
+| [ ] | GET   | `/live/{id}/requests`         | —                     | Заявки на участие в эфире (только хост)                         |
 | [x] | POST  | `/live/{id}/comment`          | `live.comment`        | Комментарий в эфир                                              |
 | [x] | POST  | `/live/{id}/like`             | `live.like`           | Лайк эфира (можно много раз — всплывающие сердечки)             |
 | [x] | POST  | `/live/{id}/reaction`         | `live.reaction`       | Реакция-смайл (всплывает у всех)                                |
@@ -136,39 +150,44 @@
 | [x] | POST  | `/live/{id}/kick/{userId}`    | `live.kick`           | Выгнать зрителя/гостя (только хост)                             |
 | [x] | GET   | `/live/{id}/stats`            | `live.getStats`       | Статистика эфира                                                |
 
-## locations — 5/5
+## locations — 5/6
 
-| ✓   | Метод  | Путь              | Сервис                     | Что делает                                   |
-| --- | ------ | ----------------- | -------------------------- | -------------------------------------------- |
-| [x] | GET    | `/locations`      | `location.getLocations`    | Список локаций (cursor, поиск по q)          |
-| [x] | POST   | `/locations`      | `location.create`          | Создать локацию                              |
-| [x] | GET    | `/locations/{id}` | `location.getLocationById` | Одна локация                                 |
-| [x] | PUT    | `/locations/{id}` | `location.update`          | Обновить локацию (полная замена)             |
-| [x] | DELETE | `/locations/{id}` | `location.remove`          | Удалить локацию (у постов locationId → null) |
+| ✓   | Метод  | Путь                    | Сервис                     | Что делает                                   |
+| --- | ------ | ----------------------- | -------------------------- | -------------------------------------------- |
+| [x] | GET    | `/locations`            | `location.getLocations`    | Список локаций (cursor, поиск по q)          |
+| [x] | POST   | `/locations`            | `location.create`          | Создать локацию                              |
+| [x] | GET    | `/locations/{id}`       | `location.getLocationById` | Одна локация                                 |
+| [x] | PUT    | `/locations/{id}`       | `location.update`          | Обновить локацию (полная замена)             |
+| [x] | DELETE | `/locations/{id}`       | `location.remove`          | Удалить локацию (у постов locationId → null) |
+| [ ] | GET    | `/locations/{id}/posts` | —                          | Лента постов, снятых в этой локации          |
 
-## music — 6/6
+## music — 6/9
 
-| ✓   | Метод  | Путь                 | Сервис              | Что делает                                            |
-| --- | ------ | -------------------- | ------------------- | ----------------------------------------------------- |
-| [x] | GET    | `/music`             | `music.search`      | Поиск музыки (по title И artist, курсорная пагинация) |
-| [x] | GET    | `/music/trending`    | `music.getTrending` | В тренде                                              |
-| [x] | GET    | `/music/{id}/stream` | `music.streamUrl`   | Стриминг mp3 с поддержкой Range (перемотка)           |
-| [x] | GET    | `/music/{id}`        | `music.getById`     | Трек по id                                            |
-| [x] | POST   | `/music/{id}/save`   | `music.save`        | Сохранить трек (идемпотентно)                         |
-| [x] | DELETE | `/music/{id}/save`   | `music.unsave`      | Убрать трек из сохранённых                            |
+| ✓   | Метод  | Путь                      | Сервис              | Что делает                                            |
+| --- | ------ | ------------------------- | ------------------- | ----------------------------------------------------- |
+| [ ] | GET    | `/music/online/providers` | —                   | Какие каталоги музыки сейчас доступны                 |
+| [ ] | GET    | `/music/online`           | —                   | Поиск любой песни во внешнем каталоге                 |
+| [ ] | POST   | `/music/online/save`      | —                   | Импортировать трек из каталога и сохранить себе       |
+| [x] | GET    | `/music`                  | `music.search`      | Поиск музыки (по title И artist, курсорная пагинация) |
+| [x] | GET    | `/music/trending`         | `music.getTrending` | В тренде                                              |
+| [x] | GET    | `/music/{id}/stream`      | `music.streamUrl`   | Стриминг mp3 с поддержкой Range (перемотка)           |
+| [x] | GET    | `/music/{id}`             | `music.getById`     | Трек по id                                            |
+| [x] | POST   | `/music/{id}/save`        | `music.save`        | Сохранить трек (идемпотентно)                         |
+| [x] | DELETE | `/music/{id}/save`        | `music.unsave`      | Убрать трек из сохранённых                            |
 
-## notes — 8/8
+## notes — 8/9
 
-| ✓   | Метод  | Путь                  | Сервис            | Что делает                                            |
-| --- | ------ | --------------------- | ----------------- | ----------------------------------------------------- |
-| [x] | GET    | `/notes`              | `note.getNotes`   | Заметки: свои + подписок (активные)                   |
-| [x] | POST   | `/notes`              | `note.create`     | Создать заметку (text ≤60, musicId, bgColor; TTL 24ч) |
-| [x] | PUT    | `/notes/{id}`         | `note.update`     | Изменить свою заметку                                 |
-| [x] | DELETE | `/notes/{id}`         | `note.remove`     | Удалить свою заметку                                  |
-| [x] | POST   | `/notes/{id}/like`    | `note.like`       | Лайк заметки (toggle) + уведомление LIKE_NOTE         |
-| [x] | GET    | `/notes/{id}/likes`   | `note.getLikes`   | Кто лайкнул (только автору)                           |
-| [x] | POST   | `/notes/{id}/reply`   | `note.reply`      | Ответить на заметку → сообщение в чат                 |
-| [x] | GET    | `/notes/{id}/replies` | `note.getReplies` | Ответы на заметку (только автору)                     |
+| ✓   | Метод  | Путь                  | Сервис            | Что делает                                                                |
+| --- | ------ | --------------------- | ----------------- | ------------------------------------------------------------------------- |
+| [x] | GET    | `/notes`              | `note.getNotes`   | Заметки: свои + подписок (активные)                                       |
+| [x] | POST   | `/notes`              | `note.create`     | Создать заметку (text ≤60, musicId/spotifyId, bgColor, audience; TTL 24ч) |
+| [ ] | GET    | `/notes/{id}`         | —                 | Заметка по id                                                             |
+| [x] | PUT    | `/notes/{id}`         | `note.update`     | Изменить свою заметку                                                     |
+| [x] | DELETE | `/notes/{id}`         | `note.remove`     | Удалить свою заметку                                                      |
+| [x] | POST   | `/notes/{id}/like`    | `note.like`       | Лайк заметки (toggle) + уведомление LIKE_NOTE                             |
+| [x] | GET    | `/notes/{id}/likes`   | `note.getLikes`   | Кто лайкнул (только автору)                                               |
+| [x] | POST   | `/notes/{id}/reply`   | `note.reply`      | Ответить на заметку → сообщение в чат                                     |
+| [x] | GET    | `/notes/{id}/replies` | `note.getReplies` | Ответы на заметку (только автору)                                         |
 
 ## notifications — 5/5
 
@@ -207,11 +226,12 @@
 | [x] | POST   | `/posts/{id}/comments`         | `post.addComment`        | Добавить комментарий                                            |
 | [x] | GET    | `/posts/{id}/comments`         | `post.getComments`       | Комментарии к публикации (корневые, cursor)                     |
 
-## profile — 14/14
+## profile — 14/15
 
 | ✓   | Метод  | Путь                             | Сервис                   | Что делает                                       |
 | --- | ------ | -------------------------------- | ------------------------ | ------------------------------------------------ |
 | [x] | GET    | `/profile/me`                    | `profile.getMyProfile`   | Мой профиль                                      |
+| [ ] | GET    | `/profile/me/collections`        | —                        | Мои коллекции сохранённого                       |
 | [x] | GET    | `/profile/favorites`             | `profile.getFavorites`   | Сохранённое (только своё)                        |
 | [x] | GET    | `/profile/me/reposts`            | `profile.getMyReposts`   | Мои репосты                                      |
 | [x] | GET    | `/profile/me/saved-music`        | `profile.getSavedMusic`  | Сохранённая музыка                               |
@@ -235,13 +255,19 @@
 | [x] | GET   | `/search/top`            | `search.getTop`     | Тренды: популярные хэштеги + аккаунты недели                      |
 | [x] | GET   | `/search/hashtag/{name}` | `search.getHashtag` | Все посты с хэштегом (cursor)                                     |
 
+## socket — 0/1
+
+| ✓   | Метод | Путь             | Сервис | Что делает                               |
+| --- | ----- | ---------------- | ------ | ---------------------------------------- |
+| [ ] | POST  | `/socket/ticket` | —      | Одноразовый тикет для подключения сокета |
+
 ## spotify — 3/3
 
-| ✓   | Метод  | Путь                               | Сервис           | Что делает                 |
-| --- | ------ | ---------------------------------- | ---------------- | -------------------------- |
-| [x] | GET    | `/spotify/search`                  | `spotify.search` | Поиск треков в Spotify     |
-| [x] | POST   | `/spotify/tracks/{spotifyId}/save` | `spotify.save`   | Сохранить трек из Spotify  |
-| [x] | DELETE | `/spotify/tracks/{spotifyId}/save` | `spotify.unsave` | Убрать трек из сохранённых |
+| ✓   | Метод  | Путь                               | Сервис           | Что делает                                               |
+| --- | ------ | ---------------------------------- | ---------------- | -------------------------------------------------------- |
+| [x] | GET    | `/spotify/search`                  | `spotify.search` | Поиск треков в Spotify (устарел — см. GET /music/online) |
+| [x] | POST   | `/spotify/tracks/{spotifyId}/save` | `spotify.save`   | Сохранить трек из Spotify                                |
+| [x] | DELETE | `/spotify/tracks/{spotifyId}/save` | `spotify.unsave` | Убрать трек из сохранённых                               |
 
 ## stories — 12/12
 
@@ -267,11 +293,12 @@
 | [x] | POST   | `/upload`       | `upload.upload` | Загрузить до 10 файлов (фото / видео / аудио) |
 | [x] | DELETE | `/upload/{key}` | `upload.remove` | Удалить файл по ключу                         |
 
-## users — 12/12
+## users — 12/13
 
 | ✓   | Метод  | Путь                              | Сервис                    | Что делает                                                    |
 | --- | ------ | --------------------------------- | ------------------------- | ------------------------------------------------------------- |
 | [x] | GET    | `/users`                          | `user.search`             | Поиск пользователей (по userName И fullName, подстрокой)      |
+| [ ] | GET    | `/users/by-username/{userName}`   | —                         | Профиль по точному userName (регистронезависимо)              |
 | [x] | GET    | `/users/suggestions`              | `user.getSuggestions`     | Рекомендации для вас                                          |
 | [x] | POST   | `/users/search-history`           | `user.addSearchText`      | Добавить текстовый запрос в историю поиска                    |
 | [x] | GET    | `/users/search-history`           | `user.getSearchTexts`     | История текстовых запросов (с createdAt!)                     |

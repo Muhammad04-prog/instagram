@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants";
 import { musicService } from "@/services/music.service";
+import { pageItems } from "@/lib/cursor";
 import { getImageUrl } from "@/lib/utils";
 import type { MusicDto } from "@/types/api.types";
 
@@ -31,12 +32,15 @@ export function MusicPicker({
   const [playing, setPlaying] = useState<number | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
 
+  // Two sources, two shapes: search paginates and answers with an envelope,
+  // trending returns the rows outright. `pageItems` reads either.
   const { data } = useQuery({
     queryKey: ["music", debounced],
     queryFn: () =>
       debounced
         ? musicService.search({ q: debounced, limit: 10 })
         : musicService.getTrending({ limit: 10 }),
+    select: pageItems<MusicDto>,
   });
 
   // One <audio> for the whole list, and it must die with the component —
@@ -55,8 +59,14 @@ export function MusicPicker({
       return;
     }
 
+    // A track from an external catalogue has no `streamUrl` — there is no full
+    // mp3 of it here, only the catalogue's 30-second `previewUrl`. Either can be
+    // absent, and then there is simply nothing to play.
+    const source = track.streamUrl ?? track.previewUrl;
+    if (!source) return;
+
     audio.current?.pause();
-    audio.current = new Audio(track.streamUrl);
+    audio.current = new Audio(source);
     void audio.current
       .play()
       .then(() => setPlaying(track.id))

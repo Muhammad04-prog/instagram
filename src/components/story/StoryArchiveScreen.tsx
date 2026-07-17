@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useDeleteStory, useStoryArchive, useStoryDetail } from "@/hooks/useStories";
 import { useRouter } from "@/i18n/navigation";
 import { getImageUrl } from "@/lib/utils";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * «Архивировать» → таб «Истории» (docs/screenshots/img45).
@@ -44,7 +45,7 @@ export function StoryArchiveScreen() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const stories = data?.pages.flat() ?? [];
+  const stories = flattenPages(data);
 
   return (
     <div className="mx-auto max-w-[935px] px-4 py-6">

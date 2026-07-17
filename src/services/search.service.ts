@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type { PostDto, SearchResultDto, TopResultDto } from "@/types/api.types";
 
 /**
@@ -14,12 +14,12 @@ export const searchService = {
   search: (q: string) => http.get<SearchResultDto>("/search", { q }),
 
   /** Explore grid: photos and videos mixed. */
-  getExplore: (params: CursorParams) => http.get<PostDto[]>("/search/explore", params),
+  getExplore: (params: CursorParams) => http.get<Page<PostDto>>("/search/explore", params),
 
   /** Trending hashtags + accounts of the week. */
   getTop: () => http.get<TopResultDto>("/search/top"),
 
   /** Every post carrying a hashtag. `name` travels without the leading '#'. */
   getHashtag: (name: string, params: CursorParams) =>
-    http.get<PostDto[]>(`/search/hashtag/${encodeURIComponent(name)}`, params),
+    http.get<Page<PostDto>>(`/search/hashtag/${encodeURIComponent(name)}`, params),
 };

@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePostLikes } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { flattenPages } from "@/lib/cursor";
 
 /** "Liked by" — a real list now; softclub only ever gave a count. */
 export function PostLikesDialog({
@@ -28,7 +29,7 @@ export function PostLikesDialog({
   const { data, isPending, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
     usePostLikes(postId, open);
 
-  const likes = data?.pages.flat() ?? [];
+  const likes = flattenPages(data);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

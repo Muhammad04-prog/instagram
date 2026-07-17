@@ -15,7 +15,7 @@ import { useDeleteChat } from "@/hooks/useChat";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { isAttachment, peerLabel, type ChatListItemDto } from "@/types/chat.types";
+import { chatAvatar, chatLabel, isAttachment, type ChatListItemDto } from "@/types/chat.types";
 
 /**
  * One conversation row.
@@ -40,7 +40,7 @@ export function ChatListItem({
   const deleteChat = useDeleteChat();
 
   const { lastMessage } = chat;
-  const name = peerLabel(chat);
+  const name = chatLabel(chat);
   const unread = chat.unreadCount > 0;
 
   const preview = !lastMessage
@@ -60,7 +60,7 @@ export function ChatListItem({
         className="hover:bg-ig-bg-secondary flex items-center gap-3 px-6 py-2"
       >
         <span className="relative shrink-0">
-          <UserAvatar src={chat.peer.avatarUrl ?? null} alt={name} size={56} />
+          <UserAvatar src={chatAvatar(chat)} alt={name} size={56} />
           {chat.isOnline ? (
             <span
               aria-label={t("online")}

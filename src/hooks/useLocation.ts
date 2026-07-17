@@ -8,11 +8,13 @@ import { PAGE_SIZE } from "@/lib/constants";
 import { queryKeys } from "@/lib/query-keys";
 import { locationService } from "@/services/location.service";
 import type { CreateLocationDto, UpdateLocationDto } from "@/types/api.types";
+import { pageItems } from "@/lib/cursor";
 
 export function useLocations(q = "") {
   return useQuery({
     queryKey: queryKeys.locations.list(q),
     queryFn: () => locationService.getLocations({ q: q || undefined, limit: PAGE_SIZE }),
+    select: pageItems,
   });
 }
 

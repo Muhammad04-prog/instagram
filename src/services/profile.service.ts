@@ -1,5 +1,5 @@
 import { http } from "@/lib/axios";
-import type { CursorParams } from "@/lib/cursor";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   ActivityItemDto,
   AvatarDto,
@@ -42,18 +42,18 @@ export const profileService = {
   isFollowing: (userId: string) => http.get<IsFollowingDto>(`/profile/${userId}/is-following`),
 
   getUserPosts: (userId: string, params: CursorParams) =>
-    http.get<PostDto[]>(`/profile/${userId}/posts`, params),
+    http.get<Page<PostDto>>(`/profile/${userId}/posts`, params),
 
   getUserReels: (userId: string, params: CursorParams) =>
-    http.get<PostDto[]>(`/profile/${userId}/reels`, params),
+    http.get<Page<PostDto>>(`/profile/${userId}/reels`, params),
 
   getUserTagged: (userId: string, params: CursorParams) =>
-    http.get<PostDto[]>(`/profile/${userId}/tagged`, params),
+    http.get<Page<PostDto>>(`/profile/${userId}/tagged`, params),
 
   /** Saved posts — only ever your own. */
-  getFavorites: (params: CursorParams) => http.get<PostDto[]>("/profile/favorites", params),
+  getFavorites: (params: CursorParams) => http.get<Page<PostDto>>("/profile/favorites", params),
 
-  getMyReposts: (params: CursorParams) => http.get<PostDto[]>("/profile/me/reposts", params),
+  getMyReposts: (params: CursorParams) => http.get<Page<PostDto>>("/profile/me/reposts", params),
 
   getSavedMusic: (params: CursorParams) => http.get<MusicDto[]>("/profile/me/saved-music", params),
 

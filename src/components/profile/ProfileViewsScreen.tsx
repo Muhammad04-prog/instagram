@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfileViews } from "@/hooks/useNotifications";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * Who looked at my profile, newest first.
@@ -28,7 +29,7 @@ export function ProfileViewsScreen() {
   if (isPending) return <Loader className="py-10" />;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const views = data?.pages.flat() ?? [];
+  const views = flattenPages(data);
   if (views.length === 0) return <EmptyState title={t("noProfileViews")} className="py-10" />;
 
   return (
