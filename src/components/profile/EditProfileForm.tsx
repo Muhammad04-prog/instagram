@@ -90,13 +90,13 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
         <Input
           value={profile.userName}
           disabled
-          className="border-ig-border text-ig-text-secondary h-12 rounded-2xl px-4"
+          className="border-ig-border bg-ig-bg-secondary text-ig-text-secondary h-11 rounded-lg px-4"
         />
       </Section>
 
       <Link
         href={ROUTES.personalInfo}
-        className="border-ig-border flex items-center gap-4 rounded-2xl border px-4 py-4"
+        className="border-ig-border flex items-center gap-4 rounded-lg border px-4 py-4"
       >
         <span className="min-w-0 flex-1">
           <span className="text-ig-text block text-sm">{t("personalInformation")}</span>
@@ -112,7 +112,7 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
           <Input
             {...register("fullName")}
             placeholder={t("fullNamePlaceholder")}
-            className="border-ig-border text-ig-text h-12 rounded-2xl px-4"
+            className="border-ig-border bg-ig-bg-secondary text-ig-text h-11 rounded-lg px-4"
           />
         </Field>
       </Section>
@@ -123,13 +123,13 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
             {...register("website")}
             inputMode="url"
             placeholder={t("websitePlaceholder")}
-            className="border-ig-border text-ig-text h-12 rounded-2xl px-4"
+            className="border-ig-border bg-ig-bg-secondary text-ig-text h-11 rounded-lg px-4"
           />
         </Field>
       </Section>
 
       <Section title={t("about")}>
-        <div className="border-ig-border focus-within:border-ig-text-secondary rounded-2xl border px-4 py-3">
+        <div className="border-ig-border bg-ig-bg-secondary focus-within:border-ig-text-secondary rounded-lg border px-4 py-3">
           <Textarea
             {...register("about")}
             maxLength={ABOUT_MAX_LENGTH}
@@ -165,13 +165,15 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
         description={t("showAccountSuggestionsHint")}
       />
 
-      <button
-        type="submit"
-        disabled={update.isPending || !isDirty}
-        className="bg-ig-primary hover:bg-ig-primary-hover w-full rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-      >
-        {update.isPending ? tCommon("loading") : tCommon("submit")}
-      </button>
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={update.isPending || !isDirty}
+          className="bg-ig-primary hover:bg-ig-primary-hover rounded-lg px-8 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {update.isPending ? tCommon("loading") : tCommon("submit")}
+        </button>
+      </div>
     </form>
   );
 }
@@ -186,8 +188,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-3">
-      <h2 className="text-ig-text text-base font-semibold">{title}</h2>
+    <section className="space-y-1">
+      <label className="text-ig-text block text-sm font-semibold">{title}</label>
       {children}
       {hint ? <p className="text-ig-text-secondary text-xs">{hint}</p> : null}
     </section>
@@ -218,15 +220,14 @@ function Toggle({
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-3", className)}>
-      <h2 className="text-ig-text text-base font-semibold">{title}</h2>
+    <section className={cn("space-y-1", className)}>
       <Controller
         control={control}
         name={name}
         render={({ field }) => (
-          <label className="border-ig-border flex cursor-pointer items-center gap-4 rounded-2xl border px-4 py-4">
+          <label className="border-ig-border flex cursor-pointer items-center gap-4 rounded-lg border px-4 py-4">
             <span className="min-w-0 flex-1">
-              <span className="text-ig-text block text-sm">{title}</span>
+              <span className="text-ig-text block text-sm font-semibold">{title}</span>
               <span className="text-ig-text-secondary block text-xs">{description}</span>
             </span>
             <Switch checked={field.value} onCheckedChange={field.onChange} />

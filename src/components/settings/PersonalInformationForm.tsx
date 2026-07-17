@@ -74,7 +74,7 @@ function PersonalInformationFields({ profile }: { profile: ProfileDto }) {
             <Input
               {...field}
               type="date"
-              className="border-ig-border text-ig-text h-11 rounded-lg px-4"
+              className="border-ig-border bg-ig-bg-secondary text-ig-text h-11 rounded-lg px-4"
             />
           )}
         />
@@ -87,7 +87,7 @@ function PersonalInformationFields({ profile }: { profile: ProfileDto }) {
           name="gender"
           render={({ field }) => (
             <Select value={field.value} onValueChange={(value) => field.onChange(value as Gender)}>
-              <SelectTrigger className="border-ig-border text-ig-text h-11 w-full rounded-lg px-4">
+              <SelectTrigger className="border-ig-border bg-ig-bg-secondary text-ig-text h-11 w-full rounded-lg px-4">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
