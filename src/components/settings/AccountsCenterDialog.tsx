@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   ChevronRight,
   CreditCard,
+  Infinity as InfinityIcon,
   KeyRound,
   Megaphone,
   RefreshCcw,
@@ -64,7 +65,8 @@ export function AccountsCenterDialog({
         <div className="flex min-h-0 flex-1">
           <aside className="border-ig-border w-[300px] shrink-0 overflow-y-auto border-r px-6 py-6">
             <p className="text-ig-text-secondary flex items-center gap-1 text-xs font-semibold">
-              <span aria-hidden>∞</span> Meta
+              <InfinityIcon className="size-3.5" aria-hidden />
+              Meta
             </p>
             <h2 className="text-ig-text mt-1 text-xl font-bold">{t("accountsCenter")}</h2>
             <p className="text-ig-text-secondary mt-3 text-xs">{t("acIntro")}</p>
@@ -305,7 +307,8 @@ function MetaPayPane() {
   return (
     <div className="max-w-[640px]">
       <p className="text-ig-text-secondary flex items-center gap-1 text-xs font-semibold">
-        <span aria-hidden>∞</span> Meta Pay
+        <InfinityIcon className="size-3.5" aria-hidden />
+        Meta Pay
       </p>
       <div className="border-ig-border mt-4 mb-6 flex gap-6 border-b">
         <span className="text-ig-text border-ig-text border-b-2 pb-3 text-sm font-semibold">
