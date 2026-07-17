@@ -7,9 +7,12 @@ import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowDialog, type FollowTab } from "@/components/profile/FollowDialog";
 import { MessageUserButton } from "@/components/profile/MessageUserButton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { StoryRing } from "@/components/story/StoryRing";
+import { useUserStories } from "@/hooks/useStories";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn, formatCount } from "@/lib/utils";
+import { useStoryStore } from "@/store/story.store";
 import { profileFullName, type UserProfile } from "@/types/profile.types";
 
 /**
@@ -29,6 +32,12 @@ export function ProfileHeader({
   const t = useTranslations("profile");
   const [followTab, setFollowTab] = useState<FollowTab>("followers");
   const [followOpen, setFollowOpen] = useState(false);
+  const { data: storyGroup } = useUserStories(userId);
+  const seen = useStoryStore((state) => state.seen);
+
+  const stories = storyGroup?.stories ?? [];
+  const hasStories = stories.length > 0;
+  const storiesSeen = hasStories && stories.every((story) => seen.includes(story.id));
 
   const fullName = profileFullName(profile);
   // The word only — the number is rendered next to it, so it must not repeat.
@@ -45,13 +54,34 @@ export function ProfileHeader({
     <header className="pt-4 pb-8 md:pt-8">
       <div className="flex gap-6 md:gap-8">
         <div className="flex shrink-0 justify-center md:w-[290px]">
-          <UserAvatar
-            src={profile.image}
-            alt={profile.userName}
-            size={150}
-            priority
-            className="size-[77px] md:size-[150px]"
-          />
+          {hasStories ? (
+            <>
+              <Link href={ROUTES.stories(userId)} className="md:hidden">
+                <StoryRing
+                  src={profile.image}
+                  alt={profile.userName}
+                  seen={storiesSeen}
+                  size={69}
+                />
+              </Link>
+              <Link href={ROUTES.stories(userId)} className="hidden md:block">
+                <StoryRing
+                  src={profile.image}
+                  alt={profile.userName}
+                  seen={storiesSeen}
+                  size={142}
+                />
+              </Link>
+            </>
+          ) : (
+            <UserAvatar
+              src={profile.image}
+              alt={profile.userName}
+              size={150}
+              priority
+              className="size-[77px] md:size-[150px]"
+            />
+          )}
         </div>
 
         <div className="min-w-0 flex-1">

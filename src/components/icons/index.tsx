@@ -187,6 +187,49 @@ export function DotsIcon({ ...props }: IconProps) {
   );
 }
 
+/** Share-sheet row — kept monochrome outline like the rest of the set, not brand colours. */
+export function FacebookIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path {...stroke} d="M15.5 8.5h-2a2 2 0 0 0-2 2V22" />
+      <path {...stroke} d="M9 13.5h5" />
+      <circle {...stroke} cx="12" cy="12" r="10" />
+    </svg>
+  );
+}
+
+export function WhatsAppIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path {...stroke} d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Z" />
+      <path
+        {...stroke}
+        d="M8.3 8.4c.2-.5.5-.5.8-.5h.6c.2 0 .4 0 .6.4.2.5.6 1.5.7 1.6.1.2.1.3 0 .5-.1.2-.2.3-.4.5-.2.2-.4.4-.2.7.2.4 1 1.4 2 2.3 1.1 1 1.9 1.3 2.2 1.4.3.1.5.1.6-.1.2-.2.7-.8.9-1 .2-.2.4-.2.6-.1l1.6.8c.2.1.4.2.4.4.1.4.1.9-.1 1.4-.3.6-1.4 1.2-1.9 1.2-.5 0-2 0-4-1.7-2.2-1.9-3.6-4.1-3.7-4.3-.1-.2-.9-1.2-.9-2.3 0-1.1.6-1.6.8-1.9Z"
+      />
+    </svg>
+  );
+}
+
+export function XIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <line {...stroke} x1="4" y1="4" x2="20" y2="20" />
+      <line {...stroke} x1="20" y1="4" x2="4" y2="20" />
+    </svg>
+  );
+}
+
+export function ThreadsIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        {...stroke}
+        d="M12 3c-4.5 0-7.5 2.7-7.5 8.5v1c0 5.8 3 8.5 7.5 8.5s7.5-2.4 7.5-6.3c0-2.8-1.7-4.3-4.4-4.3-2.3 0-3.9 1.1-3.9 2.9 0 1.4 1 2.2 2.4 2.2 1.6 0 2.7-1.1 2.9-2.9.2-1.7-.3-4.2-2.6-5.4-1.2-.6-2.8-.7-4.2-.1"
+      />
+    </svg>
+  );
+}
+
 /* ── Profile tabs (docs/screenshots/img35, img36, img38) ─────────────────── */
 
 export function GridIcon({ ...props }: IconProps) {

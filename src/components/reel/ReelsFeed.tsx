@@ -29,6 +29,19 @@ export function ReelsFeed() {
     else videos.current.delete(postId);
   }, []);
 
+  // Flip every mounted <video>'s `.muted` synchronously, in the same task as
+  // the click / keypress that requested it — some browsers only allow
+  // unmuting playing media inside the original user-gesture call stack, so
+  // waiting for the `muted` prop to flow back down through a render + effect
+  // is one tick too late and the video stays silent.
+  const toggleMuted = useCallback(() => {
+    setMuted((value) => {
+      const next = !value;
+      for (const video of videos.current.values()) video.muted = next;
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const node = sentinel.current;
     if (!node || !hasNextPage) return;
@@ -57,7 +70,7 @@ export function ReelsFeed() {
         });
       }
 
-      if (event.key === "m" || event.key === "M") setMuted((value) => !value);
+      if (event.key === "m" || event.key === "M") toggleMuted();
 
       if (event.key === " ") {
         event.preventDefault();
@@ -74,7 +87,7 @@ export function ReelsFeed() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [toggleMuted]);
 
   if (isPending) {
     return (
@@ -108,7 +121,7 @@ export function ReelsFeed() {
           key={post.postId}
           post={post}
           muted={muted}
-          onToggleMute={() => setMuted((value) => !value)}
+          onToggleMute={toggleMuted}
           registerVideo={registerVideo}
         />
       ))}

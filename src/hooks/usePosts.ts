@@ -14,32 +14,44 @@ import { useAuth } from "@/hooks/useAuth";
 import { type ApiError } from "@/lib/axios";
 import { EXPLORE_PAGE_SIZE, FEED_PAGE_SIZE, PAGE_SIZE, REELS_PAGE_SIZE } from "@/lib/constants";
 import { queryKeys } from "@/lib/query-keys";
+import { followService } from "@/services/followingRelationShip.service";
 import { postService } from "@/services/post.service";
 import type { AddPostDto, Post } from "@/types/post.types";
 
 /**
  * `/` — the feed.
  *
- * ⚠️ `get-following-post` **ignores PageNumber and PageSize**: it always returns
- * the whole feed (verified — pages 1, 2 and 3 come back byte-identical, 56 posts
- * each, with PageSize=5). Asking for page 2 would therefore duplicate every post.
- * So the feed is a single page: `getNextPageParam` never advances.
- * See docs/BACKEND_BUGS.md #21.
+ * ⚠️ `get-following-post` is unusable: it ignores PageNumber/PageSize (always
+ * returns the whole feed) and, once the follow list is large enough, the
+ * backend's own processing time (~26s) trips its request timeout and it 400s
+ * (docs/BACKEND_BUGS.md #21). `get-posts`, by contrast, paginates correctly and
+ * is fast per author. So the feed is built here instead of calling the broken
+ * endpoint: fetch who I follow, fetch each of their recent posts (in parallel,
+ * one author's failure doesn't sink the rest), merge and sort by date.
  */
 export function useFeed() {
   const { user } = useAuth();
+  const userId = user?.userId;
 
-  return useInfiniteQuery({
-    queryKey: queryKeys.posts.feed({ userId: user?.userId }),
-    queryFn: ({ pageParam }) =>
-      postService.getFollowingPosts({
-        userId: user?.userId,
-        pageNumber: pageParam,
-        pageSize: FEED_PAGE_SIZE,
-      }),
-    initialPageParam: 1,
-    getNextPageParam: () => undefined,
-    enabled: Boolean(user?.userId),
+  return useQuery({
+    queryKey: queryKeys.posts.feed({ userId }),
+    queryFn: async () => {
+      const subscriptions = await followService.getSubscriptions(userId!);
+      const authorIds = [...new Set(subscriptions.map((sub) => sub.userShortInfo.userId))];
+
+      const authorPosts = await Promise.all(
+        authorIds.map((authorId) =>
+          postService
+            .getPosts({ userId: authorId, pageNumber: 1, pageSize: FEED_PAGE_SIZE })
+            .catch(() => [] as Post[]),
+        ),
+      );
+
+      return authorPosts
+        .flat()
+        .sort((a, b) => new Date(b.datePublished).getTime() - new Date(a.datePublished).getTime());
+    },
+    enabled: Boolean(userId),
   });
 }
 
@@ -72,6 +84,12 @@ export function useMyPosts(enabled = true) {
  * /reels. The API hands back `images` as a single file name here (not an array),
  * so each reel is normalised into a Post — that way the Phase-5 like / save /
  * comment hooks work on it unchanged.
+ *
+ * ⚠️ Like `get-following-post` (docs/BACKEND_BUGS.md #21), `get-reels` can hand
+ * back reels that already appeared on an earlier page (confirmed live: postId
+ * 84 and 79 repeated across pages, React logging duplicate-key warnings). We
+ * stop asking for more pages once a page adds nothing new, and dedupe by
+ * `postId` before rendering so a repeat never shows up twice.
  */
 export function useReels() {
   return useInfiniteQuery({
@@ -79,14 +97,27 @@ export function useReels() {
     queryFn: ({ pageParam }) =>
       postService.getReels({ pageNumber: pageParam, pageSize: REELS_PAGE_SIZE }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length < REELS_PAGE_SIZE ? undefined : allPages.length + 1,
-    select: (data) => ({
-      ...data,
-      pages: data.pages.map((page) =>
-        page.map((reel): Post => ({ ...reel, images: [reel.images] })),
-      ),
-    }),
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < REELS_PAGE_SIZE) return undefined;
+      const seenIds = new Set(allPages.slice(0, -1).flatMap((page) => page.map((r) => r.postId)));
+      const hasNewReel = lastPage.some((reel) => !seenIds.has(reel.postId));
+      return hasNewReel ? allPages.length + 1 : undefined;
+    },
+    select: (data) => {
+      const seenIds = new Set<number>();
+      return {
+        ...data,
+        pages: data.pages.map((page) =>
+          page
+            .filter((reel) => {
+              if (seenIds.has(reel.postId)) return false;
+              seenIds.add(reel.postId);
+              return true;
+            })
+            .map((reel): Post => ({ ...reel, images: [reel.images] })),
+        ),
+      };
+    },
   });
 }
 
@@ -123,28 +154,25 @@ function usePatchPost() {
       post ? patch(post) : post,
     );
 
-    queryClient.setQueriesData<InfiniteData<Post[]>>({ queryKey: queryKeys.posts.all }, (data) =>
-      data?.pages
-        ? {
-            ...data,
-            pages: data.pages.map((page) =>
-              page.map((post) => (post.postId === postId ? patch(post) : post)),
-            ),
-          }
-        : data,
+    const patchList = (list: Post[]) =>
+      list.map((post) => (post.postId === postId ? patch(post) : post));
+
+    // Cached post lists come in two shapes: a plain array (useMyPosts, useFeed) or
+    // an InfiniteData<Post[]> (useUserPosts, useReels, useExplorePosts, favorites).
+    const patchEither = (data: Post[] | InfiniteData<Post[]> | undefined) => {
+      if (!data) return data;
+      if (Array.isArray(data)) return patchList(data);
+      return { ...data, pages: data.pages.map(patchList) };
+    };
+
+    queryClient.setQueriesData<Post[] | InfiniteData<Post[]>>(
+      { queryKey: queryKeys.posts.all },
+      patchEither,
     );
 
-    queryClient.setQueriesData<InfiniteData<Post[]>>(
+    queryClient.setQueriesData<Post[] | InfiniteData<Post[]>>(
       { queryKey: queryKeys.profile.favorites() },
-      (data) =>
-        data?.pages
-          ? {
-              ...data,
-              pages: data.pages.map((page) =>
-                page.map((post) => (post.postId === postId ? patch(post) : post)),
-              ),
-            }
-          : data,
+      patchEither,
     );
   };
 }

@@ -17,6 +17,7 @@ import { accountService } from "@/services/account.service";
 export function ResetPasswordForm({ token, email }: { token: string; email: string }) {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
+  const tErrors = useTranslations("errors");
   const router = useRouter();
 
   const {
@@ -41,7 +42,7 @@ export function ResetPasswordForm({ token, email }: { token: string; email: stri
       toast.success(t("passwordChanged"));
       router.replace(ROUTES.login);
     },
-    onError: (error: ApiError) => toast.error(error.message),
+    onError: (error: ApiError) => toast.error(error.message || tErrors("network")),
   });
 
   return (

@@ -9,7 +9,7 @@ import { PostCarousel } from "@/components/post/PostCarousel";
 import { CommentForm } from "@/components/post/PostComments";
 import { PostHeader } from "@/components/post/PostHeader";
 import { useLikePost, useViewPost } from "@/hooks/usePosts";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { formatCount } from "@/lib/utils";
 import type { Post } from "@/types/post.types";
@@ -25,6 +25,7 @@ export function PostCard({ post }: { post: Post }) {
   const like = useLikePost();
   const viewPost = useViewPost();
   const ref = useRef<HTMLElement>(null);
+  const router = useRouter();
 
   // view-post fires once per post, when half of the card has been on screen.
   useEffect(() => {
@@ -82,7 +83,11 @@ export function PostCard({ post }: { post: Post }) {
         </AnimatePresence>
       </div>
 
-      <PostActions post={post} className="pt-2" />
+      <PostActions
+        post={post}
+        onCommentClick={() => router.push(ROUTES.post(post.postId))}
+        className="pt-2"
+      />
 
       {post.postLikeCount > 0 ? (
         <p className="text-ig-text pt-1 text-sm font-semibold">

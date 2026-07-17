@@ -109,6 +109,7 @@
   "post": {
     "like": "Like",
     "comment": "Comment",
+    "repost": "Repost",
     "share": "Share",
     "save": "Save",
     "addComment": "Add a comment…",
@@ -135,7 +136,16 @@
     "discardDescription": "If you leave, your edits won't be saved.",
     "shareToStory": "Share to story",
     "mute": "Mute",
-    "unmute": "Unmute"
+    "unmute": "Unmute",
+    "reportPost": "Report",
+    "reportUnavailable": "Reporting isn't available yet",
+    "shareEllipsis": "Share…",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "embed": "Embed",
+    "embedCopied": "Embed code copied",
+    "aboutAccount": "About this account",
+    "shareTitle": "Share"
   },
   "story": {
     "yourStory": "Your story",
@@ -145,8 +155,13 @@
     "title": "Story",
     "share": "Share",
     "pickStoryImage": "Choose a photo for your story",
+    "pickStoryMedia": "Choose photos or videos for your story",
     "selectFile": "Select from computer",
-    "storyAdded": "Story added",
+    "selectedCount": "{count} files selected",
+    "removeFile": "Remove",
+    "storyAdded": "Story(-ies) added",
+    "play": "Play",
+    "pause": "Pause",
     "viewCount": "Views",
     "viewLike": "Likes",
     "viewersOnlyCounts": "The API only reports totals — it has no list of who viewed the story.",
@@ -278,7 +293,8 @@
     "notFoundDescription": "The link you followed may be broken, or the page may have been removed.",
     "backHome": "Go back to Instagram",
     "network": "Network error. Check your connection.",
-    "imageOnly": "Choose an image file."
+    "imageOnly": "Choose an image file.",
+    "mediaOnly": "Choose an image or video file."
   },
   "validation": {
     "required": "This field is required",

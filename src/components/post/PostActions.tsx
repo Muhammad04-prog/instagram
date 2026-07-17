@@ -1,8 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { BookmarkIcon, CommentIcon, HeartIcon, ShareIcon } from "@/components/icons";
+import { useState } from "react";
+import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon, ShareIcon } from "@/components/icons";
+import { ShareDialog } from "@/components/shared/ShareDialog";
 import { useLikePost, useSavePost } from "@/hooks/usePosts";
+import { ROUTES, SITE_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Post } from "@/types/post.types";
 
@@ -19,6 +22,7 @@ export function PostActions({
   const t = useTranslations("post");
   const like = useLikePost();
   const save = useSavePost();
+  const [shareOpen, setShareOpen] = useState(false);
 
   return (
     <div className={cn("flex items-center justify-between", className)}>
@@ -45,7 +49,23 @@ export function PostActions({
           <CommentIcon className="size-6" />
         </button>
 
-        <button type="button" aria-label={t("share")} className="text-ig-text hover:opacity-60">
+        {/* No repost endpoint exists on the backend (checked API_MAP + Swagger) — shown for
+            parity with the current Instagram UI, disabled until the API supports it. */}
+        <button
+          type="button"
+          aria-label={t("repost")}
+          disabled
+          className="text-ig-text cursor-not-allowed opacity-40"
+        >
+          <RepostIcon className="size-6" />
+        </button>
+
+        <button
+          type="button"
+          aria-label={t("share")}
+          onClick={() => setShareOpen(true)}
+          className="text-ig-text hover:opacity-60"
+        >
           <ShareIcon className="size-6" />
         </button>
       </div>
@@ -59,6 +79,12 @@ export function PostActions({
       >
         <BookmarkIcon filled={post.postFavorite} className="size-6" />
       </button>
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        url={`${SITE_URL}${ROUTES.post(post.postId)}`}
+      />
     </div>
   );
 }

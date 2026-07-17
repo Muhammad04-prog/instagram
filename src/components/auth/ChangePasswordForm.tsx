@@ -15,6 +15,7 @@ import { accountService } from "@/services/account.service";
 export function ChangePasswordForm() {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
+  const tErrors = useTranslations("errors");
 
   const {
     register,
@@ -33,7 +34,7 @@ export function ChangePasswordForm() {
       toast.success(t("passwordChanged"));
       resetForm();
     },
-    onError: (error: ApiError) => toast.error(error.message),
+    onError: (error: ApiError) => toast.error(error.message || tErrors("network")),
   });
 
   return (

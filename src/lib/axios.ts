@@ -48,11 +48,7 @@ api.interceptors.response.use(
 
     if (payload && typeof payload === "object" && "data" in payload) {
       if (payload.statusCode >= 400) {
-        throw new ApiError(
-          payload.errors?.[0] ?? "Request failed",
-          payload.statusCode,
-          payload.errors ?? [],
-        );
+        throw new ApiError(payload.errors?.[0] ?? "", payload.statusCode, payload.errors ?? []);
       }
       response.data = payload.data as never;
     }
@@ -67,7 +63,11 @@ api.interceptors.response.use(
     }
 
     const errors = error.response?.data?.errors ?? null;
-    const message = errors?.[0] ?? error.message ?? "Request failed";
+    // `error.message` is axios's own hardcoded English text (e.g. "Network Error") for
+    // connection failures with no server response — never localized, so it must not
+    // leak into the UI. Only the backend's own `errors[]` is a safe message source;
+    // everything else falls through to the caller's `error.message || t("network")`.
+    const message = errors?.[0] ?? "";
 
     return Promise.reject(new ApiError(message, status, errors ?? []));
   },

@@ -1,9 +1,19 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Eye, Trash2, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Pause,
+  Play,
+  Trash2,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HeartIcon } from "@/components/icons";
 import { StoryViewersSheet } from "@/components/story/StoryViewersSheet";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -15,6 +25,7 @@ import { useDeleteStory, useLikeStory, useMarkStorySeen, useUserStories } from "
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn, getImageUrl } from "@/lib/utils";
+import { isVideo } from "@/types/post.types";
 
 const SLIDE_MS = 5000;
 const TICK_MS = 50;
@@ -26,6 +37,7 @@ const TICK_MS = 50;
  */
 export function StoryViewer({ userId, onClose }: { userId: string; onClose: () => void }) {
   const t = useTranslations("story");
+  const tPost = useTranslations("post");
   const tCommon = useTranslations("common");
   const format = useFormatter();
   const { user } = useAuth();
@@ -38,25 +50,31 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [viewersOpen, setViewersOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [broken, setBroken] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const stories = data?.stories ?? [];
   const current = stories[index];
   const isMine = userId === user?.userId;
+  const currentIsVideo = current ? isVideo(current.fileName) : false;
 
+  // `onClose` (→ router.push) must NOT run inside the setIndex updater: React
+  // invokes updater functions during render, so calling a router action there
+  // trips "Cannot update a component (Router) while rendering StoryViewer".
+  // Checking the bound first and calling onClose as a plain side effect keeps
+  // the router update outside React's render phase.
   const next = useCallback(() => {
+    if (index + 1 >= stories.length) {
+      onClose();
+      return;
+    }
     setProgress(0);
     setBroken(false);
-    setIndex((position) => {
-      if (position + 1 >= stories.length) {
-        onClose();
-        return position;
-      }
-      return position + 1;
-    });
-  }, [onClose, stories.length]);
+    setIndex(index + 1);
+  }, [index, stories.length, onClose]);
 
   const previous = useCallback(() => {
     setProgress(0);
@@ -69,8 +87,10 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
     if (current) markSeen(current.id);
   }, [current, markSeen]);
 
+  // Image slides: fixed 5s progress bar. Video slides drive their own progress
+  // (below) off real playback time, so this timer sits out.
   useEffect(() => {
-    if (!current || paused || viewersOpen || confirmOpen) return;
+    if (!current || currentIsVideo || paused || viewersOpen || confirmOpen) return;
 
     const timer = window.setInterval(() => {
       setProgress((value) => {
@@ -83,7 +103,42 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
     }, TICK_MS);
 
     return () => window.clearInterval(timer);
-  }, [current, paused, viewersOpen, confirmOpen, next]);
+  }, [current, currentIsVideo, paused, viewersOpen, confirmOpen, next]);
+
+  // Video slides: progress bar tracks real playback time, advance on `ended`
+  // rather than a fixed 5s guess.
+  useEffect(() => {
+    if (!currentIsVideo) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const onTimeUpdate = () => {
+      if (video.duration) setProgress((video.currentTime / video.duration) * SLIDE_MS);
+    };
+    const onEnded = () => next();
+
+    video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("ended", onEnded);
+    return () => {
+      video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("ended", onEnded);
+    };
+  }, [currentIsVideo, current, next]);
+
+  // Hold-to-pause / the header play-pause button both flow through `paused` —
+  // keep the video element's actual playback state in sync with it.
+  useEffect(() => {
+    if (!currentIsVideo) return;
+    const video = videoRef.current;
+    if (!video) return;
+    if (paused || viewersOpen || confirmOpen) video.pause();
+    else void video.play().catch(() => {});
+  }, [currentIsVideo, paused, viewersOpen, confirmOpen, current]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) video.muted = muted;
+  }, [muted, current]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -148,6 +203,26 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
         </time>
 
         <div className="ml-auto flex items-center gap-3">
+          {currentIsVideo ? (
+            <>
+              <button
+                type="button"
+                aria-label={muted ? tPost("unmute") : tPost("mute")}
+                onClick={() => setMuted((value) => !value)}
+                className="text-white/90 hover:text-white"
+              >
+                {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+              </button>
+              <button
+                type="button"
+                aria-label={paused ? t("play") : t("pause")}
+                onClick={() => setPaused((value) => !value)}
+                className="text-white/90 hover:text-white"
+              >
+                {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
+              </button>
+            </>
+          ) : null}
           {isMine ? (
             <button
               type="button"
@@ -182,8 +257,20 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
           <p className="text-ig-text-secondary absolute inset-0 flex items-center justify-center px-6 text-center text-sm">
             {t("mediaMissing")}
           </p>
+        ) : currentIsVideo ? (
+          <video
+            key={current.id}
+            ref={videoRef}
+            src={url}
+            muted={muted}
+            playsInline
+            autoPlay
+            className="absolute inset-0 size-full object-contain"
+            onError={() => setBroken(true)}
+          />
         ) : (
           <Image
+            key={current.id}
             src={url}
             alt=""
             fill

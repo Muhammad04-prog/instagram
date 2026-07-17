@@ -52,33 +52,41 @@ export function StoryAvatarList() {
   return (
     <>
       <div className="border-ig-separator mb-6 flex scrollbar-none gap-4 overflow-x-auto border-b pb-4">
-        <button
-          type="button"
-          onClick={() =>
-            mine && mine.stories.length > 0
-              ? router.push(ROUTES.stories(user?.userId ?? ""))
-              : setUploadOpen(true)
-          }
-          className="flex w-16 shrink-0 flex-col items-center gap-1"
-        >
+        <div className="flex w-16 shrink-0 flex-col items-center gap-1">
+          {/* The "+" is a sibling, not nested in the avatar button, so it stays
+              clickable to add another story even once one already exists —
+              previously the whole avatar was one button that only opened the
+              viewer once `mine.stories.length > 0`, with no way back to upload. */}
           <span className="relative">
-            {mine && mine.stories.length > 0 ? (
-              <StoryRing
-                src={profile?.image ?? null}
-                alt={profile?.userName ?? ""}
-                seen={isGroupSeen(mine.stories.map((story) => story.id))}
-              />
-            ) : (
-              <>
+            <button
+              type="button"
+              onClick={() =>
+                mine && mine.stories.length > 0
+                  ? router.push(ROUTES.stories(user?.userId ?? ""))
+                  : setUploadOpen(true)
+              }
+            >
+              {mine && mine.stories.length > 0 ? (
+                <StoryRing
+                  src={profile?.image ?? null}
+                  alt={profile?.userName ?? ""}
+                  seen={isGroupSeen(mine.stories.map((story) => story.id))}
+                />
+              ) : (
                 <UserAvatar src={profile?.image} size={56} className="m-[6px]" />
-                <span className="bg-ig-primary absolute right-1 bottom-1 flex size-5 items-center justify-center rounded-full border-2 border-[color:var(--ig-bg)]">
-                  <Plus className="size-3 text-white" />
-                </span>
-              </>
-            )}
+              )}
+            </button>
+            <button
+              type="button"
+              aria-label={t("addStory")}
+              onClick={() => setUploadOpen(true)}
+              className="bg-ig-primary absolute right-1 bottom-1 flex size-5 items-center justify-center rounded-full border-2 border-[color:var(--ig-bg)]"
+            >
+              <Plus className="size-3 text-white" />
+            </button>
           </span>
           <span className="text-ig-text w-full truncate text-center text-xs">{t("yourStory")}</span>
-        </button>
+        </div>
 
         {others.map((group) => (
           <button
