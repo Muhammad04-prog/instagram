@@ -1,23 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Controller, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiError } from "@/hooks/useApiError";
 import { useUpdateProfile } from "@/hooks/useProfile";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import {
   ABOUT_MAX_LENGTH,
@@ -25,19 +19,18 @@ import {
   type EditProfileValues,
 } from "@/lib/validators/profile.schema";
 import { cn } from "@/lib/utils";
-import type { Gender, ProfileDto } from "@/types/profile.types";
+import type { ProfileDto } from "@/types/profile.types";
 
 /**
  * docs/screenshots/img43 + img44.
  *
  * Order and shape follow the screenshots: label above, then a rounded card; the
- * toggles carry a title, a description and a Switch on the right; "Пол" is a
- * select whose "Prefer not to say" is the API's `HIDDEN`.
+ * toggles carry a title, a description and a Switch on the right.
  *
- * Everything here is real now. Phase 4 could only offer `about` + `gender` —
- * softclub's update endpoint rejected anything else — so "Сайт" and the toggles
- * were left out rather than faked. Name / occupation / date of birth are extra
- * fields the API accepts; IG edits those on mobile, so they sit above the link.
+ * `username` is shown but disabled — the real `UpdateProfileDto` has no
+ * username field, so there is nowhere to send a rename. `dob` + `gender` live
+ * on their own "Personal information" page (linked below), and `occupation`
+ * is dropped entirely — real (non-business) IG accounts don't expose it.
  */
 export function EditProfileForm({ profile }: { profile: ProfileDto }) {
   const t = useTranslations("profile");
@@ -58,10 +51,6 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
       fullName: profile.fullName,
       about: profile.about ?? "",
       website: profile.website ?? "",
-      occupation: profile.occupation ?? "",
-      gender: profile.gender,
-      // The API returns an ISO timestamp; the date input wants YYYY-MM-DD.
-      dob: profile.dob ? profile.dob.slice(0, 10) : "",
       showThreadsBadge: profile.showThreadsBadge,
       isAiAuthor: profile.isAiAuthor,
       showAccountSuggestions: profile.showAccountSuggestions,
@@ -78,10 +67,7 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
       {
         fullName: values.fullName,
         about: values.about,
-        gender: values.gender,
         ...(values.website ? { website: values.website } : {}),
-        ...(values.occupation ? { occupation: values.occupation } : {}),
-        ...(values.dob ? { dob: values.dob } : {}),
         showThreadsBadge: values.showThreadsBadge,
         isAiAuthor: values.isAiAuthor,
         showAccountSuggestions: values.showAccountSuggestions,
@@ -99,6 +85,27 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       <AvatarUploader profile={profile} />
+
+      <Section title={t("username")} hint={t("usernameChangeUnavailable")}>
+        <Input
+          value={profile.userName}
+          disabled
+          className="border-ig-border text-ig-text-secondary h-12 rounded-2xl px-4"
+        />
+      </Section>
+
+      <Link
+        href={ROUTES.personalInfo}
+        className="border-ig-border flex items-center gap-4 rounded-2xl border px-4 py-4"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="text-ig-text block text-sm">{t("personalInformation")}</span>
+          <span className="text-ig-text-secondary mt-1 block text-xs">
+            {t("personalInformationHint")}
+          </span>
+        </span>
+        <ChevronRight className="text-ig-text-secondary size-5 shrink-0" />
+      </Link>
 
       <Section title={t("fullName")}>
         <Field error={errors.fullName?.message}>
@@ -137,26 +144,6 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
         {errors.about ? <p className="text-ig-danger text-xs">{errors.about.message}</p> : null}
       </Section>
 
-      <Section title={t("occupation")}>
-        <Field error={errors.occupation?.message}>
-          <Input
-            {...register("occupation")}
-            placeholder={t("occupation")}
-            className="border-ig-border text-ig-text h-12 rounded-2xl px-4"
-          />
-        </Field>
-      </Section>
-
-      <Section title={t("dobLabel")} hint={t("dobHint")}>
-        <Field error={errors.dob?.message}>
-          <Input
-            {...register("dob")}
-            type="date"
-            className="border-ig-border text-ig-text h-12 rounded-2xl px-4"
-          />
-        </Field>
-      </Section>
-
       <Toggle
         control={control}
         name="showThreadsBadge"
@@ -170,27 +157,6 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
         title={t("isAiAuthor")}
         description={t("isAiAuthorHint")}
       />
-
-      <Section title={t("gender")} hint={t("genderHint")}>
-        <Controller
-          control={control}
-          name="gender"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={(value) => field.onChange(value as Gender)}>
-              <SelectTrigger className="border-ig-border text-ig-text h-12 w-full rounded-2xl px-4">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MALE">{t("male")}</SelectItem>
-                <SelectItem value="FEMALE">{t("female")}</SelectItem>
-                <SelectItem value="OTHER">{t("otherGender")}</SelectItem>
-                {/* img44: "Предпочитаю не указывать" — the API's HIDDEN. */}
-                <SelectItem value="HIDDEN">{t("hiddenGender")}</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Section>
 
       <Toggle
         control={control}
