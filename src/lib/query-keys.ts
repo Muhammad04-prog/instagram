@@ -97,6 +97,8 @@ export const queryKeys = {
     trending: () => [...queryKeys.music.all, "trending"] as const,
     detail: (id: number) => [...queryKeys.music.all, "detail", id] as const,
     saved: () => [...queryKeys.music.all, "saved"] as const,
+    onlineProviders: () => [...queryKeys.music.all, "online-providers"] as const,
+    online: (q: string) => [...queryKeys.music.all, "online", q] as const,
   },
   spotify: {
     all: ["spotify"] as const,
