@@ -744,7 +744,13 @@
     "noLikes": "Ҳоло касе ёддоштро писанд накардааст",
     "noReplies": "Ҳоло ҷавоб нест",
     "openChat": "Чатро кушодан",
-    "loadMore": "Бештар нишон деҳ"
+    "loadMore": "Бештар нишон деҳ",
+    "publish": "Нашр кардан",
+    "audienceLabel": "Барои ин аудитория нашр шуд",
+    "audienceFollowers": "обунашавандагони мутақобил",
+    "audienceCloseFriends": "дӯстони наздик",
+    "writeNewNote": "Навиштани ёддошти нав",
+    "moreOptions": "Бештар"
   },
   "verification": {
     "navTitle": "Meta Verified",

@@ -39,7 +39,7 @@ export function NotesRail() {
               bubble anchors itself off this span, so it must sit beside the
               avatar, not on a line of its own. */}
           <span className="relative">
-            {mine ? <NoteBubble note={mine} /> : null}
+            {mine ? <NoteBubble note={mine} onWriteNew={() => setComposerOpen(true)} /> : null}
 
             <button type="button" onClick={() => setComposerOpen(true)}>
               {mine ? null : (
@@ -61,7 +61,9 @@ export function NotesRail() {
             </button>
           </span>
 
-          <span className="text-ig-text w-full truncate text-center text-xs">{t("yourNote")}</span>
+          <span className="text-ig-text w-full text-center text-xs leading-tight">
+            {t("yourNote")}
+          </span>
         </div>
 
         {isPending

@@ -744,7 +744,13 @@
     "noLikes": "Заметку пока никто не лайкнул",
     "noReplies": "Ответов пока нет",
     "openChat": "Открыть чат",
-    "loadMore": "Показать ещё"
+    "loadMore": "Показать ещё",
+    "publish": "Опубликовать",
+    "audienceLabel": "Опубликовано для следующей аудитории",
+    "audienceFollowers": "взаимные подписники",
+    "audienceCloseFriends": "близкие друзья",
+    "writeNewNote": "Написать новую заметку",
+    "moreOptions": "Ещё"
   },
   "verification": {
     "navTitle": "Meta Verified",

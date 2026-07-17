@@ -1,17 +1,20 @@
 "use client";
 
-import { Music } from "lucide-react";
+import { Music, SmilePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { HeartIcon } from "@/components/icons";
-import { NoteInsightsSheet } from "@/components/chat/NoteInsightsSheet";
+import { NoteOwnCard } from "@/components/chat/NoteInsightsSheet";
 import { useLikeNote, useReplyToNote } from "@/hooks/useNotes";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { noteTextColor } from "@/lib/note-colors";
 import { cn } from "@/lib/utils";
 import type { NoteDto } from "@/types/api.types";
+
+/** Real IG's "most popular" quick-react row — one tap sends it as a reply. */
+const QUICK_EMOJI = ["😂", "😮", "😍", "😢", "👏", "🔥", "🎉", "💯", "❤️", "🥰", "😘", "🤩"];
 
 /**
  * The thought bubble sitting on an avatar.
@@ -22,15 +25,32 @@ import type { NoteDto } from "@/types/api.types";
  * Mine opens who liked and who replied — the two endpoints only its author may
  * read. (Tapping the avatar still opens the composer.)
  */
-export function NoteBubble({ note }: { note: NoteDto }) {
+export function NoteBubble({ note, onWriteNew }: { note: NoteDto; onWriteNew?: () => void }) {
   const t = useTranslations("note");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [text, setText] = useState("");
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
   const like = useLikeNote();
   const reply = useReplyToNote();
+
+  const sendReply = (value: string) => {
+    reply.mutate(
+      { id: note.id, text: value },
+      {
+        onSuccess: (result) => {
+          toast.success(t("replySent", { userName: note.author.userName }));
+          setOpen(false);
+          setEmojiOpen(false);
+          setText("");
+          // The reply became a message — go where it landed.
+          router.push(ROUTES.chatById(result.chatId));
+        },
+      },
+    );
+  };
 
   const color = note.bgColor ?? undefined;
   const fg = noteTextColor(note.bgColor);
@@ -74,22 +94,19 @@ export function NoteBubble({ note }: { note: NoteDto }) {
             onSubmit={(event) => {
               event.preventDefault();
               const value = text.trim();
-              if (!value) return;
-              reply.mutate(
-                { id: note.id, text: value },
-                {
-                  onSuccess: (result) => {
-                    toast.success(t("replySent", { userName: note.author.userName }));
-                    setOpen(false);
-                    setText("");
-                    // The reply became a message — go where it landed.
-                    router.push(ROUTES.chatById(result.chatId));
-                  },
-                },
-              );
+              if (value) sendReply(value);
             }}
             className="flex items-center gap-2"
           >
+            <button
+              type="button"
+              onClick={() => setEmojiOpen((value) => !value)}
+              aria-label={t("moreOptions")}
+              aria-expanded={emojiOpen}
+              className="text-ig-text-secondary shrink-0"
+            >
+              <SmilePlus className="size-4" />
+            </button>
             <input
               value={text}
               onChange={(event) => setText(event.target.value)}
@@ -110,11 +127,32 @@ export function NoteBubble({ note }: { note: NoteDto }) {
               />
             </button>
           </form>
+
+          {emojiOpen ? (
+            <ul className="mt-2 grid grid-cols-6 gap-1">
+              {QUICK_EMOJI.map((emoji) => (
+                <li key={emoji}>
+                  <button
+                    type="button"
+                    onClick={() => sendReply(emoji)}
+                    className="hover:bg-ig-button-secondary flex size-7 items-center justify-center rounded-md text-base"
+                  >
+                    {emoji}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
 
       {note.isMine ? (
-        <NoteInsightsSheet noteId={note.id} open={insightsOpen} onOpenChange={setInsightsOpen} />
+        <NoteOwnCard
+          note={note}
+          open={insightsOpen}
+          onOpenChange={setInsightsOpen}
+          onWriteNew={() => onWriteNew?.()}
+        />
       ) : null}
     </>
   );

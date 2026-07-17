@@ -744,7 +744,13 @@
     "noLikes": "No one has liked this note",
     "noReplies": "No replies yet",
     "openChat": "Open chat",
-    "loadMore": "Show more"
+    "loadMore": "Show more",
+    "publish": "Share",
+    "audienceLabel": "Shared with",
+    "audienceFollowers": "your followers",
+    "audienceCloseFriends": "close friends",
+    "writeNewNote": "Write new note",
+    "moreOptions": "More"
   },
   "verification": {
     "navTitle": "Meta Verified",
