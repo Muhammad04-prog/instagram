@@ -26,7 +26,13 @@ export function NotesRail() {
   const others = notes.filter((note) => !note.isMine);
 
   return (
-    <div className="flex scrollbar-none gap-4 overflow-x-auto px-4 pt-2 pb-4">
+    <div
+      // `overflow-x-auto` forces overflow-y to clip too (CSS has no way to keep one
+      // axis visible once the other scrolls), so the note bubble's negative
+      // -top-7/-top-11 offset needs enough top padding to fit *inside* this box
+      // instead of escaping above it — otherwise it gets sheared off.
+      className="flex scrollbar-none gap-4 overflow-x-auto px-4 pt-10 pb-4"
+    >
       {/* My own bubble is itself a button — it opens who liked and replied —
             and a button inside a button is invalid HTML: the browser flattens
             it and the outer click wins. So the avatar is the button and the
