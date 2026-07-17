@@ -1,10 +1,12 @@
 "use client";
 
+import { Music } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
+import { HeartIcon } from "@/components/icons";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
@@ -18,11 +20,14 @@ import { ROUTES } from "@/lib/constants";
 import type { NoteDto, UserBriefDto } from "@/types/api.types";
 import { flattenPages } from "@/lib/cursor";
 
+/** Only the first few show inline — the rest are a tap away in the full sheet. */
+const INLINE_LIKES = 3;
+
 /**
  * The compact card real IG shows when you tap your own note bubble: avatar,
- * like count, audience, then "write a new one" or delete. The fuller
- * likes/replies breakdown (NoteInsightsSheet below) is one tap deeper, behind
- * the like-count badge, instead of being the first thing you see.
+ * the note itself (and its music, if any), audience, who liked it, then
+ * "write a new one" or delete. The fuller likes/replies breakdown
+ * (NoteInsightsSheet below) is one tap deeper, behind "view all".
  */
 export function NoteOwnCard({
   note,
@@ -36,8 +41,11 @@ export function NoteOwnCard({
   onWriteNew: () => void;
 }) {
   const t = useTranslations("note");
+  const format = useFormatter();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const remove = useDeleteNote();
+  const { data: likesData } = useNoteLikes(note.id, open && note.likesCount > 0);
+  const likes = flattenPages(likesData).slice(0, INLINE_LIKES);
 
   return (
     <>
@@ -45,24 +53,61 @@ export function NoteOwnCard({
         <DialogContent className="w-[400px] gap-0 rounded-2xl p-6 text-center">
           <DialogTitle className="sr-only">{t("insightsTitle")}</DialogTitle>
 
-          <button
-            type="button"
-            onClick={() => setDetailsOpen(true)}
-            className="relative mx-auto inline-flex"
-          >
+          <span className="relative mx-auto inline-flex">
             <UserAvatar src={note.author.avatarUrl} size={140} />
             {note.likesCount > 0 ? (
               <span className="bg-ig-bg text-ig-text border-ig-border absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full border px-1.5 text-xs font-semibold">
                 {note.likesCount > 99 ? "99+" : note.likesCount}
               </span>
             ) : null}
-          </button>
+          </span>
 
-          <p className="text-ig-text mt-3 font-semibold">{note.author.userName}</p>
-          <p className="text-ig-text-secondary mt-1 text-sm">
-            {t("audienceLabel")}:{" "}
-            {note.audience === "FOLLOWERS" ? t("audienceFollowers") : t("audienceCloseFriends")}
+          {note.music ? (
+            <p className="text-ig-text-secondary mt-3 flex items-center justify-center gap-1.5 text-sm">
+              <Music className="size-3.5 shrink-0" />
+              <span className="truncate">
+                {note.music.title} · {note.music.artist}
+              </span>
+            </p>
+          ) : null}
+
+          <p className="text-ig-text mt-2 text-lg font-bold break-words">{note.text}</p>
+
+          <p className="text-ig-text-secondary mt-2 text-sm">
+            {note.audience === "FOLLOWERS"
+              ? t("publishedForFollowers")
+              : t("publishedForCloseFriends")}
+            {" · "}
+            <time dateTime={note.createdAt} suppressHydrationWarning>
+              {format.relativeTime(new Date(note.createdAt))}
+            </time>
           </p>
+
+          {likes.length > 0 ? (
+            <div className="mt-4 space-y-2 text-left">
+              {likes.map((like) => (
+                <div key={like.user.id} className="flex items-center gap-2">
+                  <span className="relative shrink-0">
+                    <UserAvatar src={like.user.avatarUrl} size={32} />
+                    <span className="bg-ig-danger border-ig-bg absolute -bottom-0.5 -left-0.5 flex size-3.5 items-center justify-center rounded-full border">
+                      <HeartIcon filled className="size-2 text-white" />
+                    </span>
+                  </span>
+                  <span className="text-ig-text truncate text-sm">{like.user.userName}</span>
+                </div>
+              ))}
+
+              {note.likesCount > likes.length ? (
+                <button
+                  type="button"
+                  onClick={() => setDetailsOpen(true)}
+                  className="text-ig-text-secondary text-sm"
+                >
+                  {t("viewAllLikes")}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
           <button
             type="button"

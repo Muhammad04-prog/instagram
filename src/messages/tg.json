@@ -750,7 +750,10 @@
     "audienceFollowers": "обунашавандагони мутақобил",
     "audienceCloseFriends": "дӯстони наздик",
     "writeNewNote": "Навиштани ёддошти нав",
-    "moreOptions": "Бештар"
+    "moreOptions": "Бештар",
+    "publishedForFollowers": "Барои обунашавандагон нашр шуд",
+    "publishedForCloseFriends": "Барои дӯстон нашр шуд",
+    "viewAllLikes": "Ҳамаро дидан"
   },
   "verification": {
     "navTitle": "Meta Verified",
