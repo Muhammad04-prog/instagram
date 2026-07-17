@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SquarePen } from "lucide-react";
+import { ChevronDown, Search, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ChatListItem } from "@/components/chat/ChatListItem";
@@ -42,9 +42,12 @@ export function ChatList() {
     });
 
   return (
-    <div className="border-ig-border flex h-full w-full flex-col border-r md:w-[414px]">
-      <div className="flex items-center justify-between px-6 pt-8 pb-4">
-        <h1 className="text-ig-text truncate text-xl font-bold">{user?.userName ?? t("title")}</h1>
+    <div className="border-ig-border flex h-full w-full flex-col border-r md:w-[397px]">
+      <div className="flex items-center justify-between px-4 pt-6 pb-3">
+        <h1 className="text-ig-text flex items-center gap-1 truncate text-xl font-bold">
+          {user?.userName ?? t("title")}
+          <ChevronDown className="size-4 shrink-0" aria-hidden />
+        </h1>
         <button
           type="button"
           onClick={() => setNewChatOpen(true)}
@@ -55,7 +58,7 @@ export function ChatList() {
         </button>
       </div>
 
-      <div className="px-6 pb-4">
+      <div className="px-4 pb-3">
         <div className="relative">
           <Search className="text-ig-text-secondary pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <input
@@ -70,10 +73,10 @@ export function ChatList() {
 
       <NotesRail />
 
-      <div className="flex items-center justify-between px-6 pb-2">
+      <div className="flex items-center justify-between px-4 pb-2">
         <h2 className="text-ig-text text-base font-bold">{t("title")}</h2>
         <Link href={ROUTES.chatRequests} className="text-ig-primary text-sm font-semibold">
-          {t("requestsTitle")}
+          {t("requestsTab")}
         </Link>
       </div>
 
@@ -83,7 +86,7 @@ export function ChatList() {
         ) : isError ? (
           <ErrorState onRetry={() => void refetch()} />
         ) : chats.length === 0 ? (
-          <p className="text-ig-text-secondary px-6 py-10 text-center text-sm">{t("noChats")}</p>
+          <p className="text-ig-text-secondary px-4 py-10 text-center text-sm">{t("noChats")}</p>
         ) : (
           <ul>
             {chats.map((chat) => (

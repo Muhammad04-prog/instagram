@@ -57,7 +57,7 @@ export function ChatListItem({
     <li className={cn("group relative", active && "bg-ig-button-secondary")}>
       <Link
         href={ROUTES.chatById(chat.id)}
-        className="hover:bg-ig-bg-secondary flex items-center gap-3 px-6 py-2"
+        className="hover:bg-ig-bg-secondary flex items-center gap-3 px-4 py-2"
       >
         <span className="relative shrink-0">
           <UserAvatar src={chatAvatar(chat)} alt={name} size={56} />

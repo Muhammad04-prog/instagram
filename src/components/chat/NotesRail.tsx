@@ -28,7 +28,7 @@ export function NotesRail() {
 
   return (
     <>
-      <div className="flex scrollbar-none gap-4 overflow-x-auto px-6 pt-2 pb-4">
+      <div className="flex scrollbar-none gap-4 overflow-x-auto px-4 pt-2 pb-4">
         {/* My own bubble is itself a button — it opens who liked and replied —
             and a button inside a button is invalid HTML: the browser flattens
             it and the outer click wins. So the avatar is the button and the
