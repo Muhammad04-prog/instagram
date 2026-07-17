@@ -16,6 +16,9 @@ export function ContentArea({ children }: { children: ReactNode }) {
     <div
       className={cn(
         "pt-navbar pb-mobilenav md:pl-sidebar-collapsed md:pt-0 md:pb-0",
+        // Same duration/easing as the Sidebar's own width transition so the
+        // content gutter and the rail move in lockstep instead of snapping.
+        "transition-[padding-left] duration-200 ease-in-out",
         !forcedCollapsed && "xl:pl-sidebar",
       )}
     >
