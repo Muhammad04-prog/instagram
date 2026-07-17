@@ -9,9 +9,8 @@ import { locationSchema, type LocationFormValues } from "@/lib/validators/locati
 import type { LocationDto } from "@/types/api.types";
 
 /**
- * Add / edit a location. Editing calls `update-LocationDto`, which the server
- * currently rejects with a mapper error (BACKEND_BUGS #19) — the failure is
- * surfaced in a toast rather than hidden.
+ * Add / edit a location. Editing calls `update-LocationDto` — BACKEND_BUGS #19
+ * (a mapper error on this endpoint) is fixed now, the update call works.
  */
 export function LocationForm({
   editing,

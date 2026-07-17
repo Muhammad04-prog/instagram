@@ -14,11 +14,13 @@ import {
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyProfile } from "@/hooks/useProfile";
+import { useClearSearchHistories } from "@/hooks/useUserSearch";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -272,6 +274,9 @@ function CrossAppPane() {
 
 function PermissionsPane() {
   const t = useTranslations("settings");
+  const tSearch = useTranslations("search");
+  const clearHistory = useClearSearchHistories();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <div className="max-w-[560px]">
@@ -281,7 +286,21 @@ function PermissionsPane() {
       </div>
       <div className="border-ig-border mb-8 rounded-2xl border">
         <Row title={t("acExportInfo")} />
-        <Row title={t("acSearchHistory")} />
+        <button
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          className="block w-full text-left"
+        >
+          <Row title={t("acSearchHistory")} />
+        </button>
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={tSearch("clearAllTitle")}
+          description={tSearch("clearAllDescription")}
+          confirmLabel={tSearch("clearAll")}
+          onConfirm={() => clearHistory.mutate()}
+        />
       </div>
       <div className="border-ig-border rounded-2xl border">
         <Row title={t("acOtherCompanies")} />
