@@ -173,7 +173,9 @@ export function SettingsNav() {
 
   return (
     <nav className="w-full shrink-0 md:w-[350px]">
-      <h1 className="text-ig-text px-3 pb-6 text-2xl font-bold">{t("title")}</h1>
+      {/* img39: this title measures the same glyph height as EditProfileScreen's
+          h1 (23 physical px at DPR 1.25 on both) — text-xl, not text-2xl. */}
+      <h1 className="text-ig-text px-3 pb-6 text-xl font-bold">{t("title")}</h1>
 
       <div className="relative mb-6 px-1">
         <Search className="text-ig-text-secondary pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
