@@ -30,7 +30,7 @@ import { ROUTES } from "@/lib/constants";
  * Saved / Switch appearance / Report a problem — then Switch accounts, Log out.
  * "Switch appearance" opens the theme sub-view in place, as IG does.
  */
-export function MoreMenu({ wide }: { wide: boolean }) {
+export function MoreMenu({ wide, hoverLocked }: { wide: boolean; hoverLocked: boolean }) {
   const t = useTranslations("nav");
   const tSettings = useTranslations("settings");
   const tMusic = useTranslations("music");
@@ -46,7 +46,9 @@ export function MoreMenu({ wide }: { wide: boolean }) {
         >
           <MoreIcon className="text-ig-text size-6 shrink-0" />
           {/* Regular weight — IG only bolds the active entry. */}
-          <SidebarLabel wide={wide}>{t("more")}</SidebarLabel>
+          <SidebarLabel wide={wide} hoverLocked={hoverLocked}>
+            {t("more")}
+          </SidebarLabel>
         </button>
       </DropdownMenuTrigger>
 
