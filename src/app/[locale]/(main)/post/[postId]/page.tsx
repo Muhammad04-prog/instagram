@@ -3,7 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { PostDetail } from "@/components/post/PostDetail";
 import { serverGet } from "@/lib/server-api";
-import type { Post } from "@/types/post.types";
+import type { PostDto } from "@/types/post.types";
 
 export async function generateMetadata({
   params,
@@ -11,14 +11,14 @@ export async function generateMetadata({
   params: Promise<{ postId: string }>;
 }): Promise<Metadata> {
   const { postId } = await params;
-  const post = await serverGet<Post>("/Post/get-post-by-id", { id: postId });
+  const post = await serverGet<PostDto>("/Post/get-post-by-id", { id: postId });
 
   if (!post) return { title: "Post" };
 
   // The root layout's template already appends "• Instagram".
-  const caption = post.content?.trim();
+  const caption = post.caption?.trim();
   return {
-    title: post.userName ?? "Post",
+    title: post.author.userName ?? "Post",
     description: caption || undefined,
   };
 }

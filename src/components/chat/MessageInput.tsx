@@ -23,7 +23,7 @@ export function MessageInput({ chatId }: { chatId: number }) {
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSend) return;
-    send.mutate({ messageText: text || undefined, file: file ?? undefined });
+    send.mutate({ text: text || undefined, file: file ?? undefined });
     setFile(null);
     if (fileRef.current) fileRef.current.value = "";
   };

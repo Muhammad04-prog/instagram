@@ -1,70 +1,120 @@
 import { http } from "@/lib/axios";
+import type { CursorParams, Page } from "@/lib/cursor";
 import type {
-  AddCommentDto,
-  AddPostDto,
-  AddPostFavoriteDto,
-  GetFollowingPostsParams,
-  GetPagedParams,
-  GetPostsParams,
-  Post,
-  Reel,
-} from "@/types/post.types";
+  ArchiveDto,
+  CommentDto,
+  CommentLikeToggleDto,
+  CreateCommentDto,
+  DeletedDto,
+  FavoriteToggleDto,
+  LikeToggleDto,
+  PostDto,
+  ReportCreatedDto,
+  ReportPostDto,
+  ShareDto,
+  ShareResultDto,
+  UpdatePostDto,
+  UserBriefDto,
+  ViewDto,
+} from "@/types/api.types";
+
+/** What `POST /posts` accepts — multipart, up to 10 photos AND videos mixed. */
+export interface CreatePostInput {
+  media: File[];
+  caption?: string;
+  locationId?: number;
+  musicId?: number;
+  /** Comma-joined uuids on the wire. */
+  taggedUserIds?: string[];
+  /** Comma-joined filter names. */
+  filters?: string[];
+  isReel?: boolean;
+}
 
 /**
- * Swagger tag: Post (12 endpoints), all verified against the live API.
+ * Swagger tag: posts (22 endpoints).
  *
- * ⚠️ `like-post` and `add-post-favorite` are TOGGLES: the returned boolean is the
- * NEW state (true = liked/saved, false = un-liked/un-saved), not "success".
- * ⚠️ `get-my-posts` answers a bare array — no `{ data, errors, statusCode }`
- * envelope — which the axios interceptor passes through untouched.
+ * Toggles (`like`, `favorite`, comment `like`, `archive`) answer with the NEW
+ * state *plus a fresh counter* — e.g. `{ liked, likesCount }` — so optimistic UI
+ * reconciles against the server instead of guessing, as it had to on softclub.
+ *
+ * Every list is cursor-paginated and answers a bare array; see `lib/cursor.ts`.
  */
 export const postService = {
-  getPosts: (params: GetPostsParams) =>
-    http.get<Post[]>("/Post/get-posts", {
-      UserId: params.userId,
-      Title: params.title,
-      Content: params.content,
-      PageNumber: params.pageNumber,
-      PageSize: params.pageSize,
-    }),
+  /**
+   * Explore — other people's posts (private accounts and blocks excluded server-side).
+   *
+   * Superseded by `searchService.getExplore` (`/search/explore`), which returns
+   * the same posts ranked; see `useExplorePosts`. Kept because the endpoint
+   * exists, but nothing calls it.
+   */
+  getPosts: (params: CursorParams) => http.get<Page<PostDto>>("/posts", params),
 
-  getReels: (params: GetPagedParams) =>
-    http.get<Reel[]>("/Post/get-reels", {
-      PageNumber: params.pageNumber,
-      PageSize: params.pageSize,
-    }),
+  getFeed: (params: CursorParams) => http.get<Page<PostDto>>("/posts/feed", params),
 
-  getPostById: (id: number) => http.get<Post>("/Post/get-post-by-id", { id }),
+  getReels: (params: CursorParams) => http.get<Page<PostDto>>("/posts/reels", params),
 
-  getMyPosts: () => http.get<Post[]>("/Post/get-my-posts"),
+  getMyPosts: (params: CursorParams) => http.get<Page<PostDto>>("/posts/my", params),
 
-  getFollowingPosts: (params: GetFollowingPostsParams) =>
-    http.get<Post[]>("/Post/get-following-post", {
-      UserId: params.userId,
-      PageNumber: params.pageNumber,
-      PageSize: params.pageSize,
-    }),
+  getPostById: (id: number) => http.get<PostDto>(`/posts/${id}`),
 
-  /** multipart: Title, Content, Images[] (no location field exists). Returns the new postId. */
-  addPost: (dto: AddPostDto) => {
+  create: (input: CreatePostInput) => {
     const form = new FormData();
-    form.append("Title", dto.title);
-    form.append("Content", dto.content);
-    dto.images.forEach((file) => form.append("Images", file));
-    return http.post<number>("/Post/add-post", form);
+    input.media.forEach((file) => form.append("media", file));
+
+    if (input.caption) form.append("caption", input.caption);
+    if (input.locationId !== undefined) form.append("locationId", String(input.locationId));
+    if (input.musicId !== undefined) form.append("musicId", String(input.musicId));
+    if (input.taggedUserIds?.length) form.append("taggedUserIds", input.taggedUserIds.join(","));
+    if (input.filters?.length) form.append("filters", input.filters.join(","));
+    if (input.isReel !== undefined) form.append("isReel", String(input.isReel));
+
+    return http.post<PostDto>("/posts", form);
   },
 
-  deletePost: (id: number) => http.delete<boolean>("/Post/delete-post", { id }),
+  /** Caption only — hashtags are re-parsed server-side from the new text. */
+  update: (id: number, dto: UpdatePostDto) => http.put<PostDto>(`/posts/${id}`, dto),
 
-  /** Toggle — resolves to the new like state. */
-  likePost: (postId: number) => http.post<boolean>("/Post/like-post", undefined, { postId }),
+  remove: (id: number) => http.delete<DeletedDto>(`/posts/${id}`),
 
-  viewPost: (postId: number) => http.post<boolean>("/Post/view-post", undefined, { postId }),
+  archive: (id: number) => http.post<ArchiveDto>(`/posts/${id}/archive`),
 
-  addComment: (dto: AddCommentDto) => http.post<boolean>("/Post/add-comment", dto),
+  unarchive: (id: number) => http.delete<ArchiveDto>(`/posts/${id}/archive`),
 
-  deleteComment: (commentId: number) => http.delete<boolean>("/Post/delete-comment", { commentId }),
+  /** Toggle → `{ liked, likesCount }`. */
+  like: (id: number) => http.post<LikeToggleDto>(`/posts/${id}/like`),
 
-  /** Toggle — resolves to the new saved state. */
-  addPostFavorite: (dto: AddPostFavoriteDto) => http.post<boolean>("/Post/add-post-favorite", dto),
+  getLikes: (id: number, params: CursorParams) =>
+    http.get<Page<UserBriefDto>>(`/posts/${id}/likes`, params),
+
+  /** Counted once per user server-side — safe to fire on every impression. */
+  view: (id: number) => http.post<ViewDto>(`/posts/${id}/view`),
+
+  /** Toggle → new saved state. `collection` names a save-collection. */
+  favorite: (id: number, collection?: string) =>
+    http.post<FavoriteToggleDto>(`/posts/${id}/favorite`, collection ? { collection } : undefined),
+
+  /** Share to a chat (`toUserId`), to a story (`toStory`), or as a link. */
+  share: (id: number, dto: ShareDto) => http.post<ShareResultDto>(`/posts/${id}/share`, dto),
+
+  report: (id: number, dto: ReportPostDto) =>
+    http.post<ReportCreatedDto>(`/posts/${id}/report`, dto),
+
+  getComments: (id: number, params: CursorParams) =>
+    http.get<Page<CommentDto>>(`/posts/${id}/comments`, params),
+
+  addComment: (id: number, dto: CreateCommentDto) =>
+    http.post<CommentDto>(`/posts/${id}/comments`, dto),
+
+  deleteComment: (commentId: number) => http.delete<DeletedDto>(`/posts/comments/${commentId}`),
+
+  /** Toggle → new state + count. */
+  likeComment: (commentId: number) =>
+    http.post<CommentLikeToggleDto>(`/posts/comments/${commentId}/like`),
+
+  replyToComment: (commentId: number, dto: CreateCommentDto) =>
+    http.post<CommentDto>(`/posts/comments/${commentId}/reply`, dto),
+
+  getCommentReplies: (commentId: number, params: CursorParams) =>
+    http.get<Page<CommentDto>>(`/posts/comments/${commentId}/replies`, params),
 };

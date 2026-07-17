@@ -6,14 +6,13 @@ import { SettingsIcon } from "@/components/icons";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowDialog, type FollowTab } from "@/components/profile/FollowDialog";
 import { MessageUserButton } from "@/components/profile/MessageUserButton";
-import { UserAvatar } from "@/components/shared/UserAvatar";
-import { StoryRing } from "@/components/story/StoryRing";
-import { useUserStories } from "@/hooks/useStories";
+import { ProfileActionsMenu } from "@/components/profile/ProfileActionsMenu";
+import { ProfileLiveAvatar } from "@/components/live/ProfileLiveAvatar";
+import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn, formatCount } from "@/lib/utils";
-import { useStoryStore } from "@/store/story.store";
-import { profileFullName, type UserProfile } from "@/types/profile.types";
+import type { OtherProfileDto, ProfileDto } from "@/types/profile.types";
 
 /**
  * Profile header, measured off docs/screenshots/img35 (DPR 1.25): 150px avatar
@@ -26,24 +25,22 @@ export function ProfileHeader({
   isMe,
 }: {
   userId: string;
-  profile: UserProfile;
+  /** Someone else's profile carries the relationship; mine does not need one. */
+  profile: ProfileDto | OtherProfileDto;
   isMe: boolean;
 }) {
   const t = useTranslations("profile");
   const [followTab, setFollowTab] = useState<FollowTab>("followers");
   const [followOpen, setFollowOpen] = useState(false);
-  const { data: storyGroup } = useUserStories(userId);
-  const seen = useStoryStore((state) => state.seen);
 
-  const stories = storyGroup?.stories ?? [];
-  const hasStories = stories.length > 0;
-  const storiesSeen = hasStories && stories.every((story) => seen.includes(story.id));
+  // `isFollowing` only exists on someone else's profile.
+  const relation = "isFollowing" in profile ? profile : null;
 
-  const fullName = profileFullName(profile);
+  const fullName = profile.fullName;
   // The word only — the number is rendered next to it, so it must not repeat.
-  const postsLabel = t("postsLabel", { count: profile.postCount });
-  const followersLabel = t("followersLabel", { count: profile.subscribersCount });
-  const followingLabel = t("followingLabel", { count: profile.subscriptionsCount });
+  const postsLabel = t("postsLabel", { count: profile.postsCount });
+  const followersLabel = t("followersLabel", { count: profile.followersCount });
+  const followingLabel = t("followingLabel", { count: profile.followingCount });
 
   const openFollowDialog = (tab: FollowTab) => {
     setFollowTab(tab);
@@ -54,39 +51,15 @@ export function ProfileHeader({
     <header className="pt-4 pb-8 md:pt-8">
       <div className="flex gap-6 md:gap-8">
         <div className="flex shrink-0 justify-center md:w-[290px]">
-          {hasStories ? (
-            <>
-              <Link href={ROUTES.stories(userId)} className="md:hidden">
-                <StoryRing
-                  src={profile.image}
-                  alt={profile.userName}
-                  seen={storiesSeen}
-                  size={69}
-                />
-              </Link>
-              <Link href={ROUTES.stories(userId)} className="hidden md:block">
-                <StoryRing
-                  src={profile.image}
-                  alt={profile.userName}
-                  seen={storiesSeen}
-                  size={142}
-                />
-              </Link>
-            </>
-          ) : (
-            <UserAvatar
-              src={profile.image}
-              alt={profile.userName}
-              size={150}
-              priority
-              className="size-[77px] md:size-[150px]"
-            />
-          )}
+          <ProfileLiveAvatar userId={userId} src={profile.avatarUrl} userName={profile.userName} />
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-4">
-            <h1 className="text-ig-text truncate text-xl font-normal">{profile.userName}</h1>
+            <h1 className="text-ig-text flex min-w-0 items-center gap-1.5 text-xl font-normal">
+              <span className="truncate">{profile.userName}</span>
+              {profile.isVerified ? <VerifiedBadge className="size-[18px]" /> : null}
+            </h1>
             {isMe ? (
               <Link
                 href={ROUTES.settings}
@@ -95,7 +68,14 @@ export function ProfileHeader({
               >
                 <SettingsIcon className="size-6" />
               </Link>
-            ) : null}
+            ) : (
+              <ProfileActionsMenu
+                userId={userId}
+                userName={profile.userName}
+                isBlocked={relation?.isBlocked ?? false}
+                className="ml-auto"
+              />
+            )}
           </div>
 
           {fullName ? <p className="text-ig-text mt-2 text-sm">{fullName}</p> : null}
@@ -123,8 +103,10 @@ export function ProfileHeader({
             >
               {t("editProfile")}
             </Link>
+            {/* "View archive" now goes to the story archive it names (img45).
+                It pointed at Saved posts, because softclub had no archive. */}
             <Link
-              href={ROUTES.favorites}
+              href={ROUTES.storyArchive}
               className="bg-ig-button-secondary text-ig-text hover:bg-ig-button-secondary-hover flex-1 rounded-lg py-1.5 text-center text-sm font-semibold"
             >
               {t("viewArchive")}
@@ -132,7 +114,15 @@ export function ProfileHeader({
           </>
         ) : (
           <>
-            <FollowButton userId={userId} userName={profile.userName} className="flex-1" />
+            {/* The relationship is already on the profile we fetched — hand it
+                over so the button does not ask for it a second time. */}
+            <FollowButton
+              userId={userId}
+              userName={profile.userName}
+              following={relation?.isFollowing ?? false}
+              requested={relation?.hasRequestPending ?? false}
+              className="flex-1"
+            />
             <MessageUserButton userId={userId} />
           </>
         )}
@@ -171,7 +161,7 @@ function Stats({
   followersLabel,
   followingLabel,
 }: {
-  profile: UserProfile;
+  profile: ProfileDto;
   className?: string;
   stacked?: boolean;
   onOpen: (tab: FollowTab) => void;
@@ -186,18 +176,18 @@ function Stats({
   return (
     <ul className={cn("flex gap-10", className)}>
       <li className={item}>
-        <span className={value}>{formatCount(profile.postCount)}</span>{" "}
+        <span className={value}>{formatCount(profile.postsCount)}</span>{" "}
         <span className={label}>{postsLabel}</span>
       </li>
       <li>
         <button type="button" onClick={() => onOpen("followers")} className={item}>
-          <span className={value}>{formatCount(profile.subscribersCount)}</span>{" "}
+          <span className={value}>{formatCount(profile.followersCount)}</span>{" "}
           <span className={label}>{followersLabel}</span>
         </button>
       </li>
       <li>
         <button type="button" onClick={() => onOpen("following")} className={item}>
-          <span className={value}>{formatCount(profile.subscriptionsCount)}</span>{" "}
+          <span className={value}>{formatCount(profile.followingCount)}</span>{" "}
           <span className={label}>{followingLabel}</span>
         </button>
       </li>
@@ -205,7 +195,7 @@ function Stats({
   );
 }
 
-function Bio({ profile, className }: { profile: UserProfile; className?: string }) {
+function Bio({ profile, className }: { profile: ProfileDto; className?: string }) {
   if (!profile.about && !profile.occupation) return null;
 
   return (

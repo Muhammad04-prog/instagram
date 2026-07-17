@@ -1,80 +1,49 @@
+import type { PostDto, PostMediaDto } from "@/types/api.types";
+
 /**
- * Shapes confirmed against the live API (GET /Post/get-posts, /Post/get-reels,
- * /UserProfile/get-post-favorites) — see docs/API_REAL_DTO.md.
+ * Post helpers.
  *
- * ⚠️ `images` is a flat array of file names, not objects, and an entry may be a
- * video (".mp4"). ТЗ's `PostImage[]` / `postViewCount` / `postFavoriteCount` do
- * not exist; the real counter is `postView`.
+ * The DTO itself is generated (`api.types.ts`) — this file only holds the small
+ * bits of derived knowledge the UI keeps asking for.
+ *
+ * Media is typed data now: `media: [{ url, type: IMAGE | VIDEO, width, height,
+ * duration, thumbUrl, filter }]`. Softclub sent `images: string[]` and we had to
+ * guess "is this a video?" from the file extension — hence the old `isVideo()`.
  */
-export interface Comment {
-  postCommentId: number;
-  userId: string;
-  userName: string;
-  userImage: string | null;
-  comment: string;
-  dateCommented: string;
+
+export type { PostDto, PostMediaDto };
+
+export function isVideo(media: PostMediaDto): boolean {
+  return media.type === "VIDEO";
 }
 
-export interface Post {
-  postId: number;
-  userId: string;
-  userName: string | null;
-  userImage: string | null;
-  title: string | null;
-  content: string | null;
-  images: string[];
-  datePublished: string;
-  postLike: boolean;
-  postLikeCount: number;
-  postFavorite: boolean;
-  postView: number;
-  commentCount: number;
-  comments?: Comment[];
+/**
+ * The same question for a file that has not been uploaded yet (the create-post
+ * stepper), where the browser's own MIME type is the authority — no extension
+ * sniffing needed.
+ */
+export function isVideoFile(file: File): boolean {
+  return file.type.startsWith("video/");
 }
 
-/** get-reels returns a single file name in `images`, plus the author's follow state. */
-export interface Reel extends Omit<Post, "images"> {
-  images: string;
-  isSubscriber: boolean;
+/**
+ * A poster frame for a video tile.
+ *
+ * The backend generates `thumbUrl`; when it hasn't (older rows), fall back to
+ * the `#t=0.1` fragment trick so the browser paints the first frame instead of
+ * a black rectangle — the same fix Phase 7 needed for the reels grid.
+ */
+export function mediaPoster(media: PostMediaDto): string {
+  if (media.type !== "VIDEO") return media.url;
+  return media.thumbUrl ?? `${media.url}#t=0.1`;
 }
 
-export interface GetPostsParams {
-  userId?: string;
-  title?: string;
-  content?: string;
-  pageNumber?: number;
-  pageSize?: number;
+/** The tile a grid shows for a post: its first slide. */
+export function coverMedia(post: PostDto): PostMediaDto | undefined {
+  return post.media[0];
 }
 
-export interface GetFollowingPostsParams {
-  userId?: string;
-  pageNumber?: number;
-  pageSize?: number;
-}
-
-export interface GetPagedParams {
-  pageNumber?: number;
-  pageSize?: number;
-}
-
-export interface AddPostDto {
-  title: string;
-  content: string;
-  images: File[];
-}
-
-export interface AddCommentDto {
-  postId: number;
-  comment: string;
-}
-
-export interface AddPostFavoriteDto {
-  postId: number;
-}
-
-const VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm", ".m4v"];
-
-/** The API mixes photos and videos in the same `images` array. */
-export function isVideo(fileName: string): boolean {
-  return VIDEO_EXTENSIONS.some((extension) => fileName.toLowerCase().endsWith(extension));
+/** `true` when the post is a carousel — drives the stacked-squares badge. */
+export function isCarousel(post: PostDto): boolean {
+  return post.media.length > 1;
 }

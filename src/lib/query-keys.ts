@@ -1,52 +1,118 @@
-import type { GetLocationsParams } from "@/types/location.types";
-import type { GetFollowingPostsParams, GetPostsParams } from "@/types/post.types";
-import type { GetUsersParams } from "@/types/user.types";
-
 /** Single source of truth for TanStack Query cache keys. */
 export const queryKeys = {
   posts: {
     all: ["posts"] as const,
-    list: (params: GetPostsParams) => [...queryKeys.posts.all, "list", params] as const,
-    feed: (params: GetFollowingPostsParams) => [...queryKeys.posts.all, "feed", params] as const,
+    explore: () => [...queryKeys.posts.all, "explore"] as const,
+    feed: () => [...queryKeys.posts.all, "feed"] as const,
     reels: () => [...queryKeys.posts.all, "reels"] as const,
     byUser: (userId: string) => [...queryKeys.posts.all, "by-user", userId] as const,
+    reelsByUser: (userId: string) => [...queryKeys.posts.all, "reels-by-user", userId] as const,
+    taggedByUser: (userId: string) => [...queryKeys.posts.all, "tagged-by-user", userId] as const,
     mine: () => [...queryKeys.posts.all, "mine"] as const,
     detail: (postId: number) => [...queryKeys.posts.all, "detail", postId] as const,
+    likes: (postId: number) => [...queryKeys.posts.all, "likes", postId] as const,
+    comments: (postId: number) => [...queryKeys.posts.all, "comments", postId] as const,
+    commentReplies: (commentId: number) =>
+      [...queryKeys.posts.all, "comment-replies", commentId] as const,
   },
   stories: {
     all: ["stories"] as const,
-    list: () => [...queryKeys.stories.all, "list"] as const,
+    rail: () => [...queryKeys.stories.all, "rail"] as const,
     byUser: (userId: string) => [...queryKeys.stories.all, "user", userId] as const,
     mine: () => [...queryKeys.stories.all, "mine"] as const,
+    archive: () => [...queryKeys.stories.all, "archive"] as const,
     detail: (id: number) => [...queryKeys.stories.all, "detail", id] as const,
+    viewers: (id: number) => [...queryKeys.stories.all, "viewers", id] as const,
   },
   chats: {
     all: ["chats"] as const,
     list: () => [...queryKeys.chats.all, "list"] as const,
     detail: (chatId: number) => [...queryKeys.chats.all, "detail", chatId] as const,
+    messages: (chatId: number) => [...queryKeys.chats.all, "messages", chatId] as const,
+    requests: () => [...queryKeys.chats.all, "requests"] as const,
   },
   follow: {
     all: ["follow"] as const,
-    subscribers: (userId: string) => [...queryKeys.follow.all, "subscribers", userId] as const,
-    subscriptions: (userId: string) => [...queryKeys.follow.all, "subscriptions", userId] as const,
+    followers: (userId: string) => [...queryKeys.follow.all, "followers", userId] as const,
+    following: (userId: string) => [...queryKeys.follow.all, "following", userId] as const,
     isFollowing: (userId: string) => [...queryKeys.follow.all, "is-following", userId] as const,
+    requests: () => [...queryKeys.follow.all, "requests"] as const,
+    blocked: () => [...queryKeys.follow.all, "blocked"] as const,
   },
   users: {
     all: ["users"] as const,
-    list: (params: GetUsersParams) => [...queryKeys.users.all, "list", params] as const,
-    searchHistories: () => [...queryKeys.users.all, "search-histories"] as const,
-    userSearchHistories: () => [...queryKeys.users.all, "user-search-histories"] as const,
+    search: (q: string) => [...queryKeys.users.all, "search", q] as const,
+    suggestions: () => [...queryKeys.users.all, "suggestions"] as const,
+    searchTexts: () => [...queryKeys.users.all, "search-texts"] as const,
+    searchedUsers: () => [...queryKeys.users.all, "searched-users"] as const,
   },
   profile: {
     all: ["profile"] as const,
     me: () => [...queryKeys.profile.all, "me"] as const,
     byId: (userId: string) => [...queryKeys.profile.all, "by-id", userId] as const,
-    lite: (userId: string) => [...queryKeys.profile.all, "lite", userId] as const,
     favorites: () => [...queryKeys.profile.all, "favorites"] as const,
+    reposts: () => [...queryKeys.profile.all, "reposts"] as const,
+    savedMusic: () => [...queryKeys.profile.all, "saved-music"] as const,
+    activity: () => [...queryKeys.profile.all, "activity"] as const,
+  },
+  highlights: {
+    all: ["highlights"] as const,
+    byUser: (userId: string) => [...queryKeys.highlights.all, "user", userId] as const,
+    detail: (id: string) => [...queryKeys.highlights.all, "detail", id] as const,
+  },
+  verification: {
+    all: ["verification"] as const,
+    status: () => [...queryKeys.verification.all, "status"] as const,
+  },
+  admin: {
+    all: ["admin"] as const,
+    users: (q: string) => [...queryKeys.admin.all, "users", q] as const,
+    reports: (filter: string) => [...queryKeys.admin.all, "reports", filter] as const,
+  },
+  notes: {
+    all: ["notes"] as const,
+    list: () => [...queryKeys.notes.all, "list"] as const,
+    likes: (id: number) => [...queryKeys.notes.all, "likes", id] as const,
+    replies: (id: number) => [...queryKeys.notes.all, "replies", id] as const,
+  },
+  closeFriends: {
+    all: ["close-friends"] as const,
+    list: () => [...queryKeys.closeFriends.all, "list"] as const,
+  },
+  search: {
+    all: ["search"] as const,
+    combined: (q: string) => [...queryKeys.search.all, "combined", q] as const,
+    top: () => [...queryKeys.search.all, "top"] as const,
+    hashtag: (name: string) => [...queryKeys.search.all, "hashtag", name] as const,
+  },
+  notifications: {
+    all: ["notifications"] as const,
+    list: () => [...queryKeys.notifications.all, "list"] as const,
+    unreadCount: () => [...queryKeys.notifications.all, "unread-count"] as const,
+    profileViews: () => [...queryKeys.notifications.all, "profile-views"] as const,
+  },
+  music: {
+    all: ["music"] as const,
+    search: (q: string) => [...queryKeys.music.all, "search", q] as const,
+    trending: () => [...queryKeys.music.all, "trending"] as const,
+    detail: (id: number) => [...queryKeys.music.all, "detail", id] as const,
+    saved: () => [...queryKeys.music.all, "saved"] as const,
+  },
+  spotify: {
+    all: ["spotify"] as const,
+    search: (q: string) => [...queryKeys.spotify.all, "search", q] as const,
+  },
+  live: {
+    all: ["live"] as const,
+    feed: () => [...queryKeys.live.all, "feed"] as const,
+    byUser: (userId: string) => [...queryKeys.live.all, "user", userId] as const,
+    detail: (id: string) => [...queryKeys.live.all, "detail", id] as const,
+    viewers: (id: string) => [...queryKeys.live.all, "viewers", id] as const,
+    stats: (id: string) => [...queryKeys.live.all, "stats", id] as const,
   },
   locations: {
     all: ["locations"] as const,
-    list: (params: GetLocationsParams) => [...queryKeys.locations.all, "list", params] as const,
+    list: (q: string) => [...queryKeys.locations.all, "list", q] as const,
     detail: (id: number) => [...queryKeys.locations.all, "detail", id] as const,
   },
 } as const;

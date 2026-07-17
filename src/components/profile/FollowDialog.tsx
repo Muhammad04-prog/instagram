@@ -4,17 +4,20 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { SearchIcon } from "@/components/icons";
 import { FollowButton } from "@/components/profile/FollowButton";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscribers, useSubscriptions } from "@/hooks/useFollow";
+import { useFollowers, useFollowing, useRemoveFollower } from "@/hooks/useFollow";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { FollowRelation } from "@/types/profile.types";
+import type { FollowerDto } from "@/types/api.types";
+import { flattenPages } from "@/lib/cursor";
 
 export type FollowTab = "followers" | "following";
 
@@ -37,22 +40,25 @@ export function FollowDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("profile");
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
 
-  const subscribers = useSubscribers(userId, open && tab === "followers");
-  const subscriptions = useSubscriptions(userId, open && tab === "following");
-  const active = tab === "followers" ? subscribers : subscriptions;
+  const isMyProfile = userId === user?.id;
 
+  const followers = useFollowers(userId, open && tab === "followers");
+  const following = useFollowing(userId, open && tab === "following");
+  const active = tab === "followers" ? followers : following;
+
+  // The rows are flat users now — softclub wrapped each one in a `userShortInfo`
+  // object (with a lowercase `fullname`) under a relation id.
   const rows = useMemo(() => {
-    const list = active.data ?? [];
+    const list = flattenPages(active.data);
     const needle = query.trim().toLowerCase();
     if (!needle) return list;
-    return list.filter((row) => {
-      const { userName, fullname } = row.userShortInfo;
-      return (
-        userName.toLowerCase().includes(needle) || (fullname ?? "").toLowerCase().includes(needle)
-      );
-    });
+    return list.filter(
+      (row) =>
+        row.userName.toLowerCase().includes(needle) || row.fullName.toLowerCase().includes(needle),
+    );
   }, [active.data, query]);
 
   return (
@@ -102,7 +108,14 @@ export function FollowDialog({
           ) : (
             <ul>
               {rows.map((row) => (
-                <PersonRow key={row.id} relation={row} onNavigate={() => onOpenChange(false)} />
+                <PersonRow
+                  key={row.id}
+                  person={row}
+                  profileUserId={userId}
+                  // "Remove" only makes sense on MY OWN followers list.
+                  canRemove={isMyProfile && tab === "followers"}
+                  onNavigate={() => onOpenChange(false)}
+                />
               ))}
             </ul>
           )}
@@ -112,27 +125,69 @@ export function FollowDialog({
   );
 }
 
-function PersonRow({ relation, onNavigate }: { relation: FollowRelation; onNavigate: () => void }) {
+function PersonRow({
+  person,
+  profileUserId,
+  canRemove,
+  onNavigate,
+}: {
+  person: FollowerDto;
+  profileUserId: string;
+  canRemove: boolean;
+  onNavigate: () => void;
+}) {
+  const t = useTranslations("profile");
   const { user } = useAuth();
-  const { userId: personId, userName, userPhoto, fullname } = relation.userShortInfo;
-  const isMe = personId === user?.userId;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const removeFollower = useRemoveFollower(profileUserId);
+  const isMe = person.id === user?.id;
 
   return (
     <li className="flex items-center gap-3 px-2 py-2">
-      <Link href={ROUTES.profile(personId)} onClick={onNavigate}>
-        <UserAvatar src={userPhoto} size={44} alt={userName} />
+      <Link href={ROUTES.profile(person.id)} onClick={onNavigate}>
+        <UserAvatar src={person.avatarUrl ?? null} size={44} alt={person.userName} />
       </Link>
+
       <div className="min-w-0 flex-1">
         <Link
-          href={ROUTES.profile(personId)}
+          href={ROUTES.profile(person.id)}
           onClick={onNavigate}
-          className="text-ig-text block truncate text-sm font-semibold"
+          className="text-ig-text block text-sm font-semibold"
         >
-          {userName}
+          <UserNameWithBadge userName={person.userName} isVerified={person.isVerified} />
         </Link>
-        {fullname ? <p className="text-ig-text-secondary truncate text-sm">{fullname}</p> : null}
+        {person.fullName ? (
+          <p className="text-ig-text-secondary truncate text-sm">{person.fullName}</p>
+        ) : null}
       </div>
-      {isMe ? null : <FollowButton userId={personId} userName={userName} variant="link" />}
+
+      {isMe ? null : canRemove ? (
+        <button
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          className="bg-ig-button-secondary text-ig-text hover:bg-ig-button-secondary-hover shrink-0 rounded-lg px-4 py-1.5 text-xs font-semibold"
+        >
+          {t("removeFollower")}
+        </button>
+      ) : (
+        // The row already knows whether I follow this person — hand it over so
+        // the button does not spend a request per row finding out.
+        <FollowButton
+          userId={person.id}
+          userName={person.userName}
+          following={person.isFollowedByMe}
+          variant="link"
+        />
+      )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t("removeFollowerConfirm", { userName: person.userName })}
+        description={t("removeFollowerDescription")}
+        confirmLabel={t("removeFollower")}
+        onConfirm={() => removeFollower.mutate(person.id)}
+      />
     </li>
   );
 }

@@ -302,3 +302,33 @@ export function ClipIcon({ ...props }: IconProps) {
     </svg>
   );
 }
+
+/** Padlock — the private-account gate, and the privacy switch in settings. */
+export function LockIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect {...stroke} x="4" y="10.5" width="16" height="11" rx="2.5" strokeWidth={1.5} />
+      <path {...stroke} strokeWidth={1.5} d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </svg>
+  );
+}
+
+/** Circular arrow — "Your activity". */
+export function ActivityIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle {...stroke} cx="12" cy="12" r="9" strokeWidth={1.5} />
+      <path {...stroke} strokeWidth={1.5} d="M12 7v5.2l3.4 2" />
+    </svg>
+  );
+}
+
+/** Crossed-out circle — blocked accounts. */
+export function BlockIcon({ ...props }: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle {...stroke} cx="12" cy="12" r="9" strokeWidth={1.5} />
+      <path {...stroke} strokeWidth={1.5} d="m5.6 5.6 12.8 12.8" />
+    </svg>
+  );
+}

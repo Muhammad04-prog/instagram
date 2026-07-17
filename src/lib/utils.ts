@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { IMAGE_BASE } from "@/lib/constants";
+import { API_URL } from "@/lib/constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,11 +17,17 @@ export function formatCount(value: number): string {
   return `${m % 1 === 0 ? m : m.toFixed(1)}M`;
 }
 
-/** Builds an absolute URL for a file name returned by the API. */
+/**
+ * Resolves a media reference from the API to a URL <Image> can load.
+ *
+ * The backend stores files in object storage (MinIO) and already hands back
+ * absolute URLs, so this is a pass-through in practice; the relative branch only
+ * covers paths served straight off the API origin.
+ */
 export function getImageUrl(fileName: string | null | undefined): string | null {
   if (!fileName) return null;
-  if (fileName.startsWith("http://") || fileName.startsWith("https://")) return fileName;
-  return `${IMAGE_BASE}/${fileName}`;
+  if (isAbsoluteUrl(fileName)) return fileName;
+  return `${API_URL.replace(/\/api$/, "")}/${fileName.replace(/^\//, "")}`;
 }
 
 export function isAbsoluteUrl(value: string): boolean {

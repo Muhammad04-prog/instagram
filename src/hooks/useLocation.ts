@@ -4,14 +4,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { ApiError } from "@/lib/axios";
+import { PAGE_SIZE } from "@/lib/constants";
 import { queryKeys } from "@/lib/query-keys";
 import { locationService } from "@/services/location.service";
-import type { AddLocationDto, GetLocationsParams, UpdateLocationDto } from "@/types/location.types";
+import type { CreateLocationDto, UpdateLocationDto } from "@/types/api.types";
+import { pageItems } from "@/lib/cursor";
 
-export function useLocations(params: GetLocationsParams = {}) {
+export function useLocations(q = "") {
   return useQuery({
-    queryKey: queryKeys.locations.list(params),
-    queryFn: () => locationService.getLocations(params),
+    queryKey: queryKeys.locations.list(q),
+    queryFn: () => locationService.getLocations({ q: q || undefined, limit: PAGE_SIZE }),
+    select: pageItems,
   });
 }
 
@@ -43,19 +46,22 @@ function useLocationMutation<TVars>(
 
 export function useAddLocation() {
   return useLocationMutation(
-    (dto: AddLocationDto) => locationService.addLocation(dto),
+    (dto: CreateLocationDto) => locationService.create(dto),
     "locationAdded",
   );
 }
 
-/** Always fails today — the server's mapper is broken (BACKEND_BUGS #19). */
+/**
+ * Works now. Softclub's update answered 400 "Missing type map configuration"
+ * to every call — an AutoMapper misconfiguration on their side (bug #19).
+ */
 export function useUpdateLocation() {
   return useLocationMutation(
-    (dto: UpdateLocationDto) => locationService.updateLocation(dto),
+    ({ id, dto }: { id: number; dto: UpdateLocationDto }) => locationService.update(id, dto),
     "locationUpdated",
   );
 }
 
 export function useDeleteLocation() {
-  return useLocationMutation((id: number) => locationService.deleteLocation(id), "locationDeleted");
+  return useLocationMutation((id: number) => locationService.remove(id), "locationDeleted");
 }

@@ -8,8 +8,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { useDeleteLocation, useLocations } from "@/hooks/useLocation";
-import { PAGE_SIZE } from "@/lib/constants";
-import type { Location } from "@/types/location.types";
+import type { LocationDto } from "@/types/api.types";
 
 /**
  * Full CRUD for locations. It lives in Settings and not in `post/create`: the
@@ -19,13 +18,10 @@ import type { Location } from "@/types/location.types";
  */
 export function LocationManager() {
   const t = useTranslations("locations");
-  const [editing, setEditing] = useState<Location | null>(null);
-  const [toDelete, setToDelete] = useState<Location | null>(null);
+  const [editing, setEditing] = useState<LocationDto | null>(null);
+  const [toDelete, setToDelete] = useState<LocationDto | null>(null);
 
-  const { data, isPending, isError, refetch } = useLocations({
-    pageNumber: 1,
-    pageSize: PAGE_SIZE,
-  });
+  const { data, isPending, isError, refetch } = useLocations();
   const remove = useDeleteLocation();
 
   return (
@@ -47,7 +43,7 @@ export function LocationManager() {
         ) : (
           <ul className="divide-ig-separator divide-y">
             {data.map((location) => (
-              <li key={location.locationId} className="flex items-center gap-3 py-3">
+              <li key={location.id} className="flex items-center gap-3 py-3">
                 <span className="min-w-0 flex-1">
                   <span className="text-ig-text block truncate text-sm font-semibold">
                     {[location.city, location.state].filter(Boolean).join(", ") || "—"}
@@ -86,7 +82,7 @@ export function LocationManager() {
         description={t("deleteConfirm")}
         confirmLabel={t("delete")}
         onConfirm={() => {
-          if (toDelete) remove.mutate(toDelete.locationId);
+          if (toDelete) remove.mutate(toDelete.id);
           setToDelete(null);
         }}
       />

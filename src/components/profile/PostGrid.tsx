@@ -6,41 +6,41 @@ import { CarouselIcon, ClipIcon, CommentIcon, HeartIcon } from "@/components/ico
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { filterCss } from "@/lib/filters";
 import { formatCount, getImageUrl } from "@/lib/utils";
-import { isVideo, type Post } from "@/types/post.types";
+import { coverMedia, isCarousel, isVideo, mediaPoster, type PostDto } from "@/types/post.types";
 
 /**
  * IG's 3-column grid: square tiles, 4px gutters, hover reveals likes/comments
  * over a 30% black scrim (docs/screenshots/img35).
  */
-export function PostGrid({ posts }: { posts: Post[] }) {
+export function PostGrid({ posts }: { posts: PostDto[] }) {
   return (
     <ul className="grid grid-cols-3 gap-1">
       {posts.map((post) => (
-        <PostGridItem key={post.postId} post={post} />
+        <PostGridItem key={post.id} post={post} />
       ))}
     </ul>
   );
 }
 
-function PostGridItem({ post }: { post: Post }) {
+function PostGridItem({ post }: { post: PostDto }) {
   const t = useTranslations("post");
-  const cover = post.images[0];
-  const url = getImageUrl(cover);
+  const cover = coverMedia(post);
+  const url = cover ? getImageUrl(mediaPoster(cover)) : null;
   const video = Boolean(cover && isVideo(cover));
 
   return (
     <li className="relative aspect-square">
       <Link
-        href={ROUTES.post(post.postId)}
+        href={ROUTES.post(post.id)}
         className="group bg-ig-bg-secondary relative block size-full overflow-hidden"
       >
         {url ? (
           video ? (
-            // The API stores no poster; #t=0.1 makes the browser paint a first
-            // frame instead of leaving the tile black.
+            // `mediaPoster` already resolved a thumbnail (or the #t=0.1 fallback).
             <video
-              src={`${url}#t=0.1`}
+              src={url}
               muted
               playsInline
               preload="metadata"
@@ -49,15 +49,16 @@ function PostGridItem({ post }: { post: Post }) {
           ) : (
             <Image
               src={url}
-              alt={post.content ?? ""}
+              alt={post.caption ?? ""}
               fill
               sizes="(max-width: 768px) 33vw, 310px"
+              style={{ filter: filterCss(cover?.filter) }}
               className="object-cover"
             />
           )
         ) : null}
 
-        {post.images.length > 1 ? (
+        {isCarousel(post) ? (
           <CarouselIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
         ) : video ? (
           <ClipIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
@@ -66,11 +67,11 @@ function PostGridItem({ post }: { post: Post }) {
         <div className="absolute inset-0 flex items-center justify-center gap-7 bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
           <span className="flex items-center gap-1.5 font-semibold text-white">
             <HeartIcon filled className="size-5" />
-            <span aria-label={t("like")}>{formatCount(post.postLikeCount)}</span>
+            <span aria-label={t("like")}>{formatCount(post.likesCount)}</span>
           </span>
           <span className="flex items-center gap-1.5 font-semibold text-white">
             <CommentIcon className="size-5 [&_path]:fill-white" />
-            <span aria-label={t("comment")}>{formatCount(post.commentCount)}</span>
+            <span aria-label={t("comment")}>{formatCount(post.commentsCount)}</span>
           </span>
         </div>
       </Link>

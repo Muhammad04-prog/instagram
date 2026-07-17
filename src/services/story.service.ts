@@ -1,34 +1,91 @@
 import { http } from "@/lib/axios";
-import type { AddStoryDto, StoryDetail, UserStories } from "@/types/story.types";
+import type { CursorParams } from "@/lib/cursor";
+import type {
+  DeletedDto,
+  ReactionDto,
+  ReactionSentDto,
+  StoryDto,
+  StoryLikeToggleDto,
+  StoryRailItemDto,
+  StoryReplyDto,
+  StoryViewerDto,
+  ViewDto,
+} from "@/types/api.types";
+
+/** `POST /stories` — multipart, up to 10 files → up to 10 separate stories. */
+export interface CreateStoriesInput {
+  media: File[];
+  musicId?: number;
+  /** Where the track starts, in seconds. */
+  musicStartSec?: number;
+  /** Restricts the story to the close-friends list (green ring). */
+  closeFriendsOnly?: boolean;
+  /** Re-shares an existing post into a story. */
+  fromPostId?: number;
+  filter?: string;
+  /** Stickers/text placed on the story, stored as JSON by the backend. */
+  overlays?: unknown;
+}
 
 /**
- * Swagger tag: Story (8 endpoints), all checked against the live API.
+ * Swagger tag: stories (12 endpoints).
  *
- * ⚠️ `get-stories` answers a BARE ARRAY grouped by author (no envelope, and not
- * the flat GetStoryDto[] Swagger promises). `LikeStory` is a toggle that answers
- * the string "Liked" / "Disliked". Nothing in the API says whether *I* have seen
- * a story — the seen ring is tracked client-side (store/story.store.ts).
+ * `isViewed` now comes from the server, so the seen/unseen ring is finally
+ * truthful across devices — the localStorage workaround from Phase 6
+ * (`store/story.store.ts`) exists only because softclub could not answer
+ * "have I seen this?" and is deleted with this migration.
+ *
+ * `viewers` is a real list of people (who watched, who liked, which reaction),
+ * not the two bare counters softclub returned.
  */
 export const storyService = {
-  getStories: () => http.get<UserStories[]>("/Story/get-stories"),
+  /** The rail, grouped by author. */
+  getRail: () => http.get<StoryRailItemDto[]>("/stories"),
 
-  getUserStories: (userId: string) => http.get<UserStories>(`/Story/get-user-stories/${userId}`),
+  getMyStories: () => http.get<StoryDto[]>("/stories/my"),
 
-  getMyStories: () => http.get<UserStories>("/Story/get-my-stories"),
+  /** Expired stories — the archive screen (img45). */
+  getArchive: (params: CursorParams) => http.get<StoryDto[]>("/stories/archive", params),
 
-  getStoryById: (id: number) => http.get<StoryDetail>("/Story/GetStoryById", { id }),
+  getUserStories: (userId: string) => http.get<StoryDto[]>(`/stories/user/${userId}`),
 
-  addStory: (dto: AddStoryDto) => {
+  getStoryById: (id: number) => http.get<StoryDto>(`/stories/${id}`),
+
+  create: (input: CreateStoriesInput) => {
     const form = new FormData();
-    form.append("Image", dto.image);
-    return http.post<string>("/Story/AddStories", form, { PostId: dto.postId });
+    input.media.forEach((file) => form.append("media", file));
+
+    if (input.musicId !== undefined) form.append("musicId", String(input.musicId));
+    if (input.musicStartSec !== undefined) {
+      form.append("musicStartSec", String(input.musicStartSec));
+    }
+    if (input.closeFriendsOnly !== undefined) {
+      form.append("closeFriendsOnly", String(input.closeFriendsOnly));
+    }
+    if (input.fromPostId !== undefined) form.append("fromPostId", String(input.fromPostId));
+    if (input.filter) form.append("filter", input.filter);
+    if (input.overlays !== undefined) form.append("overlays", JSON.stringify(input.overlays));
+
+    return http.post<StoryDto[]>("/stories", form);
   },
 
-  /** Toggle — resolves to "Liked" or "Disliked". */
-  likeStory: (storyId: number) => http.post<string>("/Story/LikeStory", undefined, { storyId }),
+  remove: (id: number) => http.delete<DeletedDto>(`/stories/${id}`),
 
-  addStoryView: (storyId: number) =>
-    http.post<unknown>("/Story/add-story-view", undefined, { StoryId: storyId }),
+  /** Counted once per viewer server-side. */
+  view: (id: number) => http.post<ViewDto>(`/stories/${id}/view`),
 
-  deleteStory: (id: number) => http.delete<boolean>("/Story/DeleteStory", { id }),
+  /** Toggle → `{ liked, likesCount }`. */
+  like: (id: number) => http.post<StoryLikeToggleDto>(`/stories/${id}/like`),
+
+  /** An emoji reaction — lands in the author's chat. Repeatable. */
+  react: (id: number, dto: ReactionDto) =>
+    http.post<ReactionSentDto>(`/stories/${id}/reaction`, dto),
+
+  /** A written reply — also lands in the author's chat. */
+  reply: (id: number, dto: StoryReplyDto) =>
+    http.post<ReactionSentDto>(`/stories/${id}/reply`, dto),
+
+  /** Author-only. */
+  getViewers: (id: number, params: CursorParams) =>
+    http.get<StoryViewerDto[]>(`/stories/${id}/viewers`, params),
 };

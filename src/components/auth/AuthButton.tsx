@@ -9,7 +9,13 @@ interface AuthButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "outline";
 }
 
-/** Meta-style pill button: #0064E0 enabled, #133B6E when disabled (dark). */
+/**
+ * Meta-style pill button: #0064E0 enabled, #133B6E when disabled (dark).
+ *
+ * 44px tall — measured off img5 and img7, where the button band is 55px at
+ * DPR 1.25 (55 / 1.25 = 44). Inputs are taller (60px); the buttons really are
+ * the shorter of the two on the reference screens.
+ */
 export function AuthButton({
   loading,
   variant = "primary",
@@ -25,7 +31,7 @@ export function AuthButton({
       type="button"
       disabled={isDisabled}
       className={cn(
-        "flex h-12 w-full items-center justify-center rounded-full text-[15px] font-semibold transition-colors",
+        "flex h-11 w-full items-center justify-center rounded-full text-[15px] font-semibold transition-colors",
         variant === "primary" && [
           "text-white",
           isDisabled

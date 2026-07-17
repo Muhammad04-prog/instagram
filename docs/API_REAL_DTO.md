@@ -1,8 +1,75 @@
 # API_REAL_DTO — DTO-ҳои ВОҚЕИИ API
 
-Ҳама аз ҷавоби зиндаи `https://instagram-api.softclub.tj` гирифта шудаанд (curl, 2026-07-13).
 Ҳар ҷо ки Swagger бо ҷавоби воқеӣ фарқ мекунад — **ҷавоби воқеӣ ҳақ аст** (CLAUDE.md).
 Багҳои бэкенд: `docs/BACKEND_BUGS.md`.
+
+> ⚠️ **Ҳама чизи поёнтар аз § Swagger v3 — бэкенди КӮҲНАИ softclub аст** (curl, 2026-07-13).
+> Он бэкенд дигар истифода намешавад; фақат ҳамчун таърих нигоҳ дошта мешавад — чаро фалон
+> экран чунин сохта шуд. DTO-ҳои ҳозира: `docs/swagger-v2.json` + `src/types/api.gen.ts`.
+
+---
+
+## 🔴 Envelope дар рӯйхатҳо — Swagger дурӯғ мегӯяд (17.07.2026)
+
+Рӯзе ки БД баланд шуд, қоидаи «ҷавоби воқеӣ авлотар» дарҳол баги бунёдиро гирифт.
+
+Swagger ҳар рӯйхати cursor-ро **массиви луч** эълон мекунад:
+
+```jsonc
+// swagger: GET /posts/feed → { "type": "array", "items": { "$ref": "PostDto" } }
+```
+
+API-и воқеӣ бошад **envelope** медиҳад:
+
+```jsonc
+// curl: GET /posts/feed
+{ "items": [...], "nextCursor": "42", "hasMore": true }
+```
+
+Оқибат: `data.pages.flat()` худи envelope-ро ҳамчун пост медод → `post.id` ва
+`post.author` = `undefined` → лента комилан вайрон (`PostHeader` афтод).
+Ислоҳ: `lib/cursor.ts` (`Page<T>`, `pageItems`, `flattenPages`, `nextCursor`).
+
+**Қоида (ҳамааш бо curl чен шуда, 17.07.2026):** endpoint-и cursor-дор → envelope;
+рӯйхати бе пагинатсия → массиви луч.
+
+| Шакл            | Endpoint-ҳо                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **envelope**    | `posts/feed`, `posts`, `posts/reels`, `posts/my`, `users`, `notifications`, `notifications/profile-views`, `profile/favorites`, `profile/{id}/{posts,reels,tagged}`, `profile/me/reposts`, `follow/{id}/{followers,following}`, `follow/requests`, `follow/blocked`, `locations`, `music`, `search/explore`, `search/hashtag/{name}`, `chats/{id}/messages`, `chats/{id}/calls` |
+| **массиви луч** | `chats`, `chats/requests`, `stories`, `stories/archive`, `notes`, `notes/{id}/likes`, `notes/{id}/replies`, `music/trending`, `close-friends`, `highlights/user/{id}`, `users/suggestions`, `users/search-history`, `users/search-history/users`, `profile/me/{saved-music,activity,collections}`, `live/feed`                                                                  |
+
+⚠️ **Санҷида НАШУДА** (storage `down` аст, пост сохта намешавад; admin аккаунт нест):
+`posts/{id}/comments`, `posts/{id}/likes`, `posts/comments/{id}/replies`, `admin/users`,
+`admin/reports`, `stories/{id}/viewers`, `locations/{id}/posts`, `live/{id}/*`.
+Ҳамчун envelope навишта шудаанд — аз рӯи қоидаи боло. Вақте storage кор кард, санҷед.
+
+---
+
+## Swagger v3 (17.07.2026) — 170 → 190
+
+Хост: `backend-instagram-kvv4` → **`backend-instagram-a4k6`** (кӯҳна 404 медиҳад).
+Снапшот: `docs/swagger-v2.json` · типҳо: `npm run api:types`.
+Endpoint нест нашудааст, 20 нав. Тағйироти **шикананда** (ҳамаро typecheck гирифт):
+
+| DTO                                                   | Тағйирот                                                                                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `PostMusicDto` + `StoryMusicDto`                      | 🔴 нест шуданд → як `AttachedMusicDto`                                                                                   |
+| `AttachedMusicDto` / `MusicDto` / `NoteMusicDto`      | `streamUrl` ҳоло **nullable**; `previewUrl` ва `isFullTrack` нав                                                         |
+| `ChatListItemDto` / `ChatDetailDto`                   | 🔴 `peer` ҳоло **nullable** — гурӯҳ peer надорад; `isGroup`, `title`, `participants`, `participantsCount`, `isAdmin` нав |
+| `NoteDto`                                             | `audience` (`FOLLOWERS` \| `CLOSE_FRIENDS`) — ҳатмӣ дар ҷавоб                                                            |
+| `CreateNoteDto`                                       | `audience` (default `FOLLOWERS`), `provider`, `externalId` — ҳама optional                                               |
+| `MessageDto`                                          | `type` += `SYSTEM`, `MUSIC_SHARE`; майдонҳои `music`, `call` нав                                                         |
+| `NotificationDto`                                     | `requestId`, `liveId`, `postThumbUrl` нав — блокери Live-и Фазаи 21 кушода шуд                                           |
+| `StoryDto`                                            | `overlays`: `object` → `object[]`                                                                                        |
+| `ActivityItemDto`, `StoryViewerDto`, `ProfileViewDto` | `id` нав (ҳатмӣ) — акнун `key` барои рӯйхат воқеист                                                                      |
+| `HealthDto`                                           | `reasons` нав — чаро `degraded` (мисол: `storage: timeout`)                                                              |
+
+**Доми codegen:** `CreateNoteDto.audience` дар swagger optional аст (`default: FOLLOWERS`), аммо
+`openapi-typescript` майдони бо `default`-ро **ҳатмӣ** мекунад. Ин хатои генератор аст, на талаби
+бэкенд — барои ҳамин `NoteComposer` `audience`-ро ошкоро мефиристад.
+
+**`isFullTrack: false`** = треки аз каталоги берунӣ импортшуда: файли пурра нест, `streamUrl: null`,
+фақат `previewUrl` (30 сония). Player бояд ҳаминро бинад, вагарна `/music/{id}/stream` → 404.
 
 ---
 

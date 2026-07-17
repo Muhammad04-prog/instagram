@@ -7,17 +7,24 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
+import { useApiError } from "@/hooks/useApiError";
 import { useRouter } from "@/i18n/navigation";
-import type { ApiError } from "@/lib/axios";
 import { ROUTES } from "@/lib/constants";
 import { resetPasswordSchema, type ResetPasswordValues } from "@/lib/validators/auth.schema";
-import { accountService } from "@/services/account.service";
+import { authService } from "@/services/auth.service";
 
-/** No screenshot exists for this screen — laid out to match img6 (single column). */
-export function ResetPasswordForm({ token, email }: { token: string; email: string }) {
+/**
+ * Final step of the reset flow — no screenshot exists for it, so it follows img6
+ * (single column).
+ *
+ * `resetToken` is single-use and lives 15 minutes; it comes from `verify-code`.
+ * The API takes only `newPassword` — "confirm" is enforced client-side, as the
+ * screen still asks for it.
+ */
+export function ResetPasswordForm({ resetToken }: { resetToken: string }) {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
-  const tErrors = useTranslations("errors");
+  const toMessage = useApiError();
   const router = useRouter();
 
   const {
@@ -32,17 +39,13 @@ export function ResetPasswordForm({ token, email }: { token: string; email: stri
 
   const reset = useMutation({
     mutationFn: (values: ResetPasswordValues) =>
-      accountService.resetPassword({
-        token,
-        email,
-        password: values.password,
-        confirmPassword: values.confirmPassword,
-      }),
+      authService.resetPassword({ resetToken, newPassword: values.password }),
     onSuccess: () => {
       toast.success(t("passwordChanged"));
       router.replace(ROUTES.login);
     },
-    onError: (error: ApiError) => toast.error(error.message || tErrors("network")),
+    // The resetToken is single-use and expires in 15 minutes.
+    onError: (error) => toast.error(toMessage(error, { 400: t("codeInvalid") })),
   });
 
   return (

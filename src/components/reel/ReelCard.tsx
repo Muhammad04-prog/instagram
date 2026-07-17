@@ -3,17 +3,15 @@
 import { Volume2, VolumeX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { BookmarkIcon, CommentIcon, HeartIcon, ShareIcon } from "@/components/icons";
+import { BookmarkIcon, CommentIcon, DotsIcon, HeartIcon, ShareIcon } from "@/components/icons";
 import { FollowButton } from "@/components/profile/FollowButton";
-import { ReelMoreMenu } from "@/components/reel/ReelMoreMenu";
-import { ShareDialog } from "@/components/shared/ShareDialog";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useLikePost, useSavePost, useViewPost } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
-import { ROUTES, SITE_URL } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { cn, formatCount, getImageUrl } from "@/lib/utils";
-import type { Post } from "@/types/post.types";
+import { coverMedia, type PostDto } from "@/types/post.types";
 
 /**
  * One snap-scrolled reel (docs/screenshots/img16, img17): the video centred,
@@ -29,7 +27,7 @@ export function ReelCard({
   onToggleMute,
   registerVideo,
 }: {
-  post: Post;
+  post: PostDto;
   muted: boolean;
   onToggleMute: () => void;
   registerVideo: (postId: number, element: HTMLVideoElement | null) => void;
@@ -42,27 +40,17 @@ export function ReelCard({
 
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
 
-  const file = post.images[0] ?? "";
-  const url = getImageUrl(file) ?? "";
-  const isMine = post.userId === user?.userId;
-
-  // React's `muted` JSX prop only sets the DOM attribute (the *default* muted
-  // state); it does not reliably update the live `.muted` property once the
-  // element has already started playing in every browser. Set it directly so
-  // the speaker button / M key actually (un)mutes an already-playing reel.
-  useEffect(() => {
-    const video = ref.current;
-    if (video) video.muted = muted;
-  }, [muted]);
+  const cover = coverMedia(post);
+  const url = cover ? (getImageUrl(cover.url) ?? "") : "";
+  const isMine = post.author.id === user?.id;
 
   // Play while at least half of the reel is on screen, pause when it leaves.
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
 
-    registerVideo(post.postId, video);
+    registerVideo(post.id, video);
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -71,7 +59,7 @@ export function ReelCard({
             .play()
             .then(() => setPlaying(true))
             .catch(() => setPlaying(false));
-          viewPost(post.postId);
+          viewPost(post.id);
         } else {
           video.pause();
           setPlaying(false);
@@ -83,18 +71,16 @@ export function ReelCard({
     observer.observe(video);
     return () => {
       observer.disconnect();
-      registerVideo(post.postId, null);
+      registerVideo(post.id, null);
     };
-  }, [post.postId, registerVideo, viewPost]);
+  }, [post.id, registerVideo, viewPost]);
 
   const togglePlay = () => {
     const video = ref.current;
     if (!video) return;
     if (video.paused) {
-      void video
-        .play()
-        .then(() => setPlaying(true))
-        .catch(() => setPlaying(false));
+      void video.play();
+      setPlaying(true);
     } else {
       video.pause();
       setPlaying(false);
@@ -112,7 +98,7 @@ export function ReelCard({
           muted={muted}
           playsInline
           onClick={togglePlay}
-          onDoubleClick={() => !post.postLike && like.mutate(post)}
+          onDoubleClick={() => !post.isLiked && like.mutate(post)}
           className="size-full object-contain"
         />
 
@@ -122,14 +108,11 @@ export function ReelCard({
           </span>
         ) : null}
 
-        {/* bottom-16 clears the 48px MobileNav (same offset as the caption
-            block below); md:bottom-3 tucks it back into the corner once that
-            bar is gone. */}
         <button
           type="button"
           aria-label={muted ? t("unmute") : t("mute")}
           onClick={onToggleMute}
-          className="absolute right-3 bottom-16 z-10 rounded-full bg-black/50 p-2 text-white md:bottom-3"
+          className="absolute right-3 bottom-3 rounded-full bg-black/50 p-2 text-white"
         >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
         </button>
@@ -137,22 +120,22 @@ export function ReelCard({
         {/* Sits above the 48px MobileNav on phones. */}
         <div className="absolute right-0 bottom-16 left-0 px-4 text-white md:bottom-4">
           <div className="mb-2 flex items-center gap-2">
-            <Link href={ROUTES.profile(post.userId)}>
-              <UserAvatar src={post.userImage} alt={post.userName ?? ""} size={32} />
+            <Link href={ROUTES.profile(post.author.id)}>
+              <UserAvatar src={post.author.avatarUrl} alt={post.author.userName ?? ""} size={32} />
             </Link>
-            <Link href={ROUTES.profile(post.userId)} className="text-sm font-semibold">
-              {post.userName}
+            <Link href={ROUTES.profile(post.author.id)} className="text-sm font-semibold">
+              {post.author.userName}
             </Link>
             {isMine ? null : (
               <FollowButton
-                userId={post.userId}
-                userName={post.userName ?? ""}
+                userId={post.author.id}
+                userName={post.author.userName ?? ""}
                 variant="link"
                 className="text-white"
               />
             )}
           </div>
-          {post.content ? <p className="line-clamp-2 max-w-[70%] text-sm">{post.content}</p> : null}
+          {post.caption ? <p className="line-clamp-2 max-w-[70%] text-sm">{post.caption}</p> : null}
         </div>
 
         {/* Mobile: the rail floats over the video. Desktop: it sits beside the
@@ -161,8 +144,7 @@ export function ReelCard({
           <ActionRail
             post={post}
             onLike={() => like.mutate(post)}
-            onSave={() => save.mutate(post)}
-            onShare={() => setShareOpen(true)}
+            onSave={() => save.mutate({ post })}
           />
         </div>
       </div>
@@ -171,16 +153,9 @@ export function ReelCard({
         <ActionRail
           post={post}
           onLike={() => like.mutate(post)}
-          onSave={() => save.mutate(post)}
-          onShare={() => setShareOpen(true)}
+          onSave={() => save.mutate({ post })}
         />
       </div>
-
-      <ShareDialog
-        open={shareOpen}
-        onOpenChange={setShareOpen}
-        url={`${SITE_URL}${ROUTES.post(post.postId)}`}
-      />
     </section>
   );
 }
@@ -189,12 +164,10 @@ function ActionRail({
   post,
   onLike,
   onSave,
-  onShare,
 }: {
-  post: Post;
+  post: PostDto;
   onLike: () => void;
   onSave: () => void;
-  onShare: () => void;
 }) {
   const t = useTranslations("post");
 
@@ -202,25 +175,29 @@ function ActionRail({
     <>
       <Action
         label={t("like")}
-        count={post.postLikeCount}
-        active={post.postLike}
+        count={post.likesCount}
+        active={post.isLiked}
         onClick={onLike}
-        icon={<HeartIcon filled={post.postLike} className="size-6" />}
+        icon={<HeartIcon filled={post.isLiked} className="size-6" />}
       />
       <Action
         label={t("comment")}
-        count={post.commentCount}
-        href={ROUTES.post(post.postId)}
+        count={post.commentsCount}
+        href={ROUTES.post(post.id)}
         icon={<CommentIcon className="size-6" />}
       />
-      <Action label={t("share")} onClick={onShare} icon={<ShareIcon className="size-6" />} />
+      <Action label={t("share")} icon={<ShareIcon className="size-6" />} />
       <Action
         label={t("save")}
-        active={post.postFavorite}
+        active={post.isFavorited}
         onClick={onSave}
-        icon={<BookmarkIcon filled={post.postFavorite} className="size-6" />}
+        icon={<BookmarkIcon filled={post.isFavorited} className="size-6" />}
       />
-      <ReelMoreMenu post={post} onShare={onShare} />
+      <Action
+        label={t("more")}
+        href={ROUTES.post(post.id)}
+        icon={<DotsIcon className="size-6" />}
+      />
     </>
   );
 }

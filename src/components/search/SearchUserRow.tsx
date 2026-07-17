@@ -4,24 +4,25 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import type { User } from "@/types/user.types";
+import type { UserBriefDto } from "@/types/api.types";
 
 /**
  * One account in the search results or in "Recent".
  *
- * The follow button costs one `get-is-follow-user-profile-by-id` call per row —
- * the API has no bulk "am I following these users" endpoint — but the result is
- * cached per user, so repeating a search is free.
+ * The follow button costs one `is-following` call per row — there is no bulk
+ * "am I following these users" endpoint — but the result is cached per user, so
+ * repeating a search is free.
  */
 export function SearchUserRow({
   user,
   onSelect,
   onRemove,
 }: {
-  user: User;
-  onSelect: (user: User) => void;
+  user: UserBriefDto;
+  onSelect: (user: UserBriefDto) => void;
   /** Renders the ✕ that deletes this row from "Recent". */
   onRemove?: () => void;
 }) {
@@ -34,14 +35,16 @@ export function SearchUserRow({
         onClick={() => onSelect(user)}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
-        <UserAvatar src={user.avatar} size={44} />
+        <UserAvatar src={user.avatarUrl ?? null} size={44} />
         <span className="min-w-0 flex-1">
-          <span className="text-ig-text block truncate text-sm font-semibold">{user.userName}</span>
-          <span className="text-ig-text-secondary block truncate text-sm">
-            {[user.fullName?.trim(), t("followers", { count: user.subscribersCount })]
-              .filter(Boolean)
-              .join(" · ")}
-          </span>
+          <UserNameWithBadge
+            userName={user.userName}
+            isVerified={user.isVerified}
+            className="text-ig-text block text-sm font-semibold"
+          />
+          {/* `UserBriefDto` has no follower count — the row shows the real name
+              instead of a number the search endpoint never sends. */}
+          <span className="text-ig-text-secondary block truncate text-sm">{user.fullName}</span>
         </span>
       </Link>
 

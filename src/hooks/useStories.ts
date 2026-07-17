@@ -1,19 +1,21 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { toast } from "sonner";
 import { type ApiError } from "@/lib/axios";
+import { PAGE_SIZE } from "@/lib/constants";
+import { cursorParams, MAX_LIMIT, nextCursor } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
-import { storyService } from "@/services/story.service";
-import { useStoryStore } from "@/store/story.store";
-import type { AddStoryDto } from "@/types/story.types";
+import { storyService, type CreateStoriesInput } from "@/services/story.service";
+import type { StoryDto } from "@/types/api.types";
 
+/** The rail, grouped by author. `allViewed` drives the grey ring — server-side truth now. */
 export function useStories() {
   return useQuery({
-    queryKey: queryKeys.stories.list(),
-    queryFn: () => storyService.getStories(),
+    queryKey: queryKeys.stories.rail(),
+    queryFn: () => storyService.getRail(),
   });
 }
 
@@ -32,12 +34,43 @@ export function useMyStories() {
   });
 }
 
-/** Only GetStoryById carries `viewerDto` (viewCount / viewLike) — used by the viewers sheet. */
-export function useStoryDetail(storyId: number, enabled = true) {
+/** Expired stories (img45). */
+export function useStoryArchive() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.stories.archive(),
+    queryFn: ({ pageParam }) => storyService.getArchive(cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+  });
+}
+
+/**
+ * Who watched a story — a real list of people (viewed / liked / reaction), only
+ * visible to the author. Softclub could only answer two bare counters, so
+ * Phase 6 had to show numbers and admit no list existed.
+ *
+ * ⚠️ Not paginated here on purpose: `StoryViewerDto` carries no id of its own,
+ * and the cursor *is* the last row's id — so there is nothing to page with. We
+ * ask for the cap (50) in one go. A story with more viewers than that will be
+ * truncated; revisit if the backend adds an id or a nextCursor.
+ */
+export function useStoryViewers(storyId: number, enabled = true) {
   return useQuery({
-    queryKey: queryKeys.stories.detail(storyId),
-    queryFn: () => storyService.getStoryById(storyId),
+    queryKey: queryKeys.stories.viewers(storyId),
+    queryFn: () => storyService.getViewers(storyId, { limit: MAX_LIMIT }),
     enabled: enabled && Number.isFinite(storyId),
+  });
+}
+
+/**
+ * One story by id — the only place `GET /stories/{id}` fits: the archive grid
+ * holds ids, and opening a tile needs the full row (media, music, overlays).
+ */
+export function useStoryDetail(storyId: number | null) {
+  return useQuery({
+    queryKey: queryKeys.stories.detail(storyId ?? 0),
+    queryFn: () => storyService.getStoryById(storyId as number),
+    enabled: storyId !== null,
   });
 }
 
@@ -46,7 +79,7 @@ export function useAddStory() {
   const t = useTranslations("errors");
 
   return useMutation({
-    mutationFn: (dto: AddStoryDto) => storyService.addStory(dto),
+    mutationFn: (input: CreateStoriesInput) => storyService.create(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stories.all }),
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
@@ -57,36 +90,72 @@ export function useDeleteStory() {
   const t = useTranslations("errors");
 
   return useMutation({
-    mutationFn: (id: number) => storyService.deleteStory(id),
+    mutationFn: (id: number) => storyService.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stories.all }),
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
 }
 
-/** LikeStory is a toggle answering "Liked" / "Disliked" — we flip optimistically. */
-export function useLikeStory() {
+/** Toggle → `{ liked, likesCount }`, so the heart settles on the server's count. */
+export function useLikeStory(userId: string) {
   const queryClient = useQueryClient();
   const t = useTranslations("errors");
+  const key = queryKeys.stories.byUser(userId);
 
   return useMutation({
-    mutationFn: (storyId: number) => storyService.likeStory(storyId),
-    onSettled: (_data, _error, storyId) => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stories.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stories.detail(storyId) });
+    mutationFn: (storyId: number) => storyService.like(storyId),
+    onMutate: async (storyId) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<StoryDto[]>(key);
+
+      queryClient.setQueryData<StoryDto[]>(key, (stories) =>
+        stories?.map((story) =>
+          story.id === storyId
+            ? {
+                ...story,
+                isLiked: !story.isLiked,
+                likesCount: Math.max(0, story.likesCount + (story.isLiked ? -1 : 1)),
+              }
+            : story,
+        ),
+      );
+
+      return { previous };
     },
-    onError: (error: ApiError) => toast.error(error.message || t("network")),
+    onSuccess: (result, storyId) => {
+      queryClient.setQueryData<StoryDto[]>(key, (stories) =>
+        stories?.map((story) =>
+          story.id === storyId
+            ? { ...story, isLiked: result.liked, likesCount: result.likesCount }
+            : story,
+        ),
+      );
+    },
+    onError: (error: ApiError, _storyId, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+      toast.error(error.message || t("network"));
+    },
   });
 }
 
-/** Fires add-story-view once per story and remembers it for the grey ring. */
+/**
+ * Marks a story seen, once per session.
+ *
+ * The server owns "have I seen this?" now (`StoryDto.isViewed`,
+ * `StoryRailItemDto.allViewed`), so the localStorage ring-state store from
+ * Phase 6 is gone — the grey ring is finally correct in any browser.
+ */
 export function useMarkStorySeen() {
-  const markSeen = useStoryStore((state) => state.markSeen);
+  const queryClient = useQueryClient();
   const sent = useRef(new Set<number>());
 
   return (storyId: number) => {
-    markSeen(storyId);
     if (sent.current.has(storyId)) return;
     sent.current.add(storyId);
-    void storyService.addStoryView(storyId).catch(() => sent.current.delete(storyId));
+
+    void storyService
+      .view(storyId)
+      .then(() => queryClient.invalidateQueries({ queryKey: queryKeys.stories.rail() }))
+      .catch(() => sent.current.delete(storyId));
   };
 }

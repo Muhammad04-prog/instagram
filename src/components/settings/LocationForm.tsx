@@ -6,10 +6,10 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { useAddLocation, useUpdateLocation } from "@/hooks/useLocation";
 import { locationSchema, type LocationFormValues } from "@/lib/validators/location.schema";
-import type { Location } from "@/types/location.types";
+import type { LocationDto } from "@/types/api.types";
 
 /**
- * Add / edit a location. Editing calls `update-Location`, which the server
+ * Add / edit a location. Editing calls `update-LocationDto`, which the server
  * currently rejects with a mapper error (BACKEND_BUGS #19) — the failure is
  * surfaced in a toast rather than hidden.
  */
@@ -17,7 +17,7 @@ export function LocationForm({
   editing,
   onDone,
 }: {
-  editing?: Location | null;
+  editing?: LocationDto | null;
   onDone?: () => void;
 }) {
   const t = useTranslations("locations");
@@ -39,7 +39,7 @@ export function LocationForm({
 
   const onSubmit = form.handleSubmit((values) => {
     if (editing) {
-      update.mutate({ ...values, locationId: editing.locationId }, { onSuccess: () => onDone?.() });
+      update.mutate({ id: editing.id, dto: values }, { onSuccess: () => onDone?.() });
       return;
     }
     add.mutate(values, {

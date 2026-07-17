@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
+import { Check, MoreHorizontal, SmilePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
@@ -12,38 +12,90 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDeleteMessage } from "@/hooks/useChat";
+import { canEditMessage, EditMessageDialog } from "@/components/chat/EditMessageDialog";
+import { useDeleteMessage, useToggleMessageReaction } from "@/hooks/useChat";
+import { useAuth } from "@/hooks/useAuth";
+import { themeBubble } from "@/lib/chat-themes";
 import { cn, getImageUrl } from "@/lib/utils";
-import type { Message } from "@/types/chat.types";
+import { isAttachment, type MessageDto } from "@/types/chat.types";
 
-const IMAGE_RE = /\.(png|jpe?g|gif|webp|avif)$/i;
-const VIDEO_RE = /\.(mp4|webm|mov)$/i;
+/**
+ * Mine: blue, right. Theirs: grey, left with avatar (img21).
+ *
+ * `type` says what the attachment is, so the renderer no longer sniffs the file
+ * extension the way it had to on softclub.
+ */
+/** IG's reaction row — one tap adds, tapping your own emoji takes it back. */
+const QUICK = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
-/** Mine: blue, right. Theirs: grey, left with avatar (img21). */
 export function MessageBubble({
   message,
   mine,
   peerImage,
+  theme,
+  selecting,
+  selected,
+  onStartSelecting,
+  onToggleSelected,
 }: {
-  message: Message;
+  message: MessageDto;
   mine: boolean;
   peerImage: string | null;
+  /** Chat theme name — colours my own bubbles. */
+  theme?: string | null;
+  /** The whole window is in select-many mode. */
+  selecting: boolean;
+  selected: boolean;
+  onStartSelecting: () => void;
+  onToggleSelected: () => void;
 }) {
   const t = useTranslations("chat");
+  const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const deleteMessage = useDeleteMessage(message.chatId);
+  const react = useToggleMessageReaction(message.chatId);
+
+  // One reaction per person: mine is the one I can take back.
+  const myReaction = message.reactions.find((r) => r.userId === user?.id)?.emoji ?? null;
 
   // Negative id = optimistic, not yet acknowledged by the server.
-  const pending = message.messageId < 0;
-  const fileUrl = message.file ? getImageUrl(message.file) : null;
+  const pending = message.id < 0;
+  // Optimistic rows have no server id, so they cannot be part of a bulk delete.
+  const selectable = mine && !pending && !message.isDeleted;
+  const fileUrl = message.mediaUrl ? getImageUrl(message.mediaUrl) : null;
 
   return (
-    <div className={cn("group flex items-end gap-2", mine ? "justify-end" : "justify-start")}>
+    <div
+      className={cn(
+        "group flex items-end gap-2",
+        mine ? "justify-end" : "justify-start",
+        // Only my own messages can go: the server refuses the rest, so they are
+        // not selectable and must not look like they are.
+        selecting && selectable && "cursor-pointer rounded-lg",
+        selecting && selected && "bg-ig-elevated",
+      )}
+      onClick={selecting && selectable ? onToggleSelected : undefined}
+    >
+      {selecting ? (
+        <span
+          aria-hidden
+          className={cn(
+            "mb-2 flex size-5 shrink-0 items-center justify-center rounded-full border",
+            selected ? "bg-ig-primary border-ig-primary" : "border-ig-border",
+            !selectable && "invisible",
+          )}
+        >
+          {selected ? <Check className="size-3 text-white" /> : null}
+        </span>
+      ) : null}
+
       {!mine ? <UserAvatar src={peerImage} size={28} /> : null}
 
-      {/* The "…" menu is only rendered for my own messages. The server does NOT
-          enforce this — it will delete anyone's message (BACKEND_BUGS #15). */}
-      {mine && !pending ? (
+      {/* Own messages only — and the server agrees now: its OwnerGuard rejects
+          deleting someone else's. Softclub enforced nothing (bug #15). */}
+      {mine && !pending && !selecting ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -55,6 +107,26 @@ export function MessageBubble({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {/* The backend allows an edit for 15 minutes and only on text.
+                Offering it later would just produce a refusal. */}
+            {canEditMessage(message) ? (
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setEditOpen(true);
+                }}
+              >
+                {t("editMessage")}
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                onStartSelecting();
+              }}
+            >
+              {t("selectMessages")}
+            </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
               onSelect={(event) => {
@@ -70,23 +142,23 @@ export function MessageBubble({
 
       <div
         className={cn(
-          "max-w-[65%] overflow-hidden rounded-[22px]",
-          message.messageText ? "px-4 py-2" : "p-1",
-          mine ? "bg-ig-primary text-white" : "bg-ig-button-secondary text-ig-text",
+          "relative max-w-[65%] rounded-[22px]",
+          message.text ? "px-4 py-2" : "p-1",
+          mine ? themeBubble(theme) : "bg-ig-button-secondary text-ig-text",
           pending && "opacity-60",
         )}
       >
-        {fileUrl ? (
-          IMAGE_RE.test(message.file ?? "") ? (
+        {fileUrl && isAttachment(message) ? (
+          message.type === "IMAGE" ? (
             <Image
               src={fileUrl}
-              alt={message.messageText ?? ""}
+              alt={message.text ?? ""}
               width={240}
               height={240}
               className="mb-1 max-h-80 w-60 rounded-2xl object-cover"
               unoptimized
             />
-          ) : VIDEO_RE.test(message.file ?? "") ? (
+          ) : message.type === "VIDEO" ? (
             <video src={fileUrl} controls className="mb-1 w-60 rounded-2xl" />
           ) : (
             <a
@@ -100,10 +172,79 @@ export function MessageBubble({
           )
         ) : null}
 
-        {message.messageText ? (
-          <p className="text-sm break-words whitespace-pre-wrap">{message.messageText}</p>
+        {message.text ? (
+          <p className="text-sm break-words whitespace-pre-wrap">
+            {message.text}
+            {/* IG marks an edited message. `editedAt` was arriving and being
+                dropped, so a silent rewrite looked like the original. */}
+            {message.editedAt ? (
+              <span className="ml-1.5 align-baseline text-[10px] opacity-60">{t("edited")}</span>
+            ) : null}
+          </p>
+        ) : null}
+
+        {/* Reactions hang off the bubble's corner, as in IG. */}
+        {message.reactions.length > 0 ? (
+          <span
+            className={cn(
+              "bg-ig-elevated border-ig-bg absolute -bottom-2 flex items-center gap-0.5 rounded-full border-2 px-1 text-xs",
+              mine ? "right-2" : "left-2",
+            )}
+          >
+            {[...new Set(message.reactions.map((r) => r.emoji))].map((emoji) => (
+              <span key={emoji}>{emoji}</span>
+            ))}
+            {message.reactions.length > 1 ? (
+              <span className="text-ig-text-secondary">{message.reactions.length}</span>
+            ) : null}
+          </span>
         ) : null}
       </div>
+
+      {/* Reaction picker, on hover like IG's desktop web. */}
+      {pending || selecting ? null : (
+        <div className="relative self-center">
+          <button
+            type="button"
+            aria-label={t("react")}
+            onClick={() => setPickerOpen((value) => !value)}
+            className="text-ig-text-secondary opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+          >
+            <SmilePlus className="size-4" />
+          </button>
+
+          {pickerOpen ? (
+            <ul className="bg-ig-elevated border-ig-separator absolute bottom-6 z-10 flex gap-1 rounded-full border px-2 py-1 shadow-lg">
+              {QUICK.map((emoji) => (
+                <li key={emoji}>
+                  <button
+                    type="button"
+                    aria-label={emoji}
+                    onClick={() => {
+                      react.mutate({
+                        messageId: message.id,
+                        // Same emoji again = take it back.
+                        emoji: myReaction === emoji ? null : emoji,
+                      });
+                      setPickerOpen(false);
+                    }}
+                    className={cn(
+                      "text-lg transition-transform hover:scale-125",
+                      myReaction === emoji && "scale-110",
+                    )}
+                  >
+                    {emoji}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      )}
+
+      {editOpen ? (
+        <EditMessageDialog message={message} open={editOpen} onOpenChange={setEditOpen} />
+      ) : null}
 
       <ConfirmDialog
         open={confirmOpen}
@@ -111,7 +252,7 @@ export function MessageBubble({
         title={t("deleteMessage")}
         description={t("deleteMessageConfirm")}
         confirmLabel={t("deleteMessage")}
-        onConfirm={() => deleteMessage.mutate(message.messageId)}
+        onConfirm={() => deleteMessage.mutate(message.id)}
       />
     </div>
   );

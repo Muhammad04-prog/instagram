@@ -13,7 +13,10 @@ interface AuthInputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 /**
  * Meta-style auth field: 12px radius, 1px border that brightens on focus,
- * 56px tall. Sampled from docs/screenshots/img4, img6, img7.
+ * **60px tall**.
+ *
+ * The height is measured, not guessed: the input band is 74px in img4, img5,
+ * img6 and img7 alike, and those shots are DPR 1.25 → 74 / 1.25 ≈ 60 CSS px.
  *
  * Any `type="password"` field gets a show/hide eye on the right, so every
  * password box in the app (login, register, confirm, reset, change) has it
@@ -39,7 +42,7 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(function A
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            "border-auth-input-border text-ig-text placeholder:text-ig-text-secondary h-14 w-full rounded-xl border px-4 text-[15px]",
+            "border-auth-input-border text-ig-text placeholder:text-ig-text-secondary h-15 w-full rounded-xl border px-4 text-[15px]",
             "focus:border-auth-input-border-focus transition-colors outline-none",
             filled ? "bg-auth-input-bg" : "bg-transparent",
             isPassword && "pr-12",

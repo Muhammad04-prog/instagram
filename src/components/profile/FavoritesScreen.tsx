@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { useFavorites } from "@/hooks/useProfile";
+import { flattenPages } from "@/lib/cursor";
 
 /** docs/screenshots/img36 — saved posts, infinite scroll, private to the owner. */
 export function FavoritesScreen() {
@@ -32,7 +33,7 @@ export function FavoritesScreen() {
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  const posts = data?.pages.flat() ?? [];
+  const posts = flattenPages(data);
 
   return (
     <div className="py-8">

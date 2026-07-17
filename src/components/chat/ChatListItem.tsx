@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
+import { BellOff, MoreHorizontal } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -11,25 +11,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useChatMessages, useDeleteChat } from "@/hooks/useChat";
+import { useDeleteChat } from "@/hooks/useChat";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Chat, ChatPeer } from "@/types/chat.types";
+import { chatAvatar, chatLabel, isAttachment, type ChatListItemDto } from "@/types/chat.types";
 
 /**
- * `get-chats` carries no last message and no timestamp, so the preview line is
- * read from the chat's own message list (same cache entry the window uses — the
- * row is not polling, it just reuses whatever is cached / fetches once).
+ * One conversation row.
+ *
+ * Everything it draws comes from the list response — preview, time, unread
+ * count, online dot. Phase 9's version had to fetch each chat's messages just to
+ * show a preview line, and could show no unread badge at all: softclub had
+ * neither `isRead` nor `unreadCount` anywhere in its API (bug #16).
  */
 export function ChatListItem({
   chat,
-  peer,
   active,
   myUserId,
 }: {
-  chat: Chat;
-  peer: ChatPeer;
+  chat: ChatListItemDto;
   active: boolean;
   myUserId: string;
 }) {
@@ -38,36 +39,70 @@ export function ChatListItem({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const deleteChat = useDeleteChat();
 
-  const { data: messages } = useChatMessages(chat.chatId, false);
-  const last = messages?.[0];
+  const { lastMessage } = chat;
+  const name = chatLabel(chat);
+  const unread = chat.unreadCount > 0;
 
-  const preview = last
-    ? last.messageText
-      ? last.messageText
-      : last.file
-        ? t("sentAttachment", { user: last.userId === myUserId ? t("you") : peer.userName })
-        : ""
-    : "";
+  const preview = !lastMessage
+    ? ""
+    : lastMessage.text
+      ? lastMessage.text
+      : isAttachment(lastMessage)
+        ? t("sentAttachment", {
+            user: lastMessage.senderId === myUserId ? t("you") : name,
+          })
+        : "";
 
   return (
     <li className={cn("group relative", active && "bg-ig-button-secondary")}>
       <Link
-        href={ROUTES.chatById(chat.chatId)}
+        href={ROUTES.chatById(chat.id)}
         className="hover:bg-ig-bg-secondary flex items-center gap-3 px-6 py-2"
       >
-        <UserAvatar src={peer.userImage} size={56} />
+        <span className="relative shrink-0">
+          <UserAvatar src={chatAvatar(chat)} alt={name} size={56} />
+          {chat.isOnline ? (
+            <span
+              aria-label={t("online")}
+              className="border-ig-bg absolute right-0 bottom-0 size-3.5 rounded-full border-2 bg-[color:var(--ig-success)]"
+            />
+          ) : null}
+        </span>
+
         <span className="min-w-0 flex-1">
-          <span className="text-ig-text block truncate text-sm">{peer.userName}</span>
-          <span className="text-ig-text-secondary block truncate text-xs">
+          <span className="flex items-center gap-1.5">
+            <span className={cn("text-ig-text block truncate text-sm", unread && "font-semibold")}>
+              {name}
+            </span>
+            {chat.isMuted ? (
+              <BellOff
+                className="text-ig-text-secondary size-3.5 shrink-0"
+                aria-label={t("muted")}
+              />
+            ) : null}
+          </span>
+
+          <span
+            className={cn(
+              "block truncate text-xs",
+              unread ? "text-ig-text font-semibold" : "text-ig-text-secondary",
+            )}
+          >
             {preview}
-            {last ? (
+            {chat.lastMessageAt ? (
               <>
                 {preview ? " · " : null}
-                {format.relativeTime(new Date(last.sendMassageDate))}
+                {format.relativeTime(new Date(chat.lastMessageAt))}
               </>
             ) : null}
           </span>
         </span>
+
+        {unread ? (
+          <span className="bg-ig-primary ml-1 min-w-5 shrink-0 rounded-full px-1.5 py-0.5 text-center text-[11px] font-semibold text-white">
+            {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
+          </span>
+        ) : null}
       </Link>
 
       <DropdownMenu>
@@ -99,7 +134,7 @@ export function ChatListItem({
         title={t("deleteChat")}
         description={t("deleteChatConfirm")}
         confirmLabel={t("deleteChat")}
-        onConfirm={() => deleteChat.mutate(chat.chatId)}
+        onConfirm={() => deleteChat.mutate(chat.id)}
       />
     </li>
   );

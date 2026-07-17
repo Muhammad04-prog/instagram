@@ -16,6 +16,13 @@ import { InstagramGlyph, InstagramWordmark } from "@/components/icons/InstagramL
 import { MoreMenu } from "@/components/layout/MoreMenu";
 import { SidebarLabel } from "@/components/layout/SidebarLabel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useUnreadCount } from "@/hooks/useNotifications";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useSidebarForcedCollapsed } from "@/hooks/useSidebarState";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -37,9 +44,13 @@ import { useUiStore } from "@/store/ui.store";
  */
 export function Sidebar() {
   const t = useTranslations("nav");
+  const tLive = useTranslations("live");
   const pathname = usePathname();
   const { panel, togglePanel, closePanel } = useUiStore();
   const { data: profile } = useMyProfile();
+  const { data: unreadData } = useUnreadCount();
+
+  const unread = unreadData?.count ?? 0;
 
   const forcedCollapsed = useSidebarForcedCollapsed();
   // Only when not forced narrow may the rail stay open at ≥1264px.
@@ -119,18 +130,43 @@ export function Sidebar() {
           icon={
             <span className="relative">
               <HeartIcon filled={panel === "notifications"} />
-              <span className="bg-ig-badge absolute -top-0.5 -right-0.5 size-2 rounded-full" />
+              {/* Real count now. This dot used to be painted unconditionally —
+                  softclub had no notifications endpoint, so it was decoration
+                  that lied on every single render. */}
+              {unread > 0 ? (
+                <span
+                  aria-label={t("unreadCount", { count: unread })}
+                  className={cn(
+                    "bg-ig-badge absolute -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white",
+                    unread > 9 ? "-right-2" : "-right-1.5",
+                  )}
+                >
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              ) : null}
             </span>
           }
         />
-        <Item
-          href={ROUTES.createPost}
-          label={t("create")}
-          wide={wide}
-          active={pathname.startsWith("/post/create")}
-          icon={() => <CreateIcon />}
-          onNavigate={closePanel}
-        />
+        {/* IG's Create is a menu, not a link — a post and a live video start in
+            very different places. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className={rowStyles} onClick={closePanel}>
+            <span className="[&_svg]:size-6 [&_svg]:shrink-0">
+              <CreateIcon />
+            </span>
+            <SidebarLabel wide={wide} bold={pathname.startsWith("/post/create")}>
+              {t("create")}
+            </SidebarLabel>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="right" className="w-48">
+            <DropdownMenuItem asChild>
+              <Link href={ROUTES.createPost}>{t("createPost")}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={ROUTES.goLive}>{tLive("goLive")}</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Item
           href={ROUTES.myProfile}
           label={t("profile")}
@@ -139,7 +175,7 @@ export function Sidebar() {
           onNavigate={closePanel}
           icon={(active) => (
             <UserAvatar
-              src={profile?.image}
+              src={profile?.avatarUrl}
               size={24}
               priority
               className={cn(active && "ring-ig-text ring-2 ring-offset-1")}

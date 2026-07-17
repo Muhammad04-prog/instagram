@@ -2,21 +2,26 @@
 
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { BookmarkIcon, GridIcon, TaggedIcon } from "@/components/icons";
+import { BookmarkIcon, GridIcon, RepostIcon, TaggedIcon } from "@/components/icons";
 import { PostGrid, PostGridSkeleton } from "@/components/profile/PostGrid";
+import { HighlightCircles } from "@/components/profile/HighlightCircles";
+import { PrivateAccountGate } from "@/components/profile/PrivateAccountGate";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileHeaderSkeleton } from "@/components/profile/ProfileSkeleton";
 import { ProfileTabs, type ProfileTab } from "@/components/profile/ProfileTabs";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { useFavorites, useMyProfile, useUserProfile } from "@/hooks/useProfile";
-import { useMyPosts, useUserPosts } from "@/hooks/usePosts";
-import { isVideo, type Post } from "@/types/post.types";
+import { useFavorites, useMyProfile, useMyReposts, useUserProfile } from "@/hooks/useProfile";
+import { useMyPosts, useUserPosts, useUserReels, useUserTagged } from "@/hooks/usePosts";
+import type { PostDto } from "@/types/post.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
- * Shared by /profile/me and /profile/[userId]. My own profile reads
- * `get-my-profile` (it has no id), someone else's reads
- * `get-is-follow-user-profile-by-id`, which also carries the follow state.
+ * Shared by /profile/me and /profile/[userId].
+ *
+ * Reels and Tagged are their own endpoints now. Phase 4 had to derive the reels
+ * tab by filtering the grid for video files, and left Tagged as a placeholder —
+ * softclub had neither.
  */
 export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean }) {
   const t = useTranslations("profile");
@@ -26,22 +31,24 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   const other = useUserProfile(isMe ? "" : userId);
   const profileQuery = isMe ? mine : other;
 
-  // My own grid comes from get-my-posts; someone else's from get-posts?UserId
-  // (the only one of the two that can filter by user).
   const myPosts = useMyPosts(isMe);
   const otherPosts = useUserPosts(userId, !isMe);
   const posts = isMe ? myPosts : otherPosts;
+
+  const reelsQuery = useUserReels(userId, tab === "reels");
+  const taggedQuery = useUserTagged(userId, tab === "tagged");
   const favorites = useFavorites();
+  // /profile/me/reposts — my own only, so it never runs on someone else's page.
+  const repostsQuery = useMyReposts(isMe && tab === "reposts");
 
   const allPosts = useMemo(
-    () => (isMe ? (myPosts.data ?? []) : (otherPosts.data?.pages.flat() ?? [])),
-    [isMe, myPosts.data, otherPosts.data],
+    () => flattenPages((isMe ? myPosts : otherPosts).data),
+    [isMe, myPosts, otherPosts],
   );
-  const reels = useMemo(
-    () => allPosts.filter((post) => post.images.some((file) => isVideo(file))),
-    [allPosts],
-  );
-  const savedPosts = useMemo(() => favorites.data?.pages.flat() ?? [], [favorites.data]);
+  const reels = useMemo(() => flattenPages(reelsQuery.data), [reelsQuery.data]);
+  const reposts = useMemo(() => flattenPages(repostsQuery.data), [repostsQuery.data]);
+  const tagged = useMemo(() => flattenPages(taggedQuery.data), [taggedQuery.data]);
+  const savedPosts = useMemo(() => flattenPages(favorites.data), [favorites.data]);
 
   if (profileQuery.isPending) return <ProfileHeaderSkeleton />;
 
@@ -49,13 +56,24 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
     return <ErrorState onRetry={() => void profileQuery.refetch()} />;
   }
 
+  const profile = profileQuery.data;
+
+  // A private account I have not been accepted by: posts/reels/tagged all answer
+  // 403. That is the product, not a failure — show the lock instead of the tabs.
+  const locked = "canViewContent" in profile && !profile.canViewContent;
+
   return (
     <div className="pb-16">
-      <ProfileHeader userId={userId} profile={profileQuery.data} isMe={isMe} />
+      <ProfileHeader userId={userId} profile={profile} isMe={isMe} />
 
-      <ProfileTabs value={tab} onChange={setTab} showSaved={isMe} />
+      {/* A locked account hides its highlights too — they are stories. */}
+      {locked ? null : <HighlightCircles userId={userId} isMe={isMe} />}
 
-      <div className="pt-4">
+      {locked ? <PrivateAccountGate /> : null}
+
+      {locked ? null : <ProfileTabs value={tab} onChange={setTab} showSaved={isMe} />}
+
+      <div className={locked ? "hidden" : "pt-4"}>
         {tab === "posts" ? (
           <Panel
             query={posts}
@@ -66,10 +84,17 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
           />
         ) : tab === "reels" ? (
           <Panel
-            query={posts}
+            query={reelsQuery}
             items={reels}
             emptyIcon={<GridIcon className="size-8" />}
             emptyTitle={t("noReels")}
+          />
+        ) : tab === "reposts" ? (
+          <Panel
+            query={repostsQuery}
+            items={reposts}
+            emptyIcon={<RepostIcon className="size-8" />}
+            emptyTitle={t("noReposts")}
           />
         ) : tab === "saved" ? (
           <Panel
@@ -80,10 +105,12 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
             emptyDescription={t("savedOnlyVisibleToYou")}
           />
         ) : (
-          <EmptyState
-            icon={<TaggedIcon className="size-8" />}
-            title={t("taggedTitle")}
-            description={t("taggedDescription")}
+          <Panel
+            query={taggedQuery}
+            items={tagged}
+            emptyIcon={<TaggedIcon className="size-8" />}
+            emptyTitle={t("taggedTitle")}
+            emptyDescription={t("taggedDescription")}
           />
         )}
       </div>
@@ -100,7 +127,7 @@ function Panel({
   emptyDescription,
 }: {
   query: { isPending: boolean; isError: boolean; refetch: () => unknown };
-  items: Post[];
+  items: PostDto[];
   emptyIcon: React.ReactNode;
   emptyTitle: string;
   emptyDescription?: string;

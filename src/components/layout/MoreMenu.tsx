@@ -1,6 +1,14 @@
 "use client";
 
-import { Activity, Bookmark, ChevronLeft, Moon, Settings, TriangleAlert } from "lucide-react";
+import {
+  Activity,
+  Bookmark,
+  ChevronLeft,
+  Moon,
+  Music2,
+  Settings,
+  TriangleAlert,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { MoreIcon } from "@/components/icons";
@@ -25,6 +33,7 @@ import { ROUTES } from "@/lib/constants";
 export function MoreMenu({ wide }: { wide: boolean }) {
   const t = useTranslations("nav");
   const tSettings = useTranslations("settings");
+  const tMusic = useTranslations("music");
   const { logout } = useAuth();
   const [showTheme, setShowTheme] = useState(false);
 
@@ -69,6 +78,9 @@ export function MoreMenu({ wide }: { wide: boolean }) {
             </MenuLink>
             <MenuLink href={ROUTES.favorites} icon={<Bookmark className="size-5" />}>
               {t("saved")}
+            </MenuLink>
+            <MenuLink href={ROUTES.music} icon={<Music2 className="size-5" />}>
+              {tMusic("title")}
             </MenuLink>
 
             <DropdownMenuItem

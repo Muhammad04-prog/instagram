@@ -13,5 +13,5 @@ export function MyProfileView() {
 
   if (!isReady || !user) return <ProfileHeaderSkeleton />;
 
-  return <ProfileView userId={user.userId} isMe />;
+  return <ProfileView userId={user.id} isMe />;
 }

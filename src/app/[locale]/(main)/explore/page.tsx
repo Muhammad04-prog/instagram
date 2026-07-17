@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { ExploreGrid } from "@/components/explore/ExploreGrid";
 import { ExploreSearch } from "@/components/explore/ExploreSearch";
+import { ExploreTrends } from "@/components/explore/ExploreTrends";
 
 export default async function ExplorePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -9,6 +10,7 @@ export default async function ExplorePage({ params }: { params: Promise<{ locale
   return (
     <main className="mx-auto max-w-[975px] px-4 py-6">
       <ExploreSearch />
+      <ExploreTrends />
       <ExploreGrid />
     </main>
   );

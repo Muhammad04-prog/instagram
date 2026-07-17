@@ -6,14 +6,14 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useDeleteAvatar, useUpdateAvatar } from "@/hooks/useProfile";
-import { profileFullName, type UserProfile } from "@/types/profile.types";
+import type { ProfileDto } from "@/types/profile.types";
 
 /**
  * The card at the top of "Edit profile" (docs/screenshots/img43): avatar,
  * username + full name, and a blue "New photo" button. Removing the photo is
  * behind a confirm, as IG does.
  */
-export function AvatarUploader({ profile }: { profile: UserProfile }) {
+export function AvatarUploader({ profile }: { profile: ProfileDto }) {
   const t = useTranslations("profile");
   const tErrors = useTranslations("errors");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,15 +34,15 @@ export function AvatarUploader({ profile }: { profile: UserProfile }) {
 
   return (
     <div className="bg-ig-bg-secondary border-ig-border flex items-center gap-4 rounded-2xl border px-4 py-3">
-      <UserAvatar src={profile.image} alt={profile.userName} size={56} />
+      <UserAvatar src={profile.avatarUrl} alt={profile.userName} size={56} />
 
       <div className="min-w-0 flex-1">
         <p className="text-ig-text truncate text-sm font-semibold">{profile.userName}</p>
-        <p className="text-ig-text-secondary truncate text-sm">{profileFullName(profile)}</p>
+        <p className="text-ig-text-secondary truncate text-sm">{profile.fullName}</p>
       </div>
 
       <div className="flex items-center gap-3">
-        {profile.image ? (
+        {profile.avatarUrl ? (
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}

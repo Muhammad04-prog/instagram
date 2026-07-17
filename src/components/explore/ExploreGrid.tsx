@@ -11,8 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useExplorePosts } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { filterCss } from "@/lib/filters";
 import { formatCount, getImageUrl } from "@/lib/utils";
-import { isVideo, type Post } from "@/types/post.types";
+import { coverMedia, isCarousel, isVideo, mediaPoster, type PostDto } from "@/types/post.types";
+import { flattenPages } from "@/lib/cursor";
 
 /**
  * /explore — 4 columns of portrait (3:4) tiles with 4px gutters, exactly as in
@@ -55,7 +57,7 @@ export function ExploreGrid() {
 
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const posts = data.pages.flat();
+  const posts = flattenPages(data);
 
   if (posts.length === 0) return <EmptyState title={t("empty")} />;
 
@@ -63,7 +65,7 @@ export function ExploreGrid() {
     <>
       <ul className="grid grid-cols-2 gap-1 md:grid-cols-4">
         {posts.map((post) => (
-          <Tile key={post.postId} post={post} likeLabel={tPost("like")} />
+          <Tile key={post.id} post={post} likeLabel={tPost("like")} />
         ))}
       </ul>
       <div ref={sentinel} className="h-10" />
@@ -72,23 +74,22 @@ export function ExploreGrid() {
   );
 }
 
-function Tile({ post, likeLabel }: { post: Post; likeLabel: string }) {
-  const cover = post.images[0];
-  const url = getImageUrl(cover);
+function Tile({ post, likeLabel }: { post: PostDto; likeLabel: string }) {
+  const cover = coverMedia(post);
+  const url = cover ? getImageUrl(mediaPoster(cover)) : null;
   const video = Boolean(cover && isVideo(cover));
 
   return (
     <li className="relative aspect-[3/4]">
       <Link
-        href={ROUTES.post(post.postId)}
+        href={ROUTES.post(post.id)}
         className="group bg-ig-bg-secondary relative block size-full overflow-hidden"
       >
         {url ? (
           video ? (
-            // #t=0.1 makes the browser paint a first frame — without it the
-            // tile stays black until played.
+            // `mediaPoster` already resolved a thumbnail (or the #t=0.1 fallback).
             <video
-              src={`${url}#t=0.1`}
+              src={url}
               muted
               playsInline
               preload="metadata"
@@ -97,15 +98,16 @@ function Tile({ post, likeLabel }: { post: Post; likeLabel: string }) {
           ) : (
             <Image
               src={url}
-              alt={post.content ?? ""}
+              alt={post.caption ?? ""}
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
+              style={{ filter: filterCss(cover?.filter) }}
               className="object-cover"
             />
           )
         ) : null}
 
-        {post.images.length > 1 ? (
+        {isCarousel(post) ? (
           <CarouselIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
         ) : video ? (
           <ClipIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
@@ -114,11 +116,11 @@ function Tile({ post, likeLabel }: { post: Post; likeLabel: string }) {
         <div className="absolute inset-0 flex items-center justify-center gap-7 bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
           <span className="flex items-center gap-1.5 font-semibold text-white">
             <HeartIcon filled className="size-5" />
-            <span aria-label={likeLabel}>{formatCount(post.postLikeCount)}</span>
+            <span aria-label={likeLabel}>{formatCount(post.likesCount)}</span>
           </span>
           <span className="flex items-center gap-1.5 font-semibold text-white">
             <CommentIcon className="size-5 [&_path]:fill-white" />
-            {formatCount(post.commentCount)}
+            {formatCount(post.commentsCount)}
           </span>
         </div>
       </Link>

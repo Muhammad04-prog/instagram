@@ -7,5 +7,5 @@ import { useAuth } from "@/hooks/useAuth";
 export function OtherProfileView({ userId }: { userId: string }) {
   const { user } = useAuth();
 
-  return <ProfileView userId={userId} isMe={user?.userId === userId} />;
+  return <ProfileView userId={userId} isMe={user?.id === userId} />;
 }

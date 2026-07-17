@@ -21,7 +21,16 @@
   --ig-button-secondary-hover: #dbdbdb;
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
+  /* Hashtags and @mentions inside text. IG uses a deeper blue than the buttons:
+     #0095f6 at text size on white is too light to read comfortably. */
+  --ig-link: #00376b;
   --ig-danger: #ed4956;
+  /* Positive confirmation (username available). IG greens this state; there was
+     no success token before because nothing in the old API could succeed softly. */
+  --ig-success: #00b74a;
+  /* Close-friends ring. IG uses one green for it in both themes — it is a
+     status colour, not a surface, so it must not flip with the palette. */
+  --ig-close-friends: #21d167;
   --ig-badge: #ff3040;
   --ig-story-gradient: linear-gradient(
     45deg,
@@ -104,7 +113,15 @@
   --ig-button-secondary-hover: #262626;
   --ig-primary: #0095f6;
   --ig-primary-hover: #1877f2;
+  /* On black the link blue inverts — light instead of dark. */
+  --ig-link: #e0f1ff;
   --ig-danger: #ed4956;
+  /* Positive confirmation (username available). IG greens this state; there was
+     no success token before because nothing in the old API could succeed softly. */
+  --ig-success: #00b74a;
+  /* Close-friends ring. IG uses one green for it in both themes — it is a
+     status colour, not a surface, so it must not flip with the palette. */
+  --ig-close-friends: #21d167;
   --ig-badge: #ff3040;
 
   /* Auth (sampled from docs/screenshots/img4, img6, img7) */
@@ -159,7 +176,10 @@
   --color-ig-button-secondary-hover: var(--ig-button-secondary-hover);
   --color-ig-primary: var(--ig-primary);
   --color-ig-primary-hover: var(--ig-primary-hover);
+  --color-ig-link: var(--ig-link);
   --color-ig-danger: var(--ig-danger);
+  --color-ig-success: var(--ig-success);
+  --color-ig-close-friends: var(--ig-close-friends);
   --color-ig-badge: var(--ig-badge);
 
   --color-auth-bg: var(--auth-bg);

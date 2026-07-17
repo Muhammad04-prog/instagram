@@ -35,6 +35,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build-time Node tooling, not app code: CommonJS and console output are the
+    // point there, and the app's browser-oriented rules do not apply.
+    "scripts/**",
+    // Generated from Swagger — regenerate with `npm run api:types`, never edit.
+    "src/types/api.gen.ts",
   ]),
 ]);
 

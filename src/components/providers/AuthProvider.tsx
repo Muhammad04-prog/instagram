@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { userProfileService } from "@/services/userProfile.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useSavedAccountsStore } from "@/store/savedAccounts.store";
 import type { SessionUser } from "@/types/auth.types";
 
 /**
- * Asks the server who is logged in. The response carries claims only — the JWT
- * stays in the httpOnly cookie.
+ * Asks the server who is logged in. The response carries the user only — both
+ * tokens stay in httpOnly cookies.
  *
  * A restored session also refreshes the browser's saved-account list, so an
  * account that was already signed in before this feature existed still appears
@@ -31,14 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
         if (!data.user) return;
 
-        // The avatar is a nicety; a failure here must not disturb the session.
-        const profile = await userProfileService.getMyProfile().catch(() => null);
-        if (cancelled) return;
-
+        // The avatar rides along on the session response now — no extra request.
         remember({
-          userId: data.user.userId,
+          userId: data.user.id,
           userName: data.user.userName,
-          image: profile?.image ?? null,
+          image: data.user.avatarUrl ?? null,
         });
       } catch {
         if (!cancelled) setUser(null);

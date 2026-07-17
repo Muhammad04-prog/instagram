@@ -1,45 +1,28 @@
-/** Swagger: Domain.Dtos.RegisterDto — all five fields required, no birthday. */
-export interface RegisterDto {
-  userName: string;
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
+import type { AuthUserDto } from "@/types/api.types";
 
-export interface LoginDto {
-  userName: string;
-  password: string;
-}
+/**
+ * Auth request/response DTOs now come straight from the generated Swagger types
+ * (`api.types.ts`): RegisterDto, LoginDto, TokensDto, ResetPasswordDto,
+ * ChangePasswordDto, VerifyCodeDto, … Only what Swagger does NOT describe lives
+ * here: the JWT's internal claims and the identity we hand to the browser.
+ */
 
-/** POST /Account/login → JWT string. */
-export type LoginResponse = string;
-
-export interface ResetPasswordDto {
-  token: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-export interface ChangePasswordDto {
-  oldPassword: string;
-  password: string;
-  confirmPassword: string;
-}
-
-/** Claims we rely on from the decoded JWT. Server-side only. */
+/**
+ * Claims we rely on from the decoded JWT. Server-side only.
+ *
+ * Only `exp` is contractual for us — it drives proactive refresh in the proxy.
+ * The subject claim is read best-effort (`sub` in NestJS/passport-jwt), because
+ * identity itself comes from `GET /auth/me`, not from parsing the token.
+ */
 export interface JwtPayload {
-  sid: string;
-  name: string;
-  email: string;
-  role?: string | string[];
+  sub: string;
   exp: number;
 }
 
-/** The only identity data the browser ever receives — no token. */
-export interface SessionUser {
-  userId: string;
-  userName: string;
-  email: string;
-}
+/**
+ * The only identity data the browser ever receives — no token, ever.
+ *
+ * Sourced from `GET /auth/me` so it carries the fields the UI actually gates on
+ * (`role` for the admin panel, `isVerified` for the blue tick, `isPrivate`).
+ */
+export type SessionUser = AuthUserDto;

@@ -1,51 +1,43 @@
+import type { ChatDetailDto, ChatListItemDto, MessageDto } from "@/types/api.types";
+
 /**
- * Shapes read off the live API — Swagger declares no response schema for any of
- * the 6 Chat endpoints. See docs/API_REAL_DTO.md.
+ * Chat helpers.
+ *
+ * The DTOs are generated (`api.types.ts`). Note what is NOT here any more:
+ * `getChatPeer()` is gone because a 1-on-1 chat now names its `peer` outright —
+ * softclub listed both participants and left us to work out which one was not
+ * me. `lastMessage` and `unreadCount` arrive with the row too, so a list item no
+ * longer fetches a chat's messages just to draw one line of preview.
+ *
+ * `peer` is nullable: a group has no single peer, only `participants`. The app
+ * cannot create groups yet, but a group row can reach these screens from
+ * elsewhere, so nothing here may assume a peer is there.
  */
 
-/** `GET /Chat/get-chats` — participants only: no last message, no unread count. */
-export interface Chat {
-  chatId: number;
-  sendUserId: string;
-  sendUserName: string;
-  sendUserImage: string | null;
-  receiveUserId: string;
-  receiveUserName: string;
-  receiveUserImage: string | null;
+export type { ChatDetailDto, ChatListItemDto, MessageDto };
+
+/** Either chat shape — the helpers below only touch fields common to both. */
+type AnyChat = ChatListItemDto | ChatDetailDto;
+
+/**
+ * The name to show for a chat: a per-chat nickname wins over a real one, and a
+ * group falls back to naming its members when it was never given a title.
+ */
+export function chatLabel(chat: AnyChat): string {
+  if (chat.isGroup) {
+    return chat.title ?? chat.participants.map((participant) => participant.userName).join(", ");
+  }
+  const nickname = "peerNickname" in chat ? chat.peerNickname : null;
+  return nickname ?? chat.peer?.userName ?? "";
 }
 
-/** `GET /Chat/get-chat-by-id` — newest message FIRST. */
-export interface Message {
-  messageId: number;
-  chatId: number;
-  userId: string;
-  userName: string | null;
-  userImage: string | null;
-  messageText: string | null;
-  /** Backend typo (`Massage`) — kept as-is to match the wire format. */
-  sendMassageDate: string;
-  file: string | null;
+/** The avatar to show — a group has none of its own, so it borrows a member's. */
+export function chatAvatar(chat: AnyChat): string | null {
+  if (chat.isGroup) return chat.participants[0]?.avatarUrl ?? null;
+  return chat.peer?.avatarUrl ?? null;
 }
 
-export interface SendMessageDto {
-  chatId: number;
-  messageText?: string;
-  file?: File;
-}
-
-/** A chat row names both sides; the peer is whichever one is not me. */
-export interface ChatPeer {
-  userId: string;
-  userName: string;
-  userImage: string | null;
-}
-
-export function getChatPeer(chat: Chat, myUserId: string): ChatPeer {
-  return chat.sendUserId === myUserId
-    ? {
-        userId: chat.receiveUserId,
-        userName: chat.receiveUserName,
-        userImage: chat.receiveUserImage,
-      }
-    : { userId: chat.sendUserId, userName: chat.sendUserName, userImage: chat.sendUserImage };
+/** True when the message carries an attachment rather than text. */
+export function isAttachment(message: Pick<MessageDto, "type">): boolean {
+  return message.type === "IMAGE" || message.type === "VIDEO" || message.type === "AUDIO";
 }

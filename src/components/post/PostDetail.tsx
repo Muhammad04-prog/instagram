@@ -5,6 +5,7 @@ import { PostActions } from "@/components/post/PostActions";
 import { PostCarousel } from "@/components/post/PostCarousel";
 import { CommentForm, CommentList } from "@/components/post/PostComments";
 import { PostHeader } from "@/components/post/PostHeader";
+import { RichCaption } from "@/components/post/RichCaption";
 import { PostDetailSkeleton } from "@/components/post/PostSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -35,7 +36,7 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
   return (
     <div className="flex max-h-[90vh] flex-col md:flex-row">
       <div className="bg-black md:flex md:w-[60%] md:items-center">
-        <PostCarousel images={post.images} alt={post.content ?? ""} className="w-full" />
+        <PostCarousel media={post.media} alt={post.caption ?? ""} className="w-full" />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
@@ -46,38 +47,42 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
         />
 
         <div className="flex-1 scrollbar-none overflow-y-auto px-4 py-4">
-          {post.content ? (
+          {post.caption ? (
             <div className="mb-4 flex gap-3">
-              <Link href={ROUTES.profile(post.userId)}>
-                <UserAvatar src={post.userImage} alt={post.userName ?? ""} size={32} />
+              <Link href={ROUTES.profile(post.author.id)}>
+                <UserAvatar
+                  src={post.author.avatarUrl}
+                  alt={post.author.userName ?? ""}
+                  size={32}
+                />
               </Link>
               <p className="text-ig-text text-sm break-words whitespace-pre-line">
-                <Link href={ROUTES.profile(post.userId)} className="mr-1.5 font-semibold">
-                  {post.userName}
+                <Link href={ROUTES.profile(post.author.id)} className="mr-1.5 font-semibold">
+                  {post.author.userName}
                 </Link>
-                {post.content}
+                <RichCaption text={post.caption} />
               </p>
             </div>
           ) : null}
 
-          <CommentList post={post} />
+          <CommentList postId={post.id} />
         </div>
 
         <div className="border-ig-separator shrink-0 border-t px-4">
           <PostActions post={post} className="pt-3" />
 
           <p className={cn("text-ig-text pt-2 text-sm font-semibold")}>
-            {t("likes", { count: post.postLikeCount })}
+            {t("likes", { count: post.likesCount })}
           </p>
           <time
-            dateTime={post.datePublished}
+            dateTime={post.createdAt}
             className="text-ig-text-secondary text-xs"
             suppressHydrationWarning
           >
-            {format.relativeTime(new Date(post.datePublished), new Date())}
+            {format.relativeTime(new Date(post.createdAt), new Date())}
           </time>
 
-          <CommentForm postId={post.postId} className="border-ig-separator mt-2 border-t" />
+          <CommentForm postId={post.id} className="border-ig-separator mt-2 border-t" />
         </div>
       </div>
     </div>

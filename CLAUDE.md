@@ -9,19 +9,25 @@ lucide-react · framer-motion · embla-carousel · react-easy-crop · sonner.
 
 ⚠️ Next 16 аст: middleware файлаш **`src/proxy.ts`**, на `middleware.ts`.
 
-Backend: `https://instagram-api.softclub.tj` — JWT Bearer.
+Backend: **`https://backend-instagram-a4k6.onrender.com/api`** (NestJS, 190 endpoint) — JWT Bearer.
 Ҷавоби API: `{ data, errors, statusCode }` — дар `lib/axios.ts` unwrap мешавад.
-Хато танҳо вақте, ки `statusCode >= 400` (бэкенд баъзан `errors: ["success"]` медиҳад).
+Хато танҳо вақте, ки `statusCode >= 400`.
+
+⚠️ Бэкенди кӯҳна `instagram-api.softclub.tj` (57 endpoint) ва `backend-instagram-kvv4`
+**дигар кор намекунанд**. Дар код ба онҳо ишора накун.
 
 Токен **танҳо дар httpOnly cookie**. Ҳамаи дархостҳо аз `src/app/api/proxy/[...path]/route.ts`
 мегузаранд — Bearer дар СЕРВЕР гузошта мешавад, ба клиент ҳеҷ гоҳ намеравад.
 
 ## Ҳуҷҷатҳои проект
 
+Файлҳои **v2** ҳақиқати ҳозираанд; версияи бе `_V2` — таърихи бэкенди кӯҳна, танҳо барои контекст.
+
 - ТЗ: `docs/TZ.md`
-- Роадмап: `docs/ROADMAP.md` — **қатъиян аз боло ба поён, ҳар қадами тайёрро `[x]` кун**
-- Картаи API (57 endpoint): `docs/API_MAP.md` — ҳар endpoint бояд 100% дар UI кор кунад
-- DTO-ҳои воқеӣ: `docs/API_REAL_DTO.md`
+- Роадмап: `docs/ROADMAP_V2.md` — **қатъиян аз боло ба поён, ҳар қадами тайёрро `[x]` кун**
+- Картаи API (190 endpoint): `docs/API_MAP_V2.md` — **генератсия мешавад**:
+  `node scripts/gen-api-map.js`. Дастӣ таҳрир накун.
+- DTO-ҳои воқеӣ ва тағйироти шикананда: `docs/API_REAL_DTO.md`
 - Қоидаҳои `AGENTS.md` (Next.js docs дар `node_modules/next/dist/docs/`)
 
 ## Ду сарчашмаи ҳақиқат — тахмин МАНЪ
@@ -37,12 +43,18 @@ Backend: `https://instagram-api.softclub.tj` — JWT Bearer.
 3. Агар тафсилот ноаён бошад — кропро калон кун (DPR-и суратҳо 1.25)
 4. Аз рӯи он верстка кун — фосила, андоза, ранг, тартиб (±2px)
 
-### 2. API → `https://instagram-api.softclub.tj/swagger/v1/swagger.json`
+### 2. API → `https://backend-instagram-a4k6.onrender.com/api/docs-json`
 
-- Пеш аз навиштани сервис Swagger-ро гир — майдонҳои дақиқи request/response
+- Типҳо **дастӣ навишта намешаванд**: снапшот `docs/swagger-v2.json` → `npm run api:types`
+  → `src/types/api.gen.ts`. Барои нав кардани swagger:
+  `curl -s <docs-json> -o docs/swagger-v2.json && npm run api:types && npx tsc --noEmit` —
+  хатоҳои typecheck маҳз тағйироти шикананда мешаванд.
 - Агар Swagger бо ҷавоби **ВОҚЕИИ** API фарқ кунад → **ҷавоби воқеӣ авлотар**
-  (мисол: `gender` сатр `"Male"` аст, на `0|1`; `get-my-profile` майдони `id` надорад)
-- DTO-ҳои воқеиро дар `docs/API_REAL_DTO.md` сабт кун
+  (дар ин лоиҳа ин қоида дар 8 фаза аз 10 баг гирифт).
+- 🔴 Ҳоло санҷидан мумкин НЕСТ: ҳар дархости ба БД тегиста → 500 `DATABASE_ERROR`
+  (`register`, `login`, `check-username`). **Ба `/health` бовар накун** — он `database: up`
+  мегӯяд, вале дурӯғ аст. Танҳо валидатсия зинда: payload-и бад → 400 бо рӯйхати майдонҳо.
+- Тағйироти шикананда ва домҳои codegen-ро дар `docs/API_REAL_DTO.md` сабт кун
 
 ## Қоидаҳои дизайн
 
