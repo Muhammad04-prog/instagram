@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
 import { ROUTES, SITE_URL } from "@/lib/constants";
-import type { Post } from "@/types/post.types";
+import type { PostDto } from "@/types/post.types";
 import { toast } from "sonner";
 
 /**
@@ -19,9 +19,9 @@ import { toast } from "sonner";
  * those stay as honest client-side actions (toast / real copied snippet)
  * instead of pretending to hit a server.
  */
-export function ReelMoreMenu({ post, onShare }: { post: Post; onShare: () => void }) {
+export function ReelMoreMenu({ post, onShare }: { post: PostDto; onShare: () => void }) {
   const t = useTranslations("post");
-  const url = `${SITE_URL}${ROUTES.post(post.postId)}`;
+  const url = `${SITE_URL}${ROUTES.post(post.id)}`;
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(url);
@@ -49,13 +49,13 @@ export function ReelMoreMenu({ post, onShare }: { post: Post; onShare: () => voi
           {t("reportPost")}
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={ROUTES.post(post.postId)}>{t("goToPost")}</Link>
+          <Link href={ROUTES.post(post.id)}>{t("goToPost")}</Link>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onShare}>{t("shareEllipsis")}</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void copyLink()}>{t("copyLink")}</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void copyEmbed()}>{t("embed")}</DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={ROUTES.profile(post.userId)}>{t("aboutAccount")}</Link>
+          <Link href={ROUTES.profile(post.author.id)}>{t("aboutAccount")}</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -15,6 +15,7 @@ import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { useLiveKitRoom } from "@/hooks/useLiveKitRoom";
 import {
   useEndLive,
   useJoinLive,
@@ -29,6 +30,7 @@ import {
 } from "@/hooks/useLive";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { useLiveSessionStore } from "@/store/live-session.store";
 import type { LiveCommentDto } from "@/types/api.types";
 
 /**
@@ -67,6 +69,28 @@ export function LiveScreen({ liveId }: { liveId: string }) {
 
   const isHost = Boolean(user && live && live.host.id === user.id);
   const ended = live?.status === "ENDED";
+
+  // The host's LiveKit token only ever exists once, handed back by
+  // `POST /live/start` on the *previous* screen (GoLiveScreen) — this route
+  // mounts fresh, so it is bridged through a store instead of being re-fetched
+  // (there is no endpoint to re-fetch a host token). Read into local state
+  // with a lazy initializer — a pure, side-effect-free read of `getState()`,
+  // so it is safe to run twice under Strict Mode's dev double-invoke — and
+  // deliberately NOT read through a live store subscription: `useLiveKitRoom`
+  // treats `wsUrl`/`token` turning undefined as "the call ended" and tears the
+  // connection down, so once captured here the local copy must stay stable
+  // for this screen's lifetime regardless of what happens to the store.
+  const [hostCredentials] = useState<{ token: string; wsUrl: string } | null>(() => {
+    const stored = useLiveSessionStore.getState().hostCredentials;
+    return stored?.liveId === liveId ? { token: stored.token, wsUrl: stored.wsUrl } : null;
+  });
+  useEffect(() => {
+    useLiveSessionStore.getState().clearHostCredentials(liveId);
+  }, [liveId]);
+
+  const wsUrl = isHost ? hostCredentials?.wsUrl : join.data?.wsUrl;
+  const token = isHost ? hostCredentials?.token : join.data?.token;
+  const liveKit = useLiveKitRoom({ wsUrl, token, publish: isHost });
 
   // A viewer must be registered in the room to count, and must be dropped when
   // they walk away — including on a hard close, hence pagehide as well.
@@ -159,7 +183,13 @@ export function LiveScreen({ liveId }: { liveId: string }) {
       </header>
 
       <div className="relative flex flex-1 flex-col overflow-hidden">
-        <LiveStage live={live} tokenReady={isHost || join.isSuccess} isHost={isHost} />
+        <LiveStage
+          live={live}
+          tokenReady={isHost || join.isSuccess}
+          isHost={isHost}
+          videoTrack={liveKit.videoTrack}
+          connecting={liveKit.connecting}
+        />
         <LiveHearts hearts={hearts} />
       </div>
 
@@ -189,7 +219,11 @@ export function LiveScreen({ liveId }: { liveId: string }) {
             <>
               <ControlButton
                 on={live.isCameraOn}
-                onClick={() => setCamera.mutate({ on: !live.isCameraOn })}
+                onClick={() => {
+                  const next = !live.isCameraOn;
+                  setCamera.mutate({ on: next });
+                  void liveKit.room?.localParticipant.setCameraEnabled(next);
+                }}
                 labelOn={t("cameraOff")}
                 labelOff={t("cameraOn")}
                 IconOn={Video}
@@ -197,7 +231,11 @@ export function LiveScreen({ liveId }: { liveId: string }) {
               />
               <ControlButton
                 on={live.isAudioOn}
-                onClick={() => setAudio.mutate(!live.isAudioOn)}
+                onClick={() => {
+                  const next = !live.isAudioOn;
+                  setAudio.mutate(next);
+                  void liveKit.room?.localParticipant.setMicrophoneEnabled(next);
+                }}
                 labelOn={t("audioOff")}
                 labelOff={t("audioOn")}
                 IconOn={Mic}

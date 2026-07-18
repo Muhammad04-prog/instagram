@@ -1,8 +1,10 @@
 "use client";
 
+import type { LocalTrack, RemoteTrack } from "livekit-client";
 import { VideoOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { LiveKitVideo } from "@/components/live/LiveKitVideo";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getImageUrl } from "@/lib/utils";
 import type { LiveDto } from "@/types/api.types";
@@ -10,23 +12,24 @@ import type { LiveDto } from "@/types/api.types";
 /**
  * Where the picture goes.
  *
- * There is no picture. Video for this API is carried by LiveKit, and the token
- * we are handed points at `ws://localhost:7880` — the *viewer's own machine* —
- * so nothing can be played from here, with or without the LiveKit SDK. Rather
- * than dress a dead room up with a fake stream, the stage says plainly that
- * video is not connected and gets on with the parts that do work.
- *
- * When the backend supplies a real `wsUrl`, only this component changes: the
- * whole screen around it already runs on the REST state.
+ * Video is carried by LiveKit, not by this API's own endpoints — `videoTrack`
+ * is whatever `useLiveKitRoom` has resolved (the host's own camera when
+ * publishing, or the host's remote camera for a viewer). Until the room
+ * connects and a track exists, the stage falls back to the host's avatar
+ * instead of a blank rectangle.
  */
 export function LiveStage({
   live,
   tokenReady,
   isHost,
+  videoTrack,
+  connecting,
 }: {
   live: LiveDto;
   tokenReady: boolean;
   isHost: boolean;
+  videoTrack: LocalTrack | RemoteTrack | null;
+  connecting: boolean;
 }) {
   const t = useTranslations("live");
   const cover = getImageUrl(live.coverUrl);
@@ -34,6 +37,15 @@ export function LiveStage({
   // The host turning the camera off is a normal, expected state with its own
   // look — the cover or their avatar — and it must not read like a failure.
   const cameraOff = !live.isCameraOn;
+
+  if (videoTrack && !cameraOff) {
+    return (
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-black">
+        {/* The host must never hear themself — remote viewers do. */}
+        <LiveKitVideo track={videoTrack} muted={isHost} />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-ig-elevated relative flex flex-1 items-center justify-center overflow-hidden">
@@ -62,10 +74,8 @@ export function LiveStage({
         ) : (
           <>
             <UserAvatar src={live.host.avatarUrl} size={88} />
-            <p className="text-sm font-semibold text-white">
-              {tokenReady ? t("videoUnavailable") : t("connecting")}
-            </p>
-            {tokenReady ? (
+            <p className="text-sm font-semibold text-white">{t("connecting")}</p>
+            {tokenReady && !connecting ? (
               <p className="text-xs text-white/70">{t("videoUnavailableWhy")}</p>
             ) : null}
           </>

@@ -31,6 +31,14 @@ export interface SearchUsersParams extends CursorParams {
 export const userService = {
   search: (params: SearchUsersParams) => http.get<Page<UserBriefDto>>("/users", params),
 
+  /**
+   * Exact, case-insensitive userName match — added specifically so @mentions
+   * and `/u/{userName}` don't have to fake it out of the substring `search()`
+   * results (a blocked user 404s here too, same as in search).
+   */
+  getByUserName: (userName: string) =>
+    http.get<UserBriefDto>(`/users/by-username/${encodeURIComponent(userName)}`),
+
   getSuggestions: (params: CursorParams) => http.get<SuggestionDto[]>("/users/suggestions", params),
 
   deleteMe: () => http.delete<AccountDeletedDto>("/users/me"),

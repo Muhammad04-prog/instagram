@@ -57,7 +57,7 @@ function groupByDay(messages: MessageDto[]): { day: string; items: MessageDto[] 
   return groups;
 }
 
-export function ChatWindow({ chatId }: { chatId: number }) {
+export function ChatWindow({ chatId, compact = false }: { chatId: number; compact?: boolean }) {
   const t = useTranslations("chat");
   const format = useFormatter();
   const { user } = useAuth();
@@ -101,7 +101,7 @@ export function ChatWindow({ chatId }: { chatId: number }) {
 
   return (
     <div className="flex h-full flex-1 flex-col">
-      {chat ? (
+      {chat && !compact ? (
         <div className="border-ig-border flex items-center border-b px-4 py-2">
           {/* A group has no peer and so no profile to open — only its members. */}
           <ChatHeaderShell peerId={chat.peer?.id}>
@@ -150,7 +150,7 @@ export function ChatWindow({ chatId }: { chatId: number }) {
         </div>
       ) : null}
 
-      {chat ? (
+      {chat && !compact ? (
         <ChatSettingsDialog chat={chat} open={settingsOpen} onOpenChange={setSettingsOpen} />
       ) : null}
 
