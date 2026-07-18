@@ -5,7 +5,7 @@ import { HeartIcon } from "@/components/icons";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { Loader } from "@/components/shared/Loader";
+import { RowSkeleton } from "@/components/shared/RowSkeleton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
 import { Separator } from "@/components/ui/separator";
@@ -68,7 +68,7 @@ export function NotificationsPanel() {
       <Separator className="bg-ig-separator" />
 
       {open && isPending ? (
-        <Loader className="py-10" />
+        <RowSkeleton />
       ) : isError ? (
         <ErrorState onRetry={() => void refetch()} className="py-10" />
       ) : items.length === 0 ? (

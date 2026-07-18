@@ -7,7 +7,7 @@ import { ChatListItem } from "@/components/chat/ChatListItem";
 import { NewChatDialog } from "@/components/chat/NewChatDialog";
 import { NotesRail } from "@/components/chat/NotesRail";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { Loader } from "@/components/shared/Loader";
+import { RowSkeleton } from "@/components/shared/RowSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChat";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -82,7 +82,7 @@ export function ChatList() {
 
       <div className="flex-1 overflow-y-auto">
         {isPending ? (
-          <Loader className="py-10" />
+          <RowSkeleton />
         ) : isError ? (
           <ErrorState onRetry={() => void refetch()} />
         ) : chats.length === 0 ? (
