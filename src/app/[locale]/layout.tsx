@@ -4,6 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Grand_Hotel } from "next/font/google";
 import type { ReactNode } from "react";
 import { Providers } from "@/components/providers/Providers";
+import { SplashScreen } from "@/components/shared/SplashScreen";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ export default async function LocaleLayout({
       <body className="flex min-h-full flex-col antialiased">
         <NextIntlClientProvider>
           <Providers>{children}</Providers>
+          <SplashScreen />
         </NextIntlClientProvider>
       </body>
     </html>
