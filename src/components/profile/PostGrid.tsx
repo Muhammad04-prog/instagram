@@ -8,13 +8,20 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { filterCss } from "@/lib/filters";
 import { formatCount, getImageUrl } from "@/lib/utils";
-import { coverMedia, isCarousel, isVideo, mediaPoster, type PostDto } from "@/types/post.types";
+import {
+  coverMedia,
+  type GridPost,
+  gridCoverUrl,
+  gridHasVideo,
+  gridIsClip,
+  isCarousel,
+} from "@/types/post.types";
 
 /**
  * IG's 3-column grid: square tiles, 4px gutters, hover reveals likes/comments
  * over a 30% black scrim (docs/screenshots/img35).
  */
-export function PostGrid({ posts }: { posts: PostDto[] }) {
+export function PostGrid({ posts }: { posts: GridPost[] }) {
   return (
     <ul className="grid grid-cols-3 gap-1">
       {posts.map((post) => (
@@ -24,11 +31,13 @@ export function PostGrid({ posts }: { posts: PostDto[] }) {
   );
 }
 
-function PostGridItem({ post }: { post: PostDto }) {
+function PostGridItem({ post }: { post: GridPost }) {
   const t = useTranslations("post");
   const cover = coverMedia(post);
-  const url = cover ? getImageUrl(mediaPoster(cover)) : null;
-  const video = Boolean(cover && isVideo(cover));
+  const rawUrl = gridCoverUrl(post);
+  const url = rawUrl ? getImageUrl(rawUrl) : null;
+  const video = gridHasVideo(post);
+  const clip = gridIsClip(post);
 
   return (
     <li className="relative aspect-square">
@@ -60,7 +69,7 @@ function PostGridItem({ post }: { post: PostDto }) {
 
         {isCarousel(post) ? (
           <CarouselIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
-        ) : video ? (
+        ) : clip ? (
           <ClipIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
         ) : null}
 

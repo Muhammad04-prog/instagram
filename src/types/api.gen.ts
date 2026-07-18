@@ -1049,8 +1049,8 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Поиск треков в Spotify (устарел — см. GET /music/online)
-     * @description Ищет ТОЛЬКО в Spotify. Пока у владельца Spotify-приложения нет Premium, отвечает 503. Для поиска любой песни мира используйте /music/online — он работает без подписок.
+     * Поиск музыки (Deezer + Spotify)
+     * @description Ищет песню в доступном каталоге: сначала Deezer (работает без подписок), Spotify подключается сам, когда у владельца приложения появится Premium. Поле spotifyId — составной id (PROVIDER:externalId), шлите его в save/unsave как есть.
      */
     get: operations["SpotifyController_search"];
     put?: never;
@@ -1228,6 +1228,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/posts/tags/pending": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Мои неподтверждённые отметки (ревью)
+     * @description Публикации, где меня отметили, но я ещё не принял. Принять → «Фото с вами».
+     */
+    get: operations["PostsController_pendingTags"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/posts/{id}": {
     parameters: {
       query?: never;
@@ -1367,6 +1387,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/posts/{id}/tag/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Принять отметку на публикации
+     * @description Меня отметили → подтверждаю → пост появляется в моём «Фото с вами».
+     */
+    post: operations["PostsController_acceptTag"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/tag/decline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Отклонить/убрать отметку на публикации
+     * @description Скрываю отметку: пост НЕ показывается в «Фото с вами».
+     */
+    post: operations["PostsController_declineTag"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/posts/{id}/comments": {
     parameters: {
       query?: never;
@@ -1383,6 +1443,62 @@ export interface paths {
     /** Добавить комментарий */
     post: operations["PostsController_addComment"];
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/settings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Мои настройки (уведомления, приватность взаимодействий, язык) */
+    get: operations["SettingsController_get"];
+    /**
+     * Изменить настройки
+     * @description Push/email, кто может отмечать/упоминать/писать/комментировать, GIF в комментариях, репосты историй, скрытые слова, язык. Любое подмножество полей.
+     */
+    put: operations["SettingsController_update"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/settings/restricted": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Аккаунты с ограничениями */
+    get: operations["SettingsController_restricted"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/settings/restricted/{userId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Ограничить аккаунт */
+    post: operations["SettingsController_restrict"];
+    /** Снять ограничение */
+    delete: operations["SettingsController_unrestrict"];
     options?: never;
     head?: never;
     patch?: never;
@@ -1710,6 +1826,26 @@ export interface paths {
      * @description Создаёт Message(type=NOTE_REPLY, noteId, noteSnapshot). Нельзя отвечать на свою.
      */
     post: operations["NotesController_reply"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/notes/{id}/reaction": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Эмодзи-реакция на заметку → в личку автору
+     * @description Как реакция на историю: эмодзи уходит сообщением автору. Нельзя на свою заметку.
+     */
+    post: operations["NotesController_reaction"];
     delete?: never;
     options?: never;
     head?: never;
@@ -3381,6 +3517,11 @@ export interface components {
       text?: string;
     };
     UpdateProfileDto: {
+      /**
+       * @description Новый username. Если занят — 409; регистр не важен (Oo1 == oo1).
+       * @example oo1_gm
+       */
+      userName?: string;
       /** @example Фотограф из Душанбе */
       about?: string;
       /**
@@ -3901,6 +4042,99 @@ export interface components {
       /** @example Спам */
       reason: string;
     };
+    TagActionDto: {
+      /**
+       * @description Итог: ACCEPTED → пост в «Фото с вами», DECLINED → скрыт
+       * @example ACCEPTED
+       * @enum {string}
+       */
+      status: "PENDING" | "ACCEPTED" | "DECLINED";
+    };
+    SettingsDto: {
+      /** @example true */
+      pushEnabled: boolean;
+      /** @example true */
+      emailEnabled: boolean;
+      /** @enum {string} */
+      whoCanTag: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /** @enum {string} */
+      whoCanMention: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /** @enum {string} */
+      whoCanMessage: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /** @enum {string} */
+      whoCanComment: "EVERYONE" | "FOLLOWERS" | "MUTUAL" | "OFF";
+      /** @example true */
+      allowGifComments: boolean;
+      /** @example true */
+      allowStoryReshare: boolean;
+      /**
+       * @example [
+       *       "спам"
+       *     ]
+       */
+      hiddenWords: string[];
+      /** @example ru */
+      language: string;
+    };
+    UpdateSettingsDto: {
+      /**
+       * @description Push-уведомления
+       * @example true
+       */
+      pushEnabled?: boolean;
+      /**
+       * @description Уведомления по email
+       * @example true
+       */
+      emailEnabled?: boolean;
+      /**
+       * @description Кто может отмечать меня
+       * @enum {string}
+       */
+      whoCanTag?: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /**
+       * @description Кто может @упоминать меня
+       * @enum {string}
+       */
+      whoCanMention?: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /**
+       * @description Кто может писать мне (иначе — в запросы)
+       * @enum {string}
+       */
+      whoCanMessage?: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /**
+       * @description Кто может комментировать мои публикации
+       * @enum {string}
+       */
+      whoCanComment?: "EVERYONE" | "FOLLOWERS" | "MUTUAL" | "OFF";
+      /**
+       * @description Разрешить GIF в комментариях
+       * @example true
+       */
+      allowGifComments?: boolean;
+      /**
+       * @description Разрешить репосты моих историй
+       * @example true
+       */
+      allowStoryReshare?: boolean;
+      /**
+       * @description Скрытые слова: комментарии с этими словами отклоняются
+       * @example [
+       *       "спам",
+       *       "реклама"
+       *     ]
+       */
+      hiddenWords?: string[];
+      /**
+       * @description Язык интерфейса (код)
+       * @example ru
+       */
+      language?: string;
+    };
+    RestrictActionDto: {
+      /** @example true */
+      restricted: boolean;
+    };
     StoryDto: {
       /** @example 12 */
       id: number;
@@ -3937,6 +4171,11 @@ export interface components {
       filter?: string | null;
       /** @example false */
       closeFriendsOnly: boolean;
+      /**
+       * @description Сохранится ли в архив после истечения 24ч
+       * @example true
+       */
+      saveToArchive: boolean;
       /** @description id поста, если история — репост */
       fromPostId?: number | null;
       /**
@@ -4118,6 +4357,8 @@ export interface components {
       music?: components["schemas"]["NoteMusicDto"] | null;
       /** @example #FFB6C1 */
       bgColor?: string | null;
+      /** @example #222222 */
+      textColor?: string | null;
       /**
        * @description Кому видна: подписчикам или только близким друзьям
        * @example FOLLOWERS
@@ -4165,6 +4406,11 @@ export interface components {
        */
       bgColor?: string;
       /**
+       * @description Цвет текста заметки (hex)
+       * @example #222222
+       */
+      textColor?: string;
+      /**
        * @description Кому видна заметка: FOLLOWERS — всем подписчикам, CLOSE_FRIENDS — только близким друзьям.
        * @default FOLLOWERS
        * @enum {string}
@@ -4178,6 +4424,8 @@ export interface components {
       musicId?: number;
       /** @example #87CEEB */
       bgColor?: string;
+      /** @example #222222 */
+      textColor?: string;
     };
     NoteLikeToggleDto: {
       /** @example true */
@@ -4207,6 +4455,13 @@ export interface components {
        * @example 128
        */
       messageId: number;
+    };
+    NoteReactionDto: {
+      /**
+       * @description Эмодзи-реакция на заметку (уходит в личку автору, как в историях)
+       * @example ❤️
+       */
+      emoji: string;
     };
     NoteReplyItemDto: {
       /** @example 15 */
@@ -4748,6 +5003,16 @@ export interface components {
       trialEndsAt?: string | null;
       /** Format: date-time */
       currentPeriodEnd?: string | null;
+      /**
+       * @description Цена подписки в $/мес (после 7 дней бесплатного триала)
+       * @example 10
+       */
+      priceUsd: number;
+      /**
+       * @description Сколько дней бесплатного триала даётся
+       * @example 7
+       */
+      trialDays: number;
     };
     AdminUserDto: {
       id: string;
@@ -6713,6 +6978,29 @@ export interface operations {
       };
     };
   };
+  PostsController_pendingTags: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"][];
+        };
+      };
+    };
+  };
   PostsController_byId: {
     parameters: {
       query?: never;
@@ -6975,6 +7263,48 @@ export interface operations {
       };
     };
   };
+  PostsController_acceptTag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagActionDto"];
+        };
+      };
+    };
+  };
+  PostsController_declineTag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagActionDto"];
+        };
+      };
+    };
+  };
   PostsController_comments: {
     parameters: {
       query?: {
@@ -7026,6 +7356,109 @@ export interface operations {
       };
     };
   };
+  SettingsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingsDto"];
+        };
+      };
+    };
+  };
+  SettingsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateSettingsDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingsDto"];
+        };
+      };
+    };
+  };
+  SettingsController_restricted: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserBriefDto"][];
+        };
+      };
+    };
+  };
+  SettingsController_restrict: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RestrictActionDto"];
+        };
+      };
+    };
+  };
+  SettingsController_unrestrict: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RestrictActionDto"];
+        };
+      };
+    };
+  };
   StoriesController_rail: {
     parameters: {
       query?: never;
@@ -7066,6 +7499,8 @@ export interface operations {
           filter?: string;
           /** @example false */
           closeFriendsOnly?: boolean;
+          /** @example true */
+          saveToArchive?: boolean;
           /** @example 12 */
           fromPostId?: number;
         };
@@ -7618,6 +8053,31 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["NoteReplyDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NoteReplySentDto"];
+        };
+      };
+    };
+  };
+  NotesController_reaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NoteReactionDto"];
       };
     };
     responses: {

@@ -1689,7 +1689,7 @@
     },
     "/api/spotify/search": {
       "get": {
-        "description": "Ищет ТОЛЬКО в Spotify. Пока у владельца Spotify-приложения нет Premium, отвечает 503. Для поиска любой песни мира используйте /music/online — он работает без подписок.",
+        "description": "Ищет песню в доступном каталоге: сначала Deezer (работает без подписок), Spotify подключается сам, когда у владельца приложения появится Premium. Поле spotifyId — составной id (PROVIDER:externalId), шлите его в save/unsave как есть.",
         "operationId": "SpotifyController_search",
         "parameters": [
           {
@@ -1725,7 +1725,7 @@
           }
         },
         "security": [{ "bearer": [] }],
-        "summary": "Поиск треков в Spotify (устарел — см. GET /music/online)",
+        "summary": "Поиск музыки (Deezer + Spotify)",
         "tags": ["spotify"]
       }
     },
@@ -2084,6 +2084,45 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/tags/pending": {
+      "get": {
+        "description": "Публикации, где меня отметили, но я ещё не принял. Принять → «Фото с вами».",
+        "operationId": "PostsController_pendingTags",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Мои неподтверждённые отметки (ревью)",
+        "tags": ["posts"]
+      }
+    },
     "/api/posts/{id}": {
       "get": {
         "operationId": "PostsController_byId",
@@ -2329,6 +2368,46 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/{id}/tag/accept": {
+      "post": {
+        "description": "Меня отметили → подтверждаю → пост появляется в моём «Фото с вами».",
+        "operationId": "PostsController_acceptTag",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TagActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Принять отметку на публикации",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/tag/decline": {
+      "post": {
+        "description": "Скрываю отметку: пост НЕ показывается в «Фото с вами».",
+        "operationId": "PostsController_declineTag",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TagActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Отклонить/убрать отметку на публикации",
+        "tags": ["posts"]
+      }
+    },
     "/api/posts/{id}/comments": {
       "post": {
         "operationId": "PostsController_addComment",
@@ -2395,6 +2474,103 @@
         "tags": ["posts"]
       }
     },
+    "/api/settings": {
+      "get": {
+        "operationId": "SettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SettingsDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Мои настройки (уведомления, приватность взаимодействий, язык)",
+        "tags": ["settings"]
+      },
+      "put": {
+        "description": "Push/email, кто может отмечать/упоминать/писать/комментировать, GIF в комментариях, репосты историй, скрытые слова, язык. Любое подмножество полей.",
+        "operationId": "SettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/UpdateSettingsDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SettingsDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Изменить настройки",
+        "tags": ["settings"]
+      }
+    },
+    "/api/settings/restricted": {
+      "get": {
+        "operationId": "SettingsController_restricted",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/UserBriefDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Аккаунты с ограничениями",
+        "tags": ["settings"]
+      }
+    },
+    "/api/settings/restricted/{userId}": {
+      "post": {
+        "operationId": "SettingsController_restrict",
+        "parameters": [
+          { "name": "userId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RestrictActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Ограничить аккаунт",
+        "tags": ["settings"]
+      },
+      "delete": {
+        "operationId": "SettingsController_unrestrict",
+        "parameters": [
+          { "name": "userId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RestrictActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Снять ограничение",
+        "tags": ["settings"]
+      }
+    },
     "/api/stories": {
       "post": {
         "description": "multipart. Поле «media» — файлы (фото/видео). Плюс musicId, musicStartSec, overlays (JSON), filter, closeFriendsOnly, fromPostId (репост поста в историю). Каждая история живёт 24ч.",
@@ -2416,6 +2592,7 @@
                   },
                   "filter": { "type": "string", "example": "clarendon" },
                   "closeFriendsOnly": { "type": "boolean", "example": false },
+                  "saveToArchive": { "type": "boolean", "example": true },
                   "fromPostId": { "type": "number", "example": 12 }
                 }
               }
@@ -2944,6 +3121,32 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Ответить на заметку → сообщение в чат",
+        "tags": ["notes"]
+      }
+    },
+    "/api/notes/{id}/reaction": {
+      "post": {
+        "description": "Как реакция на историю: эмодзи уходит сообщением автору. Нельзя на свою заметку.",
+        "operationId": "NotesController_reaction",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/NoteReactionDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/NoteReplySentDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Эмодзи-реакция на заметку → в личку автору",
         "tags": ["notes"]
       }
     },
@@ -5398,6 +5601,13 @@
       "UpdateProfileDto": {
         "type": "object",
         "properties": {
+          "userName": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 30,
+            "example": "oo1_gm",
+            "description": "Новый username. Если занят — 409; регистр не важен (Oo1 == oo1)."
+          },
           "about": { "type": "string", "maxLength": 150, "example": "Фотограф из Душанбе" },
           "website": { "type": "string", "format": "uri", "example": "https://eraj.dev" },
           "gender": {
@@ -6020,6 +6230,104 @@
         "properties": { "reason": { "type": "string", "maxLength": 500, "example": "Спам" } },
         "required": ["reason"]
       },
+      "TagActionDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": ["PENDING", "ACCEPTED", "DECLINED"],
+            "type": "string",
+            "example": "ACCEPTED",
+            "description": "Итог: ACCEPTED → пост в «Фото с вами», DECLINED → скрыт"
+          }
+        },
+        "required": ["status"]
+      },
+      "SettingsDto": {
+        "type": "object",
+        "properties": {
+          "pushEnabled": { "type": "boolean", "example": true },
+          "emailEnabled": { "type": "boolean", "example": true },
+          "whoCanTag": { "enum": ["EVERYONE", "FOLLOWING", "NOBODY"], "type": "string" },
+          "whoCanMention": { "enum": ["EVERYONE", "FOLLOWING", "NOBODY"], "type": "string" },
+          "whoCanMessage": { "enum": ["EVERYONE", "FOLLOWING", "NOBODY"], "type": "string" },
+          "whoCanComment": { "enum": ["EVERYONE", "FOLLOWERS", "MUTUAL", "OFF"], "type": "string" },
+          "allowGifComments": { "type": "boolean", "example": true },
+          "allowStoryReshare": { "type": "boolean", "example": true },
+          "hiddenWords": { "example": ["спам"], "type": "array", "items": { "type": "string" } },
+          "language": { "type": "string", "example": "ru" }
+        },
+        "required": [
+          "pushEnabled",
+          "emailEnabled",
+          "whoCanTag",
+          "whoCanMention",
+          "whoCanMessage",
+          "whoCanComment",
+          "allowGifComments",
+          "allowStoryReshare",
+          "hiddenWords",
+          "language"
+        ]
+      },
+      "UpdateSettingsDto": {
+        "type": "object",
+        "properties": {
+          "pushEnabled": { "type": "boolean", "example": true, "description": "Push-уведомления" },
+          "emailEnabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "Уведомления по email"
+          },
+          "whoCanTag": {
+            "enum": ["EVERYONE", "FOLLOWING", "NOBODY"],
+            "type": "string",
+            "description": "Кто может отмечать меня"
+          },
+          "whoCanMention": {
+            "enum": ["EVERYONE", "FOLLOWING", "NOBODY"],
+            "type": "string",
+            "description": "Кто может @упоминать меня"
+          },
+          "whoCanMessage": {
+            "enum": ["EVERYONE", "FOLLOWING", "NOBODY"],
+            "type": "string",
+            "description": "Кто может писать мне (иначе — в запросы)"
+          },
+          "whoCanComment": {
+            "enum": ["EVERYONE", "FOLLOWERS", "MUTUAL", "OFF"],
+            "type": "string",
+            "description": "Кто может комментировать мои публикации"
+          },
+          "allowGifComments": {
+            "type": "boolean",
+            "example": true,
+            "description": "Разрешить GIF в комментариях"
+          },
+          "allowStoryReshare": {
+            "type": "boolean",
+            "example": true,
+            "description": "Разрешить репосты моих историй"
+          },
+          "hiddenWords": {
+            "maxItems": 200,
+            "description": "Скрытые слова: комментарии с этими словами отклоняются",
+            "example": ["спам", "реклама"],
+            "type": "array",
+            "items": { "type": "string", "maxLength": 50 }
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 10,
+            "example": "ru",
+            "description": "Язык интерфейса (код)"
+          }
+        }
+      },
+      "RestrictActionDto": {
+        "type": "object",
+        "properties": { "restricted": { "type": "boolean", "example": true } },
+        "required": ["restricted"]
+      },
       "StoryDto": {
         "type": "object",
         "properties": {
@@ -6045,6 +6353,11 @@
           },
           "filter": { "type": "string", "nullable": true },
           "closeFriendsOnly": { "type": "boolean", "example": false },
+          "saveToArchive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Сохранится ли в архив после истечения 24ч"
+          },
           "fromPostId": {
             "type": "number",
             "nullable": true,
@@ -6066,6 +6379,7 @@
           "mediaType",
           "duration",
           "closeFriendsOnly",
+          "saveToArchive",
           "isViewed",
           "isLiked",
           "likesCount",
@@ -6272,6 +6586,7 @@
             "allOf": [{ "$ref": "#/components/schemas/NoteMusicDto" }]
           },
           "bgColor": { "type": "string", "nullable": true, "example": "#FFB6C1" },
+          "textColor": { "type": "string", "nullable": true, "example": "#222222" },
           "audience": {
             "enum": ["FOLLOWERS", "CLOSE_FRIENDS"],
             "type": "string",
@@ -6317,6 +6632,12 @@
             "example": "#FFB6C1",
             "description": "Цвет фона заметки (hex)"
           },
+          "textColor": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#222222",
+            "description": "Цвет текста заметки (hex)"
+          },
           "audience": {
             "enum": ["FOLLOWERS", "CLOSE_FRIENDS"],
             "type": "string",
@@ -6331,7 +6652,8 @@
         "properties": {
           "text": { "type": "string", "maxLength": 60, "example": "Новый текст" },
           "musicId": { "type": "number", "example": 36 },
-          "bgColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "example": "#87CEEB" }
+          "bgColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "example": "#87CEEB" },
+          "textColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "example": "#222222" }
         }
       },
       "NoteLikeToggleDto": {
@@ -6367,6 +6689,17 @@
           }
         },
         "required": ["sent", "chatId", "messageId"]
+      },
+      "NoteReactionDto": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string",
+            "example": "❤️",
+            "description": "Эмодзи-реакция на заметку (уходит в личку автору, как в историях)"
+          }
+        },
+        "required": ["emoji"]
       },
       "NoteReplyItemDto": {
         "type": "object",
@@ -7036,9 +7369,19 @@
             "description": "Дней до конца триала/периода"
           },
           "trialEndsAt": { "type": "string", "nullable": true, "format": "date-time" },
-          "currentPeriodEnd": { "type": "string", "nullable": true, "format": "date-time" }
+          "currentPeriodEnd": { "type": "string", "nullable": true, "format": "date-time" },
+          "priceUsd": {
+            "type": "number",
+            "example": 10,
+            "description": "Цена подписки в $/мес (после 7 дней бесплатного триала)"
+          },
+          "trialDays": {
+            "type": "number",
+            "example": 7,
+            "description": "Сколько дней бесплатного триала даётся"
+          }
         },
-        "required": ["isVerified", "trialUsed"]
+        "required": ["isVerified", "trialUsed", "priceUsd", "trialDays"]
       },
       "AdminUserDto": {
         "type": "object",

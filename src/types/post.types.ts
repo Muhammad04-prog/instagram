@@ -38,12 +38,54 @@ export function mediaPoster(media: PostMediaDto): string {
   return media.thumbUrl ?? `${media.url}#t=0.1`;
 }
 
-/** The tile a grid shows for a post: its first slide. */
-export function coverMedia(post: PostDto): PostMediaDto | undefined {
-  return post.media[0];
+/**
+ * A grid tile can arrive in one of two real shapes:
+ *  - a full `PostDto` with `media: [...]` (feed, explore, search)
+ *  - a lighter summary with `coverUrl` and no `media[]` (profile posts/reels/
+ *    tagged, favorites, reposts). Swagger types every list as `PostDto`, but the
+ *    live API answers the profile grids with the summary — the mismatch used to
+ *    crash `coverMedia` (`post.media[0]` on `undefined`) the moment a profile had
+ *    a post. So the helpers below read whichever shape is present.
+ */
+export interface PostGridSummary {
+  id: number;
+  caption?: string | null;
+  isReel?: boolean;
+  coverUrl?: string | null;
+  likesCount: number;
+  commentsCount: number;
+}
+
+export type GridPost = PostDto | PostGridSummary;
+
+function gridMedia(post: GridPost): PostMediaDto[] | undefined {
+  return (post as PostDto).media;
+}
+
+/** The tile a grid shows for a post: its first slide (full DTO) if present. */
+export function coverMedia(post: GridPost): PostMediaDto | undefined {
+  return gridMedia(post)?.[0];
+}
+
+/** Resolved cover image/video URL for a grid tile, from either shape. */
+export function gridCoverUrl(post: GridPost): string | null {
+  const cover = coverMedia(post);
+  if (cover) return mediaPoster(cover);
+  return (post as PostGridSummary).coverUrl ?? null;
+}
+
+/** `true` when the tile should render a `<video>` element (real video media). */
+export function gridHasVideo(post: GridPost): boolean {
+  const cover = coverMedia(post);
+  return Boolean(cover && isVideo(cover));
+}
+
+/** `true` when the clip badge belongs on the tile (video media or a reel). */
+export function gridIsClip(post: GridPost): boolean {
+  return gridHasVideo(post) || Boolean((post as PostGridSummary).isReel);
 }
 
 /** `true` when the post is a carousel — drives the stacked-squares badge. */
-export function isCarousel(post: PostDto): boolean {
-  return post.media.length > 1;
+export function isCarousel(post: GridPost): boolean {
+  return (gridMedia(post)?.length ?? 0) > 1;
 }
