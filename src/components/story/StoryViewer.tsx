@@ -1,9 +1,9 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Eye, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Music2, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HeartIcon } from "@/components/icons";
 import { StoryReplyBar } from "@/components/story/StoryReplyBar";
 import { StoryViewersSheet } from "@/components/story/StoryViewersSheet";
@@ -16,7 +16,11 @@ import { useDeleteStory, useLikeStory, useMarkStorySeen, useUserStories } from "
 import { useUserProfile } from "@/hooks/useProfile";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { filterCss } from "@/lib/filters";
 import { cn, getImageUrl } from "@/lib/utils";
+
+/** One parsed overlay from `StoryDto.overlays` (text/sticker; x/y are 0–1). */
+type StoryOverlay = { type?: string; value?: string; x?: number; y?: number };
 
 const SLIDE_MS = 5000;
 const TICK_MS = 50;
@@ -50,6 +54,7 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const [replying, setReplying] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [broken, setBroken] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const stories = data ?? [];
   const current = stories[index];
@@ -77,6 +82,19 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   useEffect(() => {
     if (current) markSeen(current.id);
   }, [current, markSeen]);
+
+  // The attached track plays while the slide is up and mirrors the pause state
+  // (hold-to-pause, reply bar, viewers sheet). Autoplay-with-sound is allowed
+  // because the viewer was opened by a click; a rejected play is swallowed.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (paused || viewersOpen || confirmOpen || replying) {
+      audio.pause();
+    } else {
+      void audio.play().catch(() => {});
+    }
+  }, [paused, viewersOpen, confirmOpen, replying, current]);
 
   useEffect(() => {
     if (!current || paused || viewersOpen || confirmOpen || replying) return;
@@ -116,6 +134,12 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   }
 
   const url = getImageUrl(current.mediaUrl) ?? "";
+  const mediaFilter = filterCss(current.filter);
+  const overlays: StoryOverlay[] = Array.isArray(current.overlays)
+    ? (current.overlays as StoryOverlay[])
+    : [];
+  const music = current.music;
+  const audioSrc = music?.streamUrl ?? music?.previewUrl ?? null;
 
   return (
     <div className="relative mx-auto flex h-[90vh] w-[420px] max-w-[95vw] flex-col overflow-hidden rounded-lg bg-black">
@@ -198,10 +222,45 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
             fill
             sizes="420px"
             className="object-contain"
+            style={mediaFilter ? { filter: mediaFilter } : undefined}
             priority
             onError={() => setBroken(true)}
           />
         )}
+
+        {/* Text stickers baked into the story, positioned by their 0–1 x/y
+            (centre-top when the author left no coordinates). */}
+        {overlays.map((overlay, position) =>
+          overlay.type === "text" && overlay.value ? (
+            <p
+              key={position}
+              className="pointer-events-none absolute z-[6] max-w-[85%] -translate-x-1/2 -translate-y-1/2 px-2 text-center text-xl font-bold break-words text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]"
+              style={{ left: `${(overlay.x ?? 0.5) * 100}%`, top: `${(overlay.y ?? 0.18) * 100}%` }}
+            >
+              {overlay.value}
+            </p>
+          ) : null,
+        )}
+
+        {/* Music sticker + the track itself, keyed to the slide so it restarts. */}
+        {audioSrc ? (
+          <>
+            {}
+            <audio ref={audioRef} key={current.id} src={audioSrc} loop />
+            <div className="pointer-events-none absolute bottom-4 left-1/2 z-[6] flex max-w-[80%] -translate-x-1/2 items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 backdrop-blur-sm">
+              {music?.coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- external album art, hosts vary
+                <img src={music.coverUrl} alt="" className="size-6 shrink-0 rounded object-cover" />
+              ) : (
+                <Music2 className="size-4 shrink-0 text-white" />
+              )}
+              <span className="truncate text-xs font-semibold text-white">
+                {music?.title}
+                {music?.artist ? ` · ${music.artist}` : ""}
+              </span>
+            </div>
+          </>
+        ) : null}
 
         <button
           type="button"
