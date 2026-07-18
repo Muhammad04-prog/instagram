@@ -18,6 +18,16 @@ export function useUsers(q: string, enabled = true) {
   });
 }
 
+/** Exact match for @mentions / `/u/{userName}` — a 404 means no such user. */
+export function useUserByUserName(userName: string) {
+  return useQuery({
+    queryKey: queryKeys.users.byUserName(userName),
+    queryFn: () => userService.getByUserName(userName),
+    enabled: userName.length > 0,
+    retry: false,
+  });
+}
+
 export function useSuggestions() {
   return useQuery({
     queryKey: queryKeys.users.suggestions(),

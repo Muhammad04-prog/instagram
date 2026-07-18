@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useMyProfile } from "@/hooks/useProfile";
-import { useSidebarForcedCollapsed } from "@/hooks/useSidebarState";
+import { useSidebarForcedCollapsed, useSidebarHoverLocked } from "@/hooks/useSidebarState";
 import { Link, usePathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,7 @@ export function Sidebar() {
   const forcedCollapsed = useSidebarForcedCollapsed();
   // Only when not forced narrow may the rail stay open at ≥1264px.
   const wide = !forcedCollapsed;
+  const hoverLocked = useSidebarHoverLocked();
 
   return (
     <nav
@@ -63,8 +64,9 @@ export function Sidebar() {
         "group border-ig-border bg-ig-bg fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r px-3 pt-8 pb-4 md:flex",
         "w-sidebar-collapsed transition-[width] duration-200 ease-in-out",
         // Hover-expand would slide the 244px rail straight over the slide-out
-        // panel (which is anchored at 73px), so it is suppressed while one is open.
-        panel === null && "hover:w-sidebar",
+        // panel (which is anchored at 73px) or the Settings columns, so it is
+        // suppressed in those states.
+        !hoverLocked && "hover:w-sidebar",
         wide && "xl:w-sidebar",
       )}
     >
@@ -74,9 +76,13 @@ export function Sidebar() {
         className="mb-[67px] flex h-[42px] shrink-0 items-center px-3"
       >
         <InstagramGlyph
-          className={cn("text-ig-text size-6 group-hover:hidden", wide && "xl:hidden")}
+          className={cn(
+            "text-ig-text size-6",
+            !hoverLocked && "group-hover:hidden",
+            wide && "xl:hidden",
+          )}
         />
-        <span className={cn("hidden group-hover:block", wide && "xl:block")}>
+        <span className={cn("hidden", !hoverLocked && "group-hover:block", wide && "xl:block")}>
           <InstagramWordmark />
         </span>
       </Link>
@@ -87,6 +93,7 @@ export function Sidebar() {
           href={ROUTES.home}
           label={t("home")}
           wide={wide}
+          hoverLocked={hoverLocked}
           active={pathname === "/" && !panel}
           icon={(active) => <HomeIcon filled={active} />}
           onNavigate={closePanel}
@@ -94,6 +101,7 @@ export function Sidebar() {
         <PanelButton
           label={t("search")}
           wide={wide}
+          hoverLocked={hoverLocked}
           active={panel === "search"}
           onClick={() => togglePanel("search")}
           icon={<SearchIcon />}
@@ -102,6 +110,7 @@ export function Sidebar() {
           href={ROUTES.explore}
           label={t("explore")}
           wide={wide}
+          hoverLocked={hoverLocked}
           active={pathname.startsWith("/explore") && !panel}
           icon={(active) => <CompassIcon filled={active} />}
           onNavigate={closePanel}
@@ -110,6 +119,7 @@ export function Sidebar() {
           href={ROUTES.reels}
           label={t("reels")}
           wide={wide}
+          hoverLocked={hoverLocked}
           active={pathname.startsWith("/reels") && !panel}
           icon={(active) => <ReelsIcon filled={active} />}
           onNavigate={closePanel}
@@ -118,6 +128,7 @@ export function Sidebar() {
           href={ROUTES.chat}
           label={t("messages")}
           wide={wide}
+          hoverLocked={hoverLocked}
           active={pathname.startsWith("/chat") && !panel}
           icon={(active) => <MessageIcon filled={active} />}
           onNavigate={closePanel}
@@ -125,6 +136,7 @@ export function Sidebar() {
         <PanelButton
           label={t("notifications")}
           wide={wide}
+          hoverLocked={hoverLocked}
           active={panel === "notifications"}
           onClick={() => togglePanel("notifications")}
           icon={
@@ -154,7 +166,11 @@ export function Sidebar() {
             <span className="[&_svg]:size-6 [&_svg]:shrink-0">
               <CreateIcon />
             </span>
-            <SidebarLabel wide={wide} bold={pathname.startsWith("/post/create")}>
+            <SidebarLabel
+              wide={wide}
+              hoverLocked={hoverLocked}
+              bold={pathname.startsWith("/post/create")}
+            >
               {t("create")}
             </SidebarLabel>
           </DropdownMenuTrigger>
@@ -171,6 +187,7 @@ export function Sidebar() {
           href={ROUTES.myProfile}
           label={t("profile")}
           wide={wide}
+          hoverLocked={hoverLocked}
           active={pathname.startsWith("/profile")}
           onNavigate={closePanel}
           icon={(active) => (
@@ -185,10 +202,11 @@ export function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <MoreMenu wide={wide} />
+        <MoreMenu wide={wide} hoverLocked={hoverLocked} />
         <PanelButton
           label={t("otherProducts")}
           wide={wide}
+          hoverLocked={hoverLocked}
           icon={<AppsIcon />}
           onClick={() => undefined}
         />
@@ -206,6 +224,7 @@ function Item({
   icon,
   active,
   wide,
+  hoverLocked,
   onNavigate,
 }: {
   href: string;
@@ -213,6 +232,7 @@ function Item({
   icon: (active: boolean) => ReactNode;
   active: boolean;
   wide: boolean;
+  hoverLocked: boolean;
   onNavigate: () => void;
 }) {
   return (
@@ -223,7 +243,7 @@ function Item({
       className={rowStyles}
     >
       <span className="[&_svg]:size-6 [&_svg]:shrink-0">{icon(active)}</span>
-      <SidebarLabel wide={wide} bold={active}>
+      <SidebarLabel wide={wide} hoverLocked={hoverLocked} bold={active}>
         {label}
       </SidebarLabel>
     </Link>
@@ -235,12 +255,14 @@ function PanelButton({
   icon,
   active = false,
   wide,
+  hoverLocked,
   onClick,
 }: {
   label: string;
   icon: ReactNode;
   active?: boolean;
   wide: boolean;
+  hoverLocked: boolean;
   onClick: () => void;
 }) {
   return (
@@ -252,7 +274,7 @@ function PanelButton({
       className={cn(rowStyles, active && "ring-ig-border ring-1")}
     >
       <span className="[&_svg]:size-6 [&_svg]:shrink-0">{icon}</span>
-      <SidebarLabel wide={wide} bold={active}>
+      <SidebarLabel wide={wide} hoverLocked={hoverLocked} bold={active}>
         {label}
       </SidebarLabel>
     </button>

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = "C:/Users/Muhammad/Desktop/instagram";
+const ROOT = path.resolve(__dirname, "..");
 const spec = require(ROOT + "/docs/swagger-v2.json");
 
 /** Every service call site in src/, so "wired?" is measured, not claimed. */
@@ -24,8 +24,11 @@ const serviceFiles = sources.filter((s) => /services\/.*\.service\.ts$/.test(s.f
 // Map "METHOD /api/x/y" -> service method name, by finding http.<verb>(`/x/y`) literals.
 const wired = new Map();
 for (const svc of serviceFiles) {
+  // The type-argument part must tolerate one level of nesting (`Page<MessageDto>`),
+  // not just a bare `<ChatDetailDto>` — otherwise every paginated list endpoint
+  // (http.get<Page<T>>(...)) silently fails to match and reports as unwired.
   const re =
-    /(\w+):\s*\([^)]*\)\s*=>\s*(?:\{[\s\S]*?)?http\.(get|post|put|delete|patch)<[^>]*>\(\s*[`"']([^`"']+)[`"']/g;
+    /(\w+):\s*\([^)]*\)\s*=>\s*(?:\{[\s\S]*?)?http\.(get|post|put|delete|patch)<[^<>]*(?:<[^<>]*>[^<>]*)*>\(\s*[`"']([^`"']+)[`"']/g;
   let m;
   while ((m = re.exec(svc.text))) {
     const [, method, verb, url] = m;

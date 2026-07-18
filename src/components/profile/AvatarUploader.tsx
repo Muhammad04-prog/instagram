@@ -59,7 +59,7 @@ export function AvatarUploader({ profile }: { profile: ProfileDto }) {
           disabled={busy}
           className="bg-ig-primary hover:bg-ig-primary-hover rounded-lg px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {t("newPhoto")}
+          {profile.avatarUrl ? t("changePhoto") : t("newPhoto")}
         </button>
       </div>
 

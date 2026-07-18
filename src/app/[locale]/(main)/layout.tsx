@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FloatingMessages } from "@/components/chat/FloatingMessages";
 import { ContentArea } from "@/components/layout/ContentArea";
 import { MusicPlayerBar } from "@/components/music/MusicPlayerBar";
 import { MobileNav } from "@/components/layout/MobileNav";
@@ -27,6 +28,7 @@ export default function MainLayout({ children, modal }: { children: ReactNode; m
       {modal}
       {/* Mounted once, above the nav: a track must survive navigation. */}
       <MusicPlayerBar />
+      <FloatingMessages />
       <MobileNav />
     </div>
   );

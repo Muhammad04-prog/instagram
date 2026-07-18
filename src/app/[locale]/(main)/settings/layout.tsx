@@ -5,7 +5,9 @@ import { SettingsNav } from "@/components/settings/SettingsNav";
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-8 px-4 py-8 md:flex-row md:px-6">
-      <SettingsNav />
+      <div className="md:sticky md:top-0 md:h-screen md:overflow-y-auto">
+        <SettingsNav />
+      </div>
       <main className="min-w-0 flex-1">{children}</main>
     </div>
   );

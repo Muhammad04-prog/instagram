@@ -9,21 +9,17 @@ import { useStartLive } from "@/hooks/useLive";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { useLiveSessionStore } from "@/store/live-session.store";
 import type { UploadedMediaDto } from "@/types/api.types";
 
-/**
- * The pre-flight screen: name the broadcast, then open the room.
- *
- * IG shows a camera preview here. We do not, because the picture never reaches
- * the room anyway (see `LiveStage`) and a preview would promise a stream that
- * the next screen cannot deliver.
- */
+/** The pre-flight screen: name the broadcast, then open the room. */
 export function GoLiveScreen() {
   const t = useTranslations("live");
   const router = useRouter();
   const { user } = useAuth();
   const { data: profile } = useMyProfile();
   const start = useStartLive();
+  const setHostCredentials = useLiveSessionStore((s) => s.setHostCredentials);
   const [title, setTitle] = useState("");
   const [cover, setCover] = useState<UploadedMediaDto | null>(null);
 
@@ -59,7 +55,12 @@ export function GoLiveScreen() {
               ...(title.trim() ? { title: title.trim() } : {}),
               ...(cover ? { coverUrl: cover.url } : {}),
             },
-            { onSuccess: ({ live }) => router.replace(ROUTES.live(live.id)) },
+            {
+              onSuccess: ({ live, token, wsUrl }) => {
+                setHostCredentials({ liveId: live.id, token, wsUrl });
+                router.replace(ROUTES.live(live.id));
+              },
+            },
           )
         }
         disabled={start.isPending}

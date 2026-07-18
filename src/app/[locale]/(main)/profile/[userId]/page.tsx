@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { OtherProfileView } from "@/components/profile/OtherProfileView";
 import { serverGet } from "@/lib/server-api";
-import type { ProfileDto } from "@/types/profile.types";
+import type { OtherProfileDto } from "@/types/api.types";
 
 export async function generateMetadata({
   params,
@@ -10,9 +10,7 @@ export async function generateMetadata({
   params: Promise<{ userId: string }>;
 }): Promise<Metadata> {
   const { userId } = await params;
-  const profile = await serverGet<ProfileDto>("/ProfileDto/get-user-profile-by-id", {
-    id: userId,
-  });
+  const profile = await serverGet<OtherProfileDto>(`/profile/${userId}`);
 
   if (!profile) return { title: "Profile" };
 

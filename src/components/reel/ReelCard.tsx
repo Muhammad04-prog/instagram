@@ -1,11 +1,14 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { BookmarkIcon, CommentIcon, DotsIcon, HeartIcon, ShareIcon } from "@/components/icons";
+import { CommentForm, CommentList } from "@/components/post/PostComments";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useLikePost, useSavePost, useViewPost } from "@/hooks/usePosts";
 import { Link } from "@/i18n/navigation";
@@ -40,10 +43,18 @@ export function ReelCard({
 
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [burst, setBurst] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   const cover = coverMedia(post);
   const url = cover ? (getImageUrl(cover.url) ?? "") : "";
   const isMine = post.author.id === user?.id;
+
+  const onDoubleTap = () => {
+    setBurst(true);
+    window.setTimeout(() => setBurst(false), 700);
+    if (!post.isLiked) like.mutate(post);
+  };
 
   // Play while at least half of the reel is on screen, pause when it leaves.
   useEffect(() => {
@@ -98,9 +109,23 @@ export function ReelCard({
           muted={muted}
           playsInline
           onClick={togglePlay}
-          onDoubleClick={() => !post.isLiked && like.mutate(post)}
+          onDoubleClick={onDoubleTap}
           className="size-full object-contain"
         />
+
+        <AnimatePresence>
+          {burst ? (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 1] }}
+              exit={{ scale: 1.3, opacity: 0 }}
+              transition={{ duration: 0.45 }}
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
+              <HeartIcon filled className="size-24 text-white drop-shadow-lg" />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         {!playing ? (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -145,6 +170,7 @@ export function ReelCard({
             post={post}
             onLike={() => like.mutate(post)}
             onSave={() => save.mutate({ post })}
+            onOpenComments={() => setCommentsOpen(true)}
           />
         </div>
       </div>
@@ -154,9 +180,41 @@ export function ReelCard({
           post={post}
           onLike={() => like.mutate(post)}
           onSave={() => save.mutate({ post })}
+          onOpenComments={() => setCommentsOpen(true)}
         />
       </div>
+
+      <CommentsSheet postId={post.id} open={commentsOpen} onOpenChange={setCommentsOpen} />
     </section>
+  );
+}
+
+/** Comments without leaving the reels feed — a right-side panel over the video. */
+function CommentsSheet({
+  postId,
+  open,
+  onOpenChange,
+}: {
+  postId: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations("post");
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="bg-ig-bg flex w-[400px] max-w-[92vw] flex-col p-0">
+        <SheetHeader className="border-ig-separator border-b py-3">
+          <SheetTitle className="text-ig-text text-center text-base">
+            {t("commentsTitle")}
+          </SheetTitle>
+        </SheetHeader>
+
+        <CommentList postId={postId} className="flex-1 overflow-y-auto px-4 py-4" />
+
+        <CommentForm postId={postId} className="border-ig-separator border-t px-4" />
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -164,10 +222,12 @@ function ActionRail({
   post,
   onLike,
   onSave,
+  onOpenComments,
 }: {
   post: PostDto;
   onLike: () => void;
   onSave: () => void;
+  onOpenComments: () => void;
 }) {
   const t = useTranslations("post");
 
@@ -183,7 +243,7 @@ function ActionRail({
       <Action
         label={t("comment")}
         count={post.commentsCount}
-        href={ROUTES.post(post.id)}
+        onClick={onOpenComments}
         icon={<CommentIcon className="size-6" />}
       />
       <Action label={t("share")} icon={<ShareIcon className="size-6" />} />

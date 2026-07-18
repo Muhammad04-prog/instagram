@@ -1,6 +1,6 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { Info, Phone, Video } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { MessageBubble } from "@/components/chat/MessageBubble";
@@ -11,7 +11,13 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
-import { useBulkDeleteMessages, useChat, useChatMessages, useMarkChatRead } from "@/hooks/useChat";
+import {
+  useBulkDeleteMessages,
+  useChat,
+  useChatMessages,
+  useChats,
+  useMarkChatRead,
+} from "@/hooks/useChat";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { chatAvatar, chatLabel, type MessageDto } from "@/types/chat.types";
@@ -51,11 +57,18 @@ function groupByDay(messages: MessageDto[]): { day: string; items: MessageDto[] 
   return groups;
 }
 
-export function ChatWindow({ chatId }: { chatId: number }) {
+export function ChatWindow({ chatId, compact = false }: { chatId: number; compact?: boolean }) {
   const t = useTranslations("chat");
   const format = useFormatter();
   const { user } = useAuth();
-  const { data: chat } = useChat(chatId);
+  const { data: chatDetail } = useChat(chatId);
+  // ChatDetailDto never carries peerNickname — only ChatListItemDto does
+  // (a real gap in the backend's response shape) — so the open chat's own
+  // header could never reflect a nickname you'd just set. Borrow it from
+  // the list, which this same page already keeps warm.
+  const { data: chatsData } = useChats();
+  const peerNickname = flattenPages(chatsData).find((c) => c.id === chatId)?.peerNickname;
+  const chat = chatDetail && peerNickname ? { ...chatDetail, peerNickname } : chatDetail;
   const { data, isPending, isError, refetch } = useChatMessages(chatId);
   const bulkDelete = useBulkDeleteMessages(chatId);
 
@@ -88,17 +101,17 @@ export function ChatWindow({ chatId }: { chatId: number }) {
 
   return (
     <div className="flex h-full flex-1 flex-col">
-      {chat ? (
-        <div className="border-ig-border flex items-center gap-3 border-b px-6 py-3">
+      {chat && !compact ? (
+        <div className="border-ig-border flex items-center border-b px-4 py-2">
           {/* A group has no peer and so no profile to open — only its members. */}
           <ChatHeaderShell peerId={chat.peer?.id}>
-            <UserAvatar src={chatAvatar(chat)} size={44} />
+            <UserAvatar src={chatAvatar(chat)} size={28} />
             <span className="min-w-0">
-              <span className="text-ig-text block truncate text-base font-bold">
+              <span className="text-ig-text block truncate text-base leading-tight font-semibold">
                 {chatLabel(chat)}
               </span>
               {/* Presence is real data now — softclub had no online/last-seen at all. */}
-              <span className="text-ig-text-secondary block text-xs">
+              <span className="text-ig-text-secondary block text-xs leading-tight">
                 {chat.isGroup
                   ? t("members", { count: chat.participantsCount })
                   : chat.isOnline
@@ -110,22 +123,38 @@ export function ChatWindow({ chatId }: { chatId: number }) {
             </span>
           </ChatHeaderShell>
 
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            aria-label={t("chatDetails")}
-            className="text-ig-text shrink-0"
-          >
-            <Info className="size-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label={t("voiceCall")}
+              className="text-ig-text rounded-full p-2 transition-colors hover:opacity-70"
+            >
+              <Phone className="size-6" />
+            </button>
+            <button
+              type="button"
+              aria-label={t("videoCall")}
+              className="text-ig-text rounded-full p-2 transition-colors hover:opacity-70"
+            >
+              <Video className="size-6" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              aria-label={t("chatDetails")}
+              className="text-ig-text rounded-full p-2 transition-colors hover:opacity-70"
+            >
+              <Info className="size-6" />
+            </button>
+          </div>
         </div>
       ) : null}
 
-      {chat ? (
+      {chat && !compact ? (
         <ChatSettingsDialog chat={chat} open={settingsOpen} onOpenChange={setSettingsOpen} />
       ) : null}
 
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4">
         {isPending ? (
           <Loader className="py-10" />
         ) : isError ? (
@@ -203,7 +232,7 @@ function SelectionBar({
   const t = useTranslations("chat");
 
   return (
-    <div className="border-ig-border flex items-center gap-3 border-t px-6 py-3">
+    <div className="border-ig-border flex items-center gap-3 border-t px-4 py-3">
       <button type="button" onClick={onCancel} className="text-ig-text text-sm font-semibold">
         {t("cancel")}
       </button>

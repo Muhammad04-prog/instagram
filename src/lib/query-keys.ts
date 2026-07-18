@@ -42,6 +42,7 @@ export const queryKeys = {
   users: {
     all: ["users"] as const,
     search: (q: string) => [...queryKeys.users.all, "search", q] as const,
+    byUserName: (userName: string) => [...queryKeys.users.all, "by-username", userName] as const,
     suggestions: () => [...queryKeys.users.all, "suggestions"] as const,
     searchTexts: () => [...queryKeys.users.all, "search-texts"] as const,
     searchedUsers: () => [...queryKeys.users.all, "searched-users"] as const,
@@ -97,6 +98,8 @@ export const queryKeys = {
     trending: () => [...queryKeys.music.all, "trending"] as const,
     detail: (id: number) => [...queryKeys.music.all, "detail", id] as const,
     saved: () => [...queryKeys.music.all, "saved"] as const,
+    onlineProviders: () => [...queryKeys.music.all, "online-providers"] as const,
+    online: (q: string) => [...queryKeys.music.all, "online", q] as const,
   },
   spotify: {
     all: ["spotify"] as const,

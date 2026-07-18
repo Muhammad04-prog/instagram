@@ -11,9 +11,9 @@
 Это проверка проводки, **не** проверка работоспособности: живьём ответы не сверены — любой
 запрос в БД отвечает 500 `DATABASE_ERROR`, хотя `/health` и рапортует `database: up`.
 
-**Покрытие: 166 / 190** endpoint'ов вызываются из UI.
+**Покрытие: 169 / 190** endpoint'ов вызываются из UI.
 
-Не подключено 24. Это не «не дошли руки»: swagger вырос со 170 до 190 —
+Не подключено 21. Это не «не дошли руки»: swagger вырос со 170 до 190 —
 бэкенд закрыл то, что просил [`BACKEND_PROMPT.md`](./BACKEND_PROMPT.md) (`/socket/ticket`,
 `/chats/calls/ice-servers`, `/live/{id}/requests`, `NotificationDto.requestId`), и заодно
 принёс групповые чаты и внешний каталог музыки. Под фронт это отдельные фазы — см.
@@ -161,19 +161,19 @@
 | [x] | DELETE | `/locations/{id}`       | `location.remove`          | Удалить локацию (у постов locationId → null) |
 | [ ] | GET    | `/locations/{id}/posts` | —                          | Лента постов, снятых в этой локации          |
 
-## music — 6/9
+## music — 9/9
 
-| ✓   | Метод  | Путь                      | Сервис              | Что делает                                            |
-| --- | ------ | ------------------------- | ------------------- | ----------------------------------------------------- |
-| [ ] | GET    | `/music/online/providers` | —                   | Какие каталоги музыки сейчас доступны                 |
-| [ ] | GET    | `/music/online`           | —                   | Поиск любой песни во внешнем каталоге                 |
-| [ ] | POST   | `/music/online/save`      | —                   | Импортировать трек из каталога и сохранить себе       |
-| [x] | GET    | `/music`                  | `music.search`      | Поиск музыки (по title И artist, курсорная пагинация) |
-| [x] | GET    | `/music/trending`         | `music.getTrending` | В тренде                                              |
-| [x] | GET    | `/music/{id}/stream`      | `music.streamUrl`   | Стриминг mp3 с поддержкой Range (перемотка)           |
-| [x] | GET    | `/music/{id}`             | `music.getById`     | Трек по id                                            |
-| [x] | POST   | `/music/{id}/save`        | `music.save`        | Сохранить трек (идемпотентно)                         |
-| [x] | DELETE | `/music/{id}/save`        | `music.unsave`      | Убрать трек из сохранённых                            |
+| ✓   | Метод  | Путь                      | Сервис                     | Что делает                                            |
+| --- | ------ | ------------------------- | -------------------------- | ----------------------------------------------------- |
+| [x] | GET    | `/music/online/providers` | `music.getOnlineProviders` | Какие каталоги музыки сейчас доступны                 |
+| [x] | GET    | `/music/online`           | `music.searchOnline`       | Поиск любой песни во внешнем каталоге                 |
+| [x] | POST   | `/music/online/save`      | `music.saveOnline`         | Импортировать трек из каталога и сохранить себе       |
+| [x] | GET    | `/music`                  | `music.search`             | Поиск музыки (по title И artist, курсорная пагинация) |
+| [x] | GET    | `/music/trending`         | `music.getTrending`        | В тренде                                              |
+| [x] | GET    | `/music/{id}/stream`      | `music.streamUrl`          | Стриминг mp3 с поддержкой Range (перемотка)           |
+| [x] | GET    | `/music/{id}`             | `music.getById`            | Трек по id                                            |
+| [x] | POST   | `/music/{id}/save`        | `music.save`               | Сохранить трек (идемпотентно)                         |
+| [x] | DELETE | `/music/{id}/save`        | `music.unsave`             | Убрать трек из сохранённых                            |
 
 ## notes — 8/9
 

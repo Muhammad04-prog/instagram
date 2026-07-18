@@ -1,7 +1,7 @@
 "use client";
 
 import type { InfiniteData } from "@tanstack/react-query";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useApiError } from "@/hooks/useApiError";
 import { cursorParams, nextCursor } from "@/lib/cursor";
@@ -9,7 +9,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { musicService } from "@/services/music.service";
 import { profileService } from "@/services/profile.service";
 import { usePlayerStore } from "@/store/player.store";
-import type { MusicDto } from "@/types/api.types";
+import type { MusicDto, SaveOnlineTrackDto } from "@/types/api.types";
 
 const PAGE_SIZE = 20;
 
@@ -25,6 +25,34 @@ export function useMusicSearch(q: string) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => nextCursor(last, PAGE_SIZE),
     enabled: q.length > 0,
+  });
+}
+
+/** Which external catalogues (Spotify/Deezer) are actually up right now. */
+export function useOnlineMusicProviders() {
+  return useQuery({
+    queryKey: queryKeys.music.onlineProviders(),
+    queryFn: () => musicService.getOnlineProviders(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+/** Any song, not just what's already in our library — real IG's "search any song". */
+export function useOnlineMusicSearch(q: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.music.online(q),
+    queryFn: () => musicService.searchOnline({ q, limit: 10 }),
+    enabled: enabled && q.length > 0,
+  });
+}
+
+/** Idempotent import — picking an external track saves it first so it has a `musicId`. */
+export function useSaveOnlineTrack() {
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (dto: SaveOnlineTrackDto) => musicService.saveOnline(dto),
+    onError: (error) => toast.error(toMessage(error)),
   });
 }
 
