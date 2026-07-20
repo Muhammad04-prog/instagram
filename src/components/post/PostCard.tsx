@@ -61,7 +61,7 @@ export function PostCard({ post }: { post: PostDto }) {
   const shown = expanded || !isLong ? caption : `${caption.slice(0, CAPTION_CLAMP)}…`;
 
   return (
-    <article ref={ref} className="border-ig-separator border-b pb-4">
+    <article ref={ref} className="border-ig-separator mb-4 border-b pb-4">
       <PostHeader post={post} />
 
       <div className="relative">
@@ -69,7 +69,9 @@ export function PostCard({ post }: { post: PostDto }) {
           media={post.media}
           alt={caption}
           onDoubleTap={onDoubleTap}
-          className="overflow-hidden rounded-sm"
+          // Rounded + hairline border is current IG's feed card; the old
+          // square-cornered media read as a raw image dropped on the page.
+          className="border-ig-separator overflow-hidden rounded-lg border"
         />
 
         <AnimatePresence>
@@ -97,11 +99,11 @@ export function PostCard({ post }: { post: PostDto }) {
         showCounts
         onLikesCountClick={() => setLikesOpen(true)}
         onCommentClick={() => router.push(ROUTES.post(post.id))}
-        className="pt-2"
+        className="pt-3"
       />
 
       {caption ? (
-        <p className="text-ig-text pt-1 text-sm break-words whitespace-pre-line">
+        <p className="text-ig-text pt-2 text-sm break-words whitespace-pre-line">
           <Link href={ROUTES.profile(post.author.id)} className="mr-1.5 font-semibold">
             {post.author.userName}
           </Link>
@@ -119,13 +121,16 @@ export function PostCard({ post }: { post: PostDto }) {
       ) : null}
 
       {post.commentsCount > 0 ? (
-        <Link href={ROUTES.post(post.id)} className="text-ig-text-secondary mt-1 block text-sm">
+        <Link
+          href={ROUTES.post(post.id)}
+          className="text-ig-text-secondary mt-1.5 block text-sm hover:opacity-60"
+        >
           {t("viewAllComments", { count: formatCount(post.commentsCount) })}
         </Link>
       ) : null}
 
       {post.commentsDisabled ? null : (
-        <CommentForm postId={post.id} className="border-ig-separator mt-1 border-t" />
+        <CommentForm postId={post.id} className="border-ig-separator mt-2 border-t" />
       )}
 
       <PostLikesDialog postId={post.id} open={likesOpen} onOpenChange={setLikesOpen} />

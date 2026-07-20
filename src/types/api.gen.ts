@@ -637,8 +637,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Мои репосты */
-    get: operations["ProfileController_reposts"];
+    /**
+     * Мои репосты
+     * @description Посты, которые я репостнул кнопкой «двойная стрелка» (POST /posts/{id}/repost).
+     */
+    get: operations["ProfileController_myReposts"];
     put?: never;
     post?: never;
     delete?: never;
@@ -825,6 +828,23 @@ export interface paths {
     };
     /** Reels пользователя (закрытый аккаунт → 403) */
     get: operations["ProfileController_reels"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/profile/{userId}/reposts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Репосты пользователя (закрытый аккаунт → 403) */
+    get: operations["ProfileController_reposts"];
     put?: never;
     post?: never;
     delete?: never;
@@ -1614,6 +1634,26 @@ export interface paths {
     put?: never;
     /** Сохранить/убрать (toggle). collection — имя коллекции */
     post: operations["PostsController_favorite"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/repost": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Репост (двойная стрелка): вкл/выкл
+     * @description Пост попадает во вкладку «Репосты» моего профиля; повторный вызов снимает репост. Это НЕ «поделиться» — для отправки в чат/историю используйте POST /posts/{id}/share.
+     */
+    post: operations["PostsController_repost"];
     delete?: never;
     options?: never;
     head?: never;
@@ -4605,6 +4645,8 @@ export interface components {
       commentsCount: number;
       /** @example 120 */
       viewsCount: number;
+      /** @example 7 */
+      repostsCount: number;
       /**
        * @description Лайкнул ли Я
        * @example false
@@ -4615,6 +4657,11 @@ export interface components {
        * @example false
        */
       isFavorited: boolean;
+      /**
+       * @description Репостнул ли Я (кнопка «двойная стрелка»)
+       * @example false
+       */
+      isReposted: boolean;
       /**
        * @description Смотрел ли Я этот пост (для ранжированной ленты — просмотренные уходят вниз)
        * @example false
@@ -4779,6 +4826,15 @@ export interface components {
     FavoriteToggleDto: {
       /** @example true */
       favorited: boolean;
+    };
+    RepostToggleDto: {
+      /**
+       * @description true — репостнул, false — репост снят
+       * @example true
+       */
+      reposted: boolean;
+      /** @example 7 */
+      repostsCount: number;
     };
     ShareDto: {
       /**
@@ -5803,6 +5859,7 @@ export interface components {
         | "LIKE_NOTE"
         | "REPLY_NOTE"
         | "SHARE_POST"
+        | "REPOST_POST"
         | "SAVE_POST"
         | "TAG_POST"
         | "PROFILE_VIEW"
@@ -7002,7 +7059,7 @@ export interface operations {
       };
     };
   };
-  ProfileController_reposts: {
+  ProfileController_myReposts: {
     parameters: {
       query?: {
         /** @description Курсор последнего элемента предыдущей страницы */
@@ -7252,6 +7309,31 @@ export interface operations {
     };
   };
   ProfileController_reels: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostBriefDto"][];
+        };
+      };
+    };
+  };
+  ProfileController_reposts: {
     parameters: {
       query?: {
         /** @description Курсор последнего элемента предыдущей страницы */
@@ -8521,6 +8603,34 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["FavoriteToggleDto"];
         };
+      };
+    };
+  };
+  PostsController_repost: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RepostToggleDto"];
+        };
+      };
+      /** @description Нельзя репостить собственную публикацию */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

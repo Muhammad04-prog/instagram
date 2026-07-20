@@ -11,6 +11,7 @@ import type {
   FeedDto,
   InviteCollaboratorsDto,
   LikeToggleDto,
+  RepostToggleDto,
   PostDto,
   PostInsightsDto,
   ReportCreatedDto,
@@ -97,6 +98,12 @@ export const postService = {
 
   getLikes: (id: number, params: CursorParams) =>
     http.get<Page<UserBriefDto>>(`/posts/${id}/likes`, params),
+
+  /**
+   * Toggle → `{ reposted, repostsCount }` — the double-arrow action, not
+   * `share` (which sends the post into a chat and creates nothing).
+   */
+  repost: (id: number) => http.post<RepostToggleDto>(`/posts/${id}/repost`),
 
   /** Counted once per user server-side — safe to fire on every impression. */
   view: (id: number) => http.post<ViewDto>(`/posts/${id}/view`),

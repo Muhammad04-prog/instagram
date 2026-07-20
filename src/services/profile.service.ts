@@ -55,7 +55,16 @@ export const profileService = {
   /** Saved posts — only ever your own. */
   getFavorites: (params: CursorParams) => http.get<Page<PostDto>>("/profile/favorites", params),
 
+  /**
+   * ⚠️ Both repost lists are **paged** — `{ items, nextCursor, hasMore }` —
+   * despite Swagger typing them as a bare `PostBriefDto[]`. Verified against the
+   * live API on 2026-07-20; the real response wins (docs/API_REAL_DTO.md).
+   */
   getMyReposts: (params: CursorParams) => http.get<Page<PostDto>>("/profile/me/reposts", params),
+
+  /** Someone else's reposts tab. A private account they don't follow → 403. */
+  getUserReposts: (userId: string, params: CursorParams) =>
+    http.get<Page<PostDto>>(`/profile/${userId}/reposts`, params),
 
   getSavedMusic: (params: CursorParams) => http.get<MusicDto[]>("/profile/me/saved-music", params),
 

@@ -70,6 +70,7 @@ export type CommentDto = components["schemas"]["CommentDto"];
 export type UpdatePostDto = components["schemas"]["UpdatePostDto"];
 export type ArchiveDto = components["schemas"]["ArchiveDto"];
 export type LikeToggleDto = components["schemas"]["LikeToggleDto"];
+export type RepostToggleDto = components["schemas"]["RepostToggleDto"];
 export type ViewDto = components["schemas"]["ViewDto"];
 export type FavoriteToggleDto = components["schemas"]["FavoriteToggleDto"];
 export type ShareDto = components["schemas"]["ShareDto"];

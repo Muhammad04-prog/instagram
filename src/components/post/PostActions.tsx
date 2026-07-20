@@ -2,10 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
-import { BookmarkIcon, CommentIcon, HeartIcon, ShareIcon } from "@/components/icons";
+import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon, ShareIcon } from "@/components/icons";
 import { SaveToCollectionDialog } from "@/components/post/SaveToCollectionDialog";
 import { ShareSheet } from "@/components/post/ShareSheet";
-import { useLikePost, useSavePost } from "@/hooks/usePosts";
+import { useLikePost, useRepostPost, useSavePost } from "@/hooks/usePosts";
 import { cn, formatCount } from "@/lib/utils";
 import type { PostDto } from "@/types/post.types";
 
@@ -17,10 +17,11 @@ const HOLD_MS = 500;
  *
  * `showCounts` puts the like/comment numbers right next to their icons —
  * real IG's current feed-card look — instead of the count living on its own
- * line below (still how the post-detail modal shows it, img12). There is no
- * "repost" action here: the API has `GET /profile/me/reposts` (reading what
- * you've reposted) but nothing that creates one, so a repost button would
- * press and do nothing real.
+ * line below (still how the post-detail modal shows it, img12).
+ *
+ * Repost is the double-arrow: `POST /posts/{id}/repost`, a toggle that answers
+ * `{ reposted, repostsCount }` and puts the post on your profile's reposts tab.
+ * Not the same action as share, which only forwards it into a chat.
  */
 export function PostActions({
   post,
@@ -40,6 +41,7 @@ export function PostActions({
   const [shareOpen, setShareOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
   const like = useLikePost();
+  const repost = useRepostPost();
   const save = useSavePost();
 
   const holdTimer = useRef<number | undefined>(undefined);
@@ -86,6 +88,28 @@ export function PostActions({
           {showCounts && post.commentsCount > 0 ? (
             <span className="text-ig-text text-sm font-semibold">
               {formatCount(post.commentsCount)}
+            </span>
+          ) : null}
+        </span>
+
+        <span className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={t("repost")}
+            aria-pressed={post.isReposted}
+            onClick={() => repost.mutate(post)}
+            className={cn(
+              "transition-transform active:scale-90",
+              // Reposted turns green, the way IG marks an active double-arrow —
+              // it is not a "like", so it must not read as the red heart.
+              post.isReposted ? "text-ig-close-friends" : "text-ig-text hover:opacity-60",
+            )}
+          >
+            <RepostIcon className="size-6" />
+          </button>
+          {showCounts && post.repostsCount ? (
+            <span className="text-ig-text text-sm font-semibold">
+              {formatCount(post.repostsCount)}
             </span>
           ) : null}
         </span>

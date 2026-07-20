@@ -118,7 +118,8 @@
     "logout": "Баромадан",
     "follow": "Обуна шудан",
     "unreadCount": "{count, plural, other {# огоҳиномаи нохонда}}",
-    "createPost": "Публикатсия"
+    "createPost": "Публикатсия",
+    "noOtherAccounts": "Дар ин браузер профили дигар нест"
   },
   "notifications": {
     "title": "Огоҳиномаҳо",
@@ -164,7 +165,9 @@
     "followedBy": "Обуна: {user}{count, plural, =0 {} other { + боз #}}",
     "suggestedForYou": "Тавсия барои шумо",
     "allCaughtUp": "Шумо ҳамаро дидед",
-    "allCaughtUpDescription": "Шумо ҳамаи нашрҳои навро аз онҳое, ки обуна ҳастед, дидед."
+    "allCaughtUpDescription": "Шумо ҳамаи нашрҳои навро аз онҳое, ки обуна ҳастед, дидед.",
+    "suggestionsTitle": "Тавсияҳо",
+    "noSuggestions": "Ҳоло тавсия нест"
   },
   "post": {
     "like": "Писанд",
@@ -300,7 +303,9 @@
     "collectionPlaceholder": "Номи коллексия",
     "justSave": "Танҳо сақл кардан",
     "saved": "Сақл шуд",
-    "savedToCollection": "Ба «{name}» сақл шуд"
+    "savedToCollection": "Ба «{name}» сақл шуд",
+    "repost": "Репост",
+    "repostUnavailable": "Репост ҳоло дастрас нест"
   },
   "story": {
     "yourStory": "Ҳикояи шумо",
@@ -390,7 +395,9 @@
     "stickerResultsAverage": "Миёна: {value}",
     "stickerResultsNone": "Ҳанӯз ҷавобе нест",
     "stickerSubmit": "Фиристодан",
-    "stickerSliderSend": "Фиристодан"
+    "stickerSliderSend": "Фиристодан",
+    "addToHighlight": "Ба актуалӣ илова кун",
+    "noHighlight": "Илова накун"
   },
   "reels": {
     "title": "Reels",
@@ -865,7 +872,10 @@
     "backHome": "Бозгашт ба Instagram",
     "network": "Хатои шабака. Пайвастшавиро санҷед.",
     "imageOnly": "Файли тасвирро интихоб кунед.",
-    "rateLimited": "Кӯшишҳо аз ҳад зиёданд. Як дақиқа сабр кунед ва аз нав кӯшиш кунед."
+    "rateLimited": "Кӯшишҳо аз ҳад зиёданд. Як дақиқа сабр кунед ва аз нав кӯшиш кунед.",
+    "highlightFailed": "Story нашр шуд, вале ба актуалӣ илова нашуд",
+    "audioUnavailable": "Ин трек садо намедиҳад — истиноди каталог мӯҳлаташ гузашт",
+    "audioUnavailableShort": "бе садо"
   },
   "validation": {
     "required": "Ин майдон ҳатмист",

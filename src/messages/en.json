@@ -118,7 +118,8 @@
     "logout": "Log out",
     "follow": "Follow",
     "unreadCount": "{count, plural, one {# unread notification} other {# unread notifications}}",
-    "createPost": "Post"
+    "createPost": "Post",
+    "noOtherAccounts": "No other profiles saved in this browser"
   },
   "notifications": {
     "title": "Notifications",
@@ -164,7 +165,9 @@
     "followedBy": "Followed by {user}{count, plural, =0 {} other { + # more}}",
     "suggestedForYou": "Suggested for you",
     "allCaughtUp": "You're all caught up",
-    "allCaughtUpDescription": "You've seen all new posts from people you follow."
+    "allCaughtUpDescription": "You've seen all new posts from people you follow.",
+    "suggestionsTitle": "Suggested for you",
+    "noSuggestions": "No suggestions right now"
   },
   "post": {
     "like": "Like",
@@ -300,7 +303,9 @@
     "collectionPlaceholder": "Collection name",
     "justSave": "Just save",
     "saved": "Saved",
-    "savedToCollection": "Saved to “{name}”"
+    "savedToCollection": "Saved to “{name}”",
+    "repost": "Repost",
+    "repostUnavailable": "Reposting isn’t available yet"
   },
   "story": {
     "yourStory": "Your story",
@@ -390,7 +395,9 @@
     "stickerResultsAverage": "Average: {value}",
     "stickerResultsNone": "No responses yet",
     "stickerSubmit": "Submit",
-    "stickerSliderSend": "Send"
+    "stickerSliderSend": "Send",
+    "addToHighlight": "Add to highlights",
+    "noHighlight": "Don’t add"
   },
   "reels": {
     "title": "Reels",
@@ -865,7 +872,10 @@
     "backHome": "Go back to Instagram",
     "network": "Network error. Check your connection.",
     "imageOnly": "Choose an image file.",
-    "rateLimited": "Too many attempts. Please wait a minute and try again."
+    "rateLimited": "Too many attempts. Please wait a minute and try again.",
+    "highlightFailed": "Story posted, but adding it to highlights failed",
+    "audioUnavailable": "This track can’t be played — the catalogue link has expired",
+    "audioUnavailableShort": "no sound"
   },
   "validation": {
     "required": "This field is required",

@@ -18,7 +18,7 @@ import { CreateAddYoursDialog } from "@/components/story/CreateAddYoursDialog";
 import { StoryInsightsDialog } from "@/components/story/StoryInsightsDialog";
 import { StoryReplyBar } from "@/components/story/StoryReplyBar";
 import { StoryStickerLayer } from "@/components/story/StoryStickerLayer";
-import { StoryViewersSheet } from "@/components/story/StoryViewersSheet";
+import { StoryViewersDialog } from "@/components/story/StoryViewersDialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
@@ -38,13 +38,33 @@ const SLIDE_MS = 5000;
 const TICK_MS = 50;
 
 /**
- * Full-screen viewer: one progress bar per slide (5s each), tap left/right,
- * hold to pause, ←/→ to move, Space to pause, Esc to close. No reference
- * screenshot exists (docs/screenshots/INDEX.md §5) — this follows live IG.
+ * One author's slides: a progress bar per slide (5s each), tap left/right,
+ * hold to pause, ←/→ to move, Space to pause, Esc to close
+ * (docs/screenshots/img10, img11).
+ *
+ * Moving *between* authors belongs to `StoryDeck`, which wraps this and hands
+ * down `onExitForward`/`onExitBackward` — running off either end of the slides
+ * hands control back rather than closing outright.
  */
-export function StoryViewer({ userId, onClose }: { userId: string; onClose: () => void }) {
+export function StoryViewer({
+  userId,
+  onClose,
+  showClose = true,
+  onExitForward,
+  onExitBackward,
+}: {
+  userId: string;
+  onClose: () => void;
+  /** The deck draws its own close button, in the screen corner rather than the card. */
+  showClose?: boolean;
+  /** Past the last slide. Falls back to closing when playing solo. */
+  onExitForward?: () => void;
+  /** Back past the first slide; absent when there is no earlier author. */
+  onExitBackward?: () => void;
+}) {
   const t = useTranslations("story");
   const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
   const format = useFormatter();
   const { user } = useAuth();
 
@@ -70,34 +90,56 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const [stickerBusy, setStickerBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [broken, setBroken] = useState(false);
+  const [audioBroken, setAudioBroken] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  // Mirrors `progress` for the interval, so it can decide to advance without
+  // reading render state. See the timer effect.
+  const progressRef = useRef(0);
 
   const stories = data ?? [];
   const current = stories[index];
   const isMine = userId === user?.id;
 
-  const next = useCallback(() => {
+  const resetProgress = useCallback(() => {
+    progressRef.current = 0;
     setProgress(0);
     setBroken(false);
-    setIndex((position) => {
-      if (position + 1 >= stories.length) {
-        onClose();
-        return position;
-      }
-      return position + 1;
-    });
-  }, [onClose, stories.length]);
-
-  const previous = useCallback(() => {
-    setProgress(0);
-    setBroken(false);
-    setIndex((position) => Math.max(0, position - 1));
   }, []);
 
+  // ⚠️ The hand-off must NOT live inside a `setIndex` updater. Updaters run
+  // during render, and `onExitForward` navigates — React flagged it as
+  // "Cannot update a component (Router) while rendering StoryViewer". Reading
+  // `index` from state keeps the navigation in the event handler where it
+  // belongs; the extra dep is the price and it is the correct one.
+  const next = useCallback(() => {
+    if (index + 1 >= stories.length) {
+      // Hand over to the deck when there is a next author; closing is the
+      // solo-playback fallback (deep link, rail not loaded).
+      if (onExitForward) onExitForward();
+      else onClose();
+      return;
+    }
+    resetProgress();
+    setIndex(index + 1);
+  }, [index, onClose, onExitForward, resetProgress, stories.length]);
+
+  const previous = useCallback(() => {
+    // Rewinding off the front rewinds to the previous author, matching IG.
+    // Without one, stay put on the first slide rather than closing.
+    if (index === 0) {
+      onExitBackward?.();
+      return;
+    }
+    resetProgress();
+    setIndex(index - 1);
+  }, [index, onExitBackward, resetProgress]);
+
   // Each slide counts as a view exactly once (add-story-view + grey ring).
+  // `isMine` matters: the server discards an author's view of their own story,
+  // so those are additionally noted client-side.
   useEffect(() => {
-    if (current) markSeen(current.id);
-  }, [current, markSeen]);
+    if (current) markSeen(current.id, isMine);
+  }, [current, isMine, markSeen]);
 
   // The attached track plays while the slide is up and mirrors the pause state
   // (hold-to-pause, reply bar, viewers sheet). Autoplay-with-sound is allowed
@@ -115,17 +157,22 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
     }
   }, [frozen, current]);
 
+  // Elapsed time is kept in a ref and mirrored into state only for painting.
+  // The decision to advance therefore happens in the interval callback — an
+  // event, where navigating is legal — rather than inside a `setProgress`
+  // updater (which runs during render and triggered "Cannot update Router
+  // while rendering StoryViewer") or inside an effect body (cascading renders).
   useEffect(() => {
     if (!current || frozen) return;
 
     const timer = window.setInterval(() => {
-      setProgress((value) => {
-        if (value + TICK_MS >= SLIDE_MS) {
-          next();
-          return 0;
-        }
-        return value + TICK_MS;
-      });
+      const elapsed = progressRef.current + TICK_MS;
+      if (elapsed >= SLIDE_MS) {
+        next();
+        return;
+      }
+      progressRef.current = elapsed;
+      setProgress(elapsed);
     }, TICK_MS);
 
     return () => window.clearInterval(timer);
@@ -161,7 +208,7 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const audioSrc = music?.streamUrl ?? music?.previewUrl ?? null;
 
   return (
-    <div className="relative mx-auto flex h-[90vh] w-[420px] max-w-[95vw] flex-col overflow-hidden rounded-lg bg-black">
+    <div className="relative flex aspect-[9/16] max-h-[92vh] w-[420px] max-w-[95vw] shrink-0 flex-col overflow-hidden rounded-xl bg-black shadow-2xl">
       <div className="absolute top-0 right-0 left-0 z-10 flex gap-1 p-2">
         {stories.map((story, position) => (
           <span key={story.id} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30">
@@ -230,14 +277,16 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
               <Trash2 className="size-5" />
             </button>
           ) : null}
-          <button
-            type="button"
-            aria-label={tCommon("close")}
-            onClick={onClose}
-            className="text-white/90 hover:text-white"
-          >
-            <X className="size-6" />
-          </button>
+          {showClose ? (
+            <button
+              type="button"
+              aria-label={tCommon("close")}
+              onClick={onClose}
+              className="text-white/90 hover:text-white"
+            >
+              <X className="size-6" />
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -285,8 +334,26 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
         {audioSrc ? (
           <>
             {}
-            <audio ref={audioRef} key={current.id} src={audioSrc} loop />
-            <div className="pointer-events-none absolute bottom-4 left-1/2 z-[6] flex max-w-[80%] -translate-x-1/2 items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 backdrop-blur-sm">
+            {/* Imported catalogue tracks carry a **signed, expiring** preview
+                URL (Deezer's `exp=` 403s after ~a day) and the backend's own
+                `/music/{id}/stream` answers 404 for them — the file was never
+                stored. Nothing here can re-sign it, so say so instead of
+                playing silence. */}
+            <audio
+              ref={audioRef}
+              key={current.id}
+              src={audioSrc}
+              loop
+              onError={() => setAudioBroken(true)}
+            />
+            {/* Cleared above the reply bar — at `bottom-4` the pill landed on
+                top of the input on anyone else's story. */}
+            <div
+              className={cn(
+                "pointer-events-none absolute left-1/2 z-[6] flex max-w-[80%] -translate-x-1/2 items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 backdrop-blur-sm",
+                isMine ? "bottom-4" : "bottom-20",
+              )}
+            >
               {music?.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- external album art, hosts vary
                 <img src={music.coverUrl} alt="" className="size-6 shrink-0 rounded object-cover" />
@@ -297,6 +364,11 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
                 {music?.title}
                 {music?.artist ? ` · ${music.artist}` : ""}
               </span>
+              {audioBroken ? (
+                <span className="shrink-0 text-[10px] text-white/60">
+                  {tErrors("audioUnavailableShort")}
+                </span>
+              ) : null}
             </div>
           </>
         ) : null}
@@ -331,8 +403,10 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
         <ChevronRight className="pointer-events-none absolute top-1/2 right-1 size-6 -translate-y-1/2 text-white/60" />
       </div>
 
-      <div className="flex items-center gap-4 px-4 py-3">
-        {isMine ? (
+      {/* Only my own story gets its own footer row; on someone else's the like
+          heart lives inside the reply bar, which is what covers the bottom. */}
+      {isMine ? (
+        <div className="flex items-center gap-4 px-4 py-3">
           <button
             type="button"
             onClick={() => setViewersOpen(true)}
@@ -341,25 +415,12 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
             <Eye className="size-5" />
             {t("viewers")}
           </button>
-        ) : (
-          <button
-            type="button"
-            aria-label={t("likeStory")}
-            aria-pressed={current.isLiked}
-            onClick={() => likeStory.mutate(current.id)}
-            className={cn(
-              "transition-transform active:scale-90",
-              current.isLiked ? "text-ig-danger" : "text-white",
-            )}
-          >
-            <HeartIcon filled={current.isLiked} className="size-7" />
-          </button>
-        )}
-      </div>
+        </div>
+      ) : null}
 
       {isMine ? (
         <>
-          <StoryViewersSheet
+          <StoryViewersDialog
             storyId={current.id}
             open={viewersOpen}
             onOpenChange={setViewersOpen}
@@ -386,6 +447,20 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
           authorName={author?.userName ?? ""}
           onInteractionStart={() => setReplying(true)}
           onInteractionEnd={() => setReplying(false)}
+          trailing={
+            <button
+              type="button"
+              aria-label={t("likeStory")}
+              aria-pressed={current.isLiked}
+              onClick={() => likeStory.mutate(current.id)}
+              className={cn(
+                "shrink-0 transition-transform active:scale-90",
+                current.isLiked ? "text-ig-danger" : "text-white",
+              )}
+            >
+              <HeartIcon filled={current.isLiked} className="size-6" />
+            </button>
+          }
         />
       )}
 

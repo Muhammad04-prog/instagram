@@ -68,6 +68,7 @@ export const queryKeys = {
     byId: (userId: string) => [...queryKeys.profile.all, "by-id", userId] as const,
     favorites: () => [...queryKeys.profile.all, "favorites"] as const,
     reposts: () => [...queryKeys.profile.all, "reposts"] as const,
+    userReposts: (userId: string) => [...queryKeys.profile.all, "reposts", userId] as const,
     savedMusic: () => [...queryKeys.profile.all, "saved-music"] as const,
     activity: () => [...queryKeys.profile.all, "activity"] as const,
     collections: () => [...queryKeys.profile.all, "collections"] as const,

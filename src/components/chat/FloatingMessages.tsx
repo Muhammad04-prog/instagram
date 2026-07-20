@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronLeft, MessageCircle, SquareArrowOutUpRight, X } from "lucide-react";
+import { ChevronLeft, SquareArrowOutUpRight, SquarePen, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ChatWindow } from "@/components/chat/ChatWindow";
+import { ShareIcon } from "@/components/icons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
@@ -36,14 +37,16 @@ export function FloatingMessages() {
   const totalUnread = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
   const openChatId = typeof panel === "number" ? panel : null;
   const openChatItem = openChatId !== null ? chats.find((c) => c.id === openChatId) : undefined;
+  // The three faces on the pill — most recent conversations, as IG shows them.
+  const recentFaces = chats.slice(0, 3);
 
   if (pathname.startsWith(ROUTES.chat)) return null;
 
   return (
     <div className="fixed right-4 bottom-20 z-40 flex flex-col items-end gap-3 md:right-6 md:bottom-6">
       {panel !== "closed" ? (
-        <div className="border-ig-border bg-ig-bg flex h-[480px] w-[92vw] max-w-[360px] flex-col overflow-hidden rounded-xl border shadow-2xl">
-          <div className="border-ig-border flex items-center gap-2 border-b px-3 py-2">
+        <div className="border-ig-border bg-ig-elevated relative flex h-[520px] w-[92vw] max-w-[380px] flex-col overflow-hidden rounded-2xl border shadow-2xl">
+          <div className="border-ig-separator flex items-center gap-2 border-b px-4 py-3">
             {openChatId !== null ? (
               <button
                 type="button"
@@ -63,7 +66,7 @@ export function FloatingMessages() {
                 </span>
               </span>
             ) : (
-              <span className="text-ig-text flex-1 text-sm font-semibold">{t("title")}</span>
+              <span className="text-ig-text flex-1 text-base font-bold">{t("title")}</span>
             )}
 
             {openChatId !== null ? (
@@ -113,9 +116,9 @@ export function FloatingMessages() {
                       <button
                         type="button"
                         onClick={() => openChat(chat.id)}
-                        className="hover:bg-ig-bg-secondary flex w-full items-center gap-3 px-3 py-2 text-left"
+                        className="hover:bg-ig-bg-secondary flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors"
                       >
-                        <UserAvatar src={chatAvatar(chat)} size={40} />
+                        <UserAvatar src={chatAvatar(chat)} size={48} />
                         <span className="min-w-0 flex-1">
                           <span
                             className={cn(
@@ -146,17 +149,32 @@ export function FloatingMessages() {
               </ul>
             )}
           </div>
+
+          {/* Compose, pinned over the list like IG's own pencil FAB (img13).
+              Only on the list view — inside a thread there is already an input. */}
+          {openChatId === null ? (
+            <Link
+              href={ROUTES.chat}
+              onClick={close}
+              aria-label={t("newMessage")}
+              className="bg-ig-elevated border-ig-border text-ig-text absolute right-4 bottom-4 flex size-12 items-center justify-center rounded-full border shadow-lg transition-transform hover:scale-105"
+            >
+              <SquarePen className="size-5" />
+            </Link>
+          ) : null}
         </div>
       ) : null}
 
+      {/* IG's own pill: the send glyph, the word, then the faces of the people
+          who wrote last — stacked and overlapping (docs/screenshots/img12). */}
       <button
         type="button"
         onClick={() => (panel === "closed" ? openList() : close())}
         aria-expanded={panel !== "closed"}
-        className="bg-ig-bg border-ig-border text-ig-text flex items-center gap-2 rounded-full border py-2 pr-4 pl-3 text-sm font-semibold shadow-lg"
+        className="bg-ig-elevated border-ig-border text-ig-text flex items-center gap-2.5 rounded-full border py-2 pr-2.5 pl-4 text-sm font-semibold shadow-xl transition-transform hover:scale-[1.02]"
       >
         <span className="relative">
-          <MessageCircle className="size-5" />
+          <ShareIcon className="size-5" />
           {totalUnread > 0 ? (
             <span
               aria-label={t("unreadCount", { count: totalUnread })}
@@ -166,7 +184,19 @@ export function FloatingMessages() {
             </span>
           ) : null}
         </span>
-        {t("title")}
+        <span className="whitespace-nowrap">{t("title")}</span>
+        {recentFaces.length > 0 ? (
+          <span className="flex shrink-0 items-center -space-x-2" aria-hidden>
+            {recentFaces.map((chat) => (
+              <UserAvatar
+                key={chat.id}
+                src={chatAvatar(chat)}
+                size={26}
+                className="border-2 border-[color:var(--ig-elevated)]"
+              />
+            ))}
+          </span>
+        ) : null}
       </button>
     </div>
   );

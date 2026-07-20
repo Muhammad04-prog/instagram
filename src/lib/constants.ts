@@ -58,6 +58,8 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   reels: "/reels",
   explore: "/explore",
+  /** «Все» — every account `/users/suggestions` returns, not the sidebar's five. */
+  suggestions: "/explore/people",
   chat: "/chat",
   chatById: (chatId: number | string) => `/chat/${chatId}`,
   chatRequests: "/chat/requests",

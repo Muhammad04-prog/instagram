@@ -27,6 +27,7 @@ import {
   useLiveComments,
   useLiveReaction,
   useRequestJoinLive,
+  useLiveJoinRequests,
   useSetLiveAudio,
   useSetLiveCamera,
 } from "@/hooks/useLive";
@@ -72,6 +73,11 @@ export function LiveScreen({ liveId }: { liveId: string }) {
 
   const isHost = Boolean(user && live && live.host.id === user.id);
   const ended = live?.status === "ENDED";
+
+  // Host-only, and polled — a request arriving mid-stream has to surface on the
+  // control bar without the host opening the sheet to go looking for it.
+  const { data: joinRequests } = useLiveJoinRequests(liveId, isHost && !ended);
+  const pendingRequests = joinRequests?.length ?? 0;
 
   // The host's LiveKit token only ever exists once, handed back by
   // `POST /live/start` on the *previous* screen (GoLiveScreen) — this route
@@ -147,8 +153,23 @@ export function LiveScreen({ liveId }: { liveId: string }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
-      <header className="flex items-center gap-3 p-3">
+    // Video fills the whole screen and every control floats over it, the way IG
+    // does it. The old column layout gave the stage `flex-1` and stacked the
+    // comments *below* it, which cropped the picture into the top half and left
+    // a dead black slab underneath (the bug in the report).
+    <div className="fixed inset-0 z-50 bg-black">
+      <div className="absolute inset-0">
+        <LiveStage
+          live={live}
+          tokenReady={isHost || join.isSuccess}
+          isHost={isHost}
+          videoTrack={liveKit.videoTrack}
+          connecting={liveKit.connecting}
+        />
+        <LiveHearts hearts={hearts} />
+      </div>
+
+      <header className="absolute inset-x-0 top-0 z-10 flex items-center gap-3 bg-gradient-to-b from-black/70 via-black/30 to-transparent p-3 pb-10">
         <Link href={ROUTES.profile(live.host.id)} className="flex min-w-0 items-center gap-2">
           <UserAvatar src={live.host.avatarUrl} size={32} />
           <span className="min-w-0">
@@ -185,18 +206,7 @@ export function LiveScreen({ liveId }: { liveId: string }) {
         </button>
       </header>
 
-      <div className="relative flex flex-1 flex-col overflow-hidden">
-        <LiveStage
-          live={live}
-          tokenReady={isHost || join.isSuccess}
-          isHost={isHost}
-          videoTrack={liveKit.videoTrack}
-          connecting={liveKit.connecting}
-        />
-        <LiveHearts hearts={hearts} />
-      </div>
-
-      <div className="bg-gradient-to-t from-black to-transparent">
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/50 to-transparent pt-20">
         <LiveCommentBar
           // The API answers newest → oldest; the bar reads top-to-bottom oldest first.
           comments={[...pageItems(liveComments ?? [])].reverse()}
@@ -215,13 +225,20 @@ export function LiveScreen({ liveId }: { liveId: string }) {
         <div className="flex items-center justify-center gap-3 pb-4">
           {isHost ? (
             <>
+              {/* Polled while the host is on screen, so a request that arrives
+                  mid-stream is visible without opening the sheet to check. */}
               <button
                 type="button"
                 onClick={() => setRequestsOpen(true)}
                 aria-label={t("joinRequests")}
-                className="flex size-10 items-center justify-center rounded-full bg-white/15 text-white"
+                className="relative flex size-10 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
               >
                 <UserPlus className="size-5" />
+                {pendingRequests > 0 ? (
+                  <span className="bg-ig-badge absolute -top-0.5 -right-0.5 flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+                    {pendingRequests > 9 ? "9+" : pendingRequests}
+                  </span>
+                ) : null}
               </button>
               <ControlButton
                 on={live.isCameraOn}

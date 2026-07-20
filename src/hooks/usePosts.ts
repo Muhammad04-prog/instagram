@@ -216,6 +216,52 @@ export function useLikePost() {
 }
 
 /**
+ * Repost / un-repost — IG's double-arrow. Toggle → `{ reposted, repostsCount }`.
+ *
+ * Distinct from `useSharePost`: share pushes the post into a chat and creates
+ * nothing, this puts it on your own profile's reposts tab
+ * (`GET /profile/{userId}/reposts`). The endpoint landed 2026-07-20; until then
+ * the button was rendered disabled because only the *read* half existed.
+ */
+export function useRepostPost() {
+  const patch = usePatchPost();
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (post: PostDto) => postService.repost(post.id),
+    onMutate: (post) => {
+      const next = !post.isReposted;
+      patch(post.id, (current) => ({
+        ...current,
+        isReposted: next,
+        repostsCount:
+          current.repostsCount == null
+            ? current.repostsCount
+            : Math.max(0, current.repostsCount + (next ? 1 : -1)),
+      }));
+      return { previous: post };
+    },
+    onSuccess: (result, post) => {
+      patch(post.id, (current) => ({
+        ...current,
+        isReposted: result.reposted,
+        repostsCount: result.repostsCount,
+      }));
+      // The reposts tab on my profile is now stale either way.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.profile.reposts() });
+    },
+    onError: (error: ApiError, _post, context) => {
+      if (context?.previous) {
+        const { isReposted, repostsCount } = context.previous;
+        patch(context.previous.id, (current) => ({ ...current, isReposted, repostsCount }));
+      }
+      toast.error(error.message || t("network"));
+    },
+  });
+}
+
+/**
  * Save / unsave. Toggle → `{ favorited }`.
  *
  * `collection` files it under a named collection. The API takes a **name**, not

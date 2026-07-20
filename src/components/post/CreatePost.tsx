@@ -45,7 +45,14 @@ type Step = "pick" | "crop" | "edit" | "caption";
  * /posts` itself takes no collaborator field, so an invite (if any) goes out
  * right after creation succeeds, against the post id the server just handed back.
  */
-export function CreatePost() {
+export function CreatePost({
+  embedded = false,
+  onPublished,
+}: {
+  embedded?: boolean;
+  /** Called instead of navigating once the post is live — the modal closes itself. */
+  onPublished?: () => void;
+} = {}) {
   const t = useTranslations("post");
   const tCommon = useTranslations("common");
   const router = useRouter();
@@ -120,15 +127,30 @@ export function CreatePost() {
             });
           }
           toast.success(t("published"));
-          router.push(ROUTES.myProfile);
+          // In the modal, pushing a route left the intercepted slot mounted —
+          // the dialog stayed open over the new page. The host dismisses it and
+          // decides where to go; only the standalone page navigates itself.
+          if (onPublished) onPublished();
+          else router.push(ROUTES.myProfile);
         },
       },
     );
   };
 
   return (
-    <div className="mx-auto max-w-[900px] px-4 py-8">
-      <div className="border-ig-border bg-ig-bg overflow-hidden rounded-xl border">
+    // `embedded` = already inside the create modal, which supplies the page
+    // padding, the border and the rounding. Keeping them here too drew a card
+    // inside a card and let the header collapse to content width, jamming
+    // «Отмена» against the title.
+    <div className={cn(embedded ? "w-full" : "mx-auto max-w-[900px] px-4 py-8")}>
+      <div
+        className={cn(
+          "overflow-hidden",
+          // Embedded, the dialog already supplies the surface; painting our own
+          // black over its elevated one flattened the modal into the page.
+          embedded ? "bg-transparent" : "border-ig-border bg-ig-bg rounded-xl border",
+        )}
+      >
         <div className="border-ig-separator flex items-center justify-between border-b px-4 py-3">
           <button
             type="button"

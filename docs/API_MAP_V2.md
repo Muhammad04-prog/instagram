@@ -1,4 +1,4 @@
-# API_MAP v2 — новый backend (NestJS), 230 endpoints
+# API_MAP v2 — новый backend (NestJS), 232 endpoints
 
 **Swagger:** `https://backend-instagram-a4k6.onrender.com/api/docs-json` → копия в `docs/swagger-v2.json`.
 
@@ -11,9 +11,9 @@
 Это проверка проводки, **не** проверка работоспособности: живьём ответы не сверены — любой
 запрос в БД отвечает 500 `DATABASE_ERROR`, хотя `/health` и рапортует `database: up`.
 
-**Покрытие: 221 / 230** endpoint'ов вызываются из UI.
+**Покрытие: 225 / 232** endpoint'ов вызываются из UI.
 
-Не подключено 9. Это не «не дошли руки»: swagger вырос со 170 до 230 —
+Не подключено 7. Это не «не дошли руки»: swagger вырос со 170 до 232 —
 бэкенд закрыл то, что просил [`BACKEND_PROMPT.md`](./BACKEND_PROMPT.md) (`/socket/ticket`,
 `/chats/calls/ice-servers`, `/live/{id}/requests`, `NotificationDto.requestId`), и заодно
 принёс групповые чаты и внешний каталог музыки. Под фронт это отдельные фазы — см.
@@ -58,7 +58,7 @@
 | [x] | POST   | `/auth/sessions/logout-all` | `route.ts (server)`       | Выйти со всех устройств, кроме текущего                     |
 | [x] | GET    | `/auth/me`                  | `route.ts (server)`       | Текущий пользователь                                        |
 
-## chats — 27/33
+## chats — 31/33
 
 | ✓   | Метод  | Путь                                | Сервис                       | Что делает                                                         |
 | --- | ------ | ----------------------------------- | ---------------------------- | ------------------------------------------------------------------ |
@@ -69,10 +69,10 @@
 | [x] | DELETE | `/chats/{id}/participants/{userId}` | `chat.removeParticipant`     | Удалить участника из группы                                        |
 | [x] | POST   | `/chats/{id}/leave`                 | `chat.leaveGroup`            | Выйти из группы                                                    |
 | [x] | PUT    | `/chats/{id}/title`                 | `chat.updateGroupTitle`      | Переименовать группу                                               |
-| [ ] | GET    | `/chats/calls/ice-servers`          | —                            | ICE-серверы (STUN/TURN) для WebRTC                                 |
-| [ ] | POST   | `/chats/calls/{callId}/answer`      | —                            | Взять трубку                                                       |
-| [ ] | POST   | `/chats/calls/{callId}/decline`     | —                            | Сбросить входящий                                                  |
-| [ ] | POST   | `/chats/calls/{callId}/end`         | —                            | Завершить звонок                                                   |
+| [ ] | GET    | `/chats/calls/ice-servers`          | `chat.getIceServers`         | ICE-серверы (STUN/TURN) для WebRTC                                 |
+| [x] | POST   | `/chats/calls/{callId}/answer`      | `chat.answerCall`            | Взять трубку                                                       |
+| [x] | POST   | `/chats/calls/{callId}/decline`     | `chat.declineCall`           | Сбросить входящий                                                  |
+| [x] | POST   | `/chats/calls/{callId}/end`         | `chat.endCall`               | Завершить звонок                                                   |
 | [ ] | GET    | `/chats/{id}/calls`                 | —                            | История звонков чата (курсорная)                                   |
 | [x] | PUT    | `/chats/messages/{id}`              | `chat.editMessage`           | Редактировать сообщение (≤15 мин, только своё)                     |
 | [x] | DELETE | `/chats/messages/{id}`              | `chat.deleteMessage`         | Удалить сообщение (OwnerGuard: только своё)                        |
@@ -94,7 +94,7 @@
 | [x] | POST   | `/chats/{id}/close`                 | `chat.closeChat`             | Закрыть чат (уйти с экрана) — сжечь увиденные исчезающие сообщения |
 | [x] | POST   | `/chats/messages/{id}/open`         | `chat.openViewOnceMessage`   | Открыть медиа «просмотр один раз»                                  |
 | [x] | POST   | `/chats/{id}/report`                | `chat.report`                | Пожаловаться на чат                                                |
-| [ ] | POST   | `/chats/{id}/call`                  | `chat.startCall`             | Начать звонок (WebRTC-сигналинг через сокет)                       |
+| [x] | POST   | `/chats/{id}/call`                  | `chat.startCall`             | Начать звонок (WebRTC-сигналинг через сокет)                       |
 
 ## close-friends — 3/3
 
@@ -218,7 +218,7 @@
 | [x] | POST  | `/notifications/{id}/read`     | `notification.markRead`         | Пометить прочитанным (всю группу)          |
 | [x] | POST  | `/notifications/read-all`      | `notification.markAllRead`      | Пометить всё прочитанным                   |
 
-## posts — 34/36
+## posts — 34/37
 
 | ✓   | Метод  | Путь                                | Сервис                     | Что делает                                                          |
 | --- | ------ | ----------------------------------- | -------------------------- | ------------------------------------------------------------------- |
@@ -248,6 +248,7 @@
 | [x] | POST   | `/posts/{id}/view`                  | `post.view`                | Просмотр (считается 1 раз на пользователя)                          |
 | [x] | GET    | `/posts/{id}/insights`              | `post.getInsights`         | Аналитика поста (только автору)                                     |
 | [x] | POST   | `/posts/{id}/favorite`              | `post.favorite`            | Сохранить/убрать (toggle). collection — имя коллекции               |
+| [ ] | POST   | `/posts/{id}/repost`                | —                          | Репост (двойная стрелка): вкл/выкл                                  |
 | [x] | POST   | `/posts/{id}/share`                 | `post.share`               | Поделиться: в чат (toUserId) / в историю (toStory) / ссылка         |
 | [x] | POST   | `/posts/{id}/collaborators`         | `post.inviteCollaborators` | Пригласить соавторов (только автор)                                 |
 | [x] | POST   | `/posts/{id}/collaborators/accept`  | `post.acceptCollab`        | Принять приглашение в соавторы                                      |
@@ -259,7 +260,7 @@
 | [x] | GET    | `/posts/{id}/comments`              | `post.getComments`         | Комментарии к публикации (корневые, cursor)                         |
 | [x] | PATCH  | `/posts/{postId}/comments/{id}/pin` | `post.pinComment`          | Закрепить / открепить комментарий к публикации (только автор поста) |
 
-## profile — 16/16
+## profile — 16/17
 
 | ✓   | Метод  | Путь                             | Сервис                     | Что делает                                       |
 | --- | ------ | -------------------------------- | -------------------------- | ------------------------------------------------ |
@@ -278,6 +279,7 @@
 | [x] | GET    | `/profile/{userId}/is-following` | `profile.isFollowing`      | Подписан ли я на этого пользователя              |
 | [x] | GET    | `/profile/{userId}/posts`        | `profile.getUserPosts`     | Публикации пользователя (закрытый аккаунт → 403) |
 | [x] | GET    | `/profile/{userId}/reels`        | `profile.getUserReels`     | Reels пользователя (закрытый аккаунт → 403)      |
+| [ ] | GET    | `/profile/{userId}/reposts`      | —                          | Репосты пользователя (закрытый аккаунт → 403)    |
 | [x] | GET    | `/profile/{userId}/tagged`       | `profile.getUserTagged`    | Отмеченные публикации (закрытый аккаунт → 403)   |
 
 ## search — 4/4

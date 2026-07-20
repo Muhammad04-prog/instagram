@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { ListChecks, Type, Undo2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -7,11 +8,27 @@ import { toast } from "sonner";
 import { MusicPicker } from "@/components/post/MusicPicker";
 import { StickerComposer } from "@/components/story/StickerComposer";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserHighlights } from "@/hooks/useHighlights";
 import { useAddStory, useCreateSticker } from "@/hooks/useStories";
+import { highlightService } from "@/services/highlight.service";
+import { queryKeys } from "@/lib/query-keys";
 import { ORIGINAL_FILTER, PHOTO_FILTERS, filterCss } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 import type { CreateStickerDto, MusicDto } from "@/types/api.types";
+
+/** `highlightTarget` when the story should not be highlighted at all. */
+const NO_HIGHLIGHT = "none";
+/** …and when it should start a brand-new one. */
+const NEW_HIGHLIGHT = "new";
 
 /**
  * «Добавить в историю» — full-bleed editor, not a small centered dialog.
@@ -43,8 +60,14 @@ export function StoryUploadDialog({
   const [filterId, setFilterId] = useState(ORIGINAL_FILTER);
   const [music, setMusic] = useState<MusicDto | null>(null);
   const [closeFriendsOnly, setCloseFriendsOnly] = useState(false);
+  // NO_HIGHLIGHT / NEW_HIGHLIGHT / an existing highlight's uuid.
+  const [highlightTarget, setHighlightTarget] = useState<string>(NO_HIGHLIGHT);
+  const [highlightTitle, setHighlightTitle] = useState("");
   const add = useAddStory();
   const createSticker = useCreateSticker();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { data: highlights } = useUserHighlights(user?.id ?? "", open);
 
   const preview = file ? URL.createObjectURL(file) : null;
 
@@ -57,6 +80,34 @@ export function StoryUploadDialog({
     setFilterId(ORIGINAL_FILTER);
     setMusic(null);
     setCloseFriendsOnly(false);
+    setHighlightTarget(NO_HIGHLIGHT);
+    setHighlightTitle("");
+  };
+
+  /**
+   * "Actualniy" — pin the story that was just created into a highlight.
+   *
+   * Always a second call: `POST /stories` has no highlight field. Appending to
+   * an existing one has to re-send the full `storyIds` list, because
+   * `PUT /highlights/{id}` replaces rather than appends — sending only the new
+   * id would empty the highlight of everything else in it.
+   */
+  const pinToHighlight = async (storyId: number) => {
+    if (highlightTarget === NO_HIGHLIGHT) return;
+
+    if (highlightTarget === NEW_HIGHLIGHT) {
+      await highlightService.create({
+        title: highlightTitle.trim() || t("yourStory"),
+        storyIds: [storyId],
+      });
+      return;
+    }
+
+    const existing = await highlightService.getHighlight(highlightTarget);
+    await highlightService.update(highlightTarget, {
+      title: existing.title,
+      storyIds: [...existing.stories.map((story) => story.id), storyId],
+    });
   };
 
   const onSubmit = () => {
@@ -77,6 +128,13 @@ export function StoryUploadDialog({
           const story = created[0];
           if (sticker && story) {
             createSticker.mutate({ storyId: story.id, dto: sticker });
+          }
+          // The story itself is already live; a failed highlight is a warning,
+          // not a reason to tell the author their story did not post.
+          if (story) {
+            void pinToHighlight(story.id)
+              .then(() => queryClient.invalidateQueries({ queryKey: queryKeys.highlights.all }))
+              .catch(() => toast.error(tErrors("highlightFailed")));
           }
           toast.success(t("storyAdded"));
           reset();
@@ -256,6 +314,36 @@ export function StoryUploadDialog({
                   </span>
                   <Switch checked={closeFriendsOnly} onCheckedChange={setCloseFriendsOnly} />
                 </label>
+
+                {/* "Актуальное": a story expires in 24h, this is the only place
+                    to keep it. Two calls behind one control — see pinToHighlight. */}
+                <div className="border-ig-separator space-y-2 border-t py-3">
+                  <p className="text-ig-text text-sm font-semibold">{t("addToHighlight")}</p>
+                  <Select value={highlightTarget} onValueChange={setHighlightTarget}>
+                    <SelectTrigger className="w-full" aria-label={t("addToHighlight")}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_HIGHLIGHT}>{t("noHighlight")}</SelectItem>
+                      <SelectItem value={NEW_HIGHLIGHT}>{t("newHighlight")}</SelectItem>
+                      {(highlights ?? []).map((highlight) => (
+                        <SelectItem key={highlight.id} value={highlight.id}>
+                          {highlight.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {highlightTarget === NEW_HIGHLIGHT ? (
+                    <input
+                      value={highlightTitle}
+                      onChange={(event) => setHighlightTitle(event.target.value.slice(0, 30))}
+                      placeholder={t("highlightTitle")}
+                      aria-label={t("highlightTitle")}
+                      className="border-ig-border bg-ig-bg text-ig-text placeholder:text-ig-text-secondary w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                    />
+                  ) : null}
+                </div>
               </div>
 
               <div className="border-ig-separator border-t p-4">

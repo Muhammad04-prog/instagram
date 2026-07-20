@@ -4,6 +4,7 @@ import { Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useToggleSaveMusic } from "@/hooks/useMusic";
 import { useSidebarForcedCollapsed } from "@/hooks/useSidebarState";
 import { musicService } from "@/services/music.service";
@@ -24,6 +25,7 @@ const formatTime = (seconds: number) => {
  */
 export function MusicPlayerBar() {
   const t = useTranslations("music");
+  const tError = useTranslations("errors");
   const { track, isPlaying, toggle, close, next, previous } = usePlayerStore();
   const save = useToggleSaveMusic();
   // The bar must clear the sidebar exactly as the content does, or it slides
@@ -67,6 +69,15 @@ export function MusicPlayerBar() {
         onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
         onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
         onEnded={() => next()}
+        // Imported previews are **signed, expiring** catalogue URLs (Deezer's
+        // carry `exp=` and 403 after ~a day), and the backend's own
+        // `/music/{id}/stream` answers 404 for them — "Файл трека не лежит в
+        // нашем хранилище". Nothing here can re-sign that, so the honest move is
+        // to stop claiming playback and say so, instead of sitting in silence.
+        onError={() => {
+          pause();
+          toast.error(tError("audioUnavailable"));
+        }}
       />
 
       <div className="mx-auto flex max-w-[935px] items-center gap-3 px-4 py-2">

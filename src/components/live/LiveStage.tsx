@@ -40,7 +40,7 @@ export function LiveStage({
 
   if (videoTrack && !cameraOff) {
     return (
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-black">
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-black">
         {/* The host must never hear themself — remote viewers do. */}
         <LiveKitVideo track={videoTrack} muted={isHost} />
       </div>
@@ -48,7 +48,7 @@ export function LiveStage({
   }
 
   return (
-    <div className="bg-ig-elevated relative flex flex-1 items-center justify-center overflow-hidden">
+    <div className="bg-ig-elevated absolute inset-0 flex items-center justify-center overflow-hidden">
       {cover ? (
         <Image
           src={cover}

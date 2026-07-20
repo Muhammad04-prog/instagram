@@ -118,7 +118,8 @@
     "logout": "Выйти",
     "follow": "Подписаться",
     "unreadCount": "{count, plural, one {# непрочитанное уведомление} few {# непрочитанных уведомления} other {# непрочитанных уведомлений}}",
-    "createPost": "Публикация"
+    "createPost": "Публикация",
+    "noOtherAccounts": "В этом браузере нет других профилей"
   },
   "notifications": {
     "title": "Уведомления",
@@ -164,7 +165,9 @@
     "followedBy": "Подписаны: {user}{count, plural, =0 {} other { + ещё #}}",
     "suggestedForYou": "Рекомендации для вас",
     "allCaughtUp": "Вы всё посмотрели",
-    "allCaughtUpDescription": "Вы просмотрели все новые публикации от тех, на кого подписаны."
+    "allCaughtUpDescription": "Вы просмотрели все новые публикации от тех, на кого подписаны.",
+    "suggestionsTitle": "Рекомендации",
+    "noSuggestions": "Сейчас нет рекомендаций"
   },
   "post": {
     "like": "Нравится",
@@ -300,7 +303,9 @@
     "collectionPlaceholder": "Название коллекции",
     "justSave": "Просто сохранить",
     "saved": "Сохранено",
-    "savedToCollection": "Сохранено в «{name}»"
+    "savedToCollection": "Сохранено в «{name}»",
+    "repost": "Репост",
+    "repostUnavailable": "Репосты пока недоступны"
   },
   "story": {
     "yourStory": "Ваша история",
@@ -390,7 +395,9 @@
     "stickerResultsAverage": "Среднее: {value}",
     "stickerResultsNone": "Пока нет ответов",
     "stickerSubmit": "Отправить",
-    "stickerSliderSend": "Отправить"
+    "stickerSliderSend": "Отправить",
+    "addToHighlight": "Добавить в актуальное",
+    "noHighlight": "Не добавлять"
   },
   "reels": {
     "title": "Reels",
@@ -865,7 +872,10 @@
     "backHome": "Вернуться в Instagram",
     "network": "Ошибка сети. Проверьте подключение.",
     "imageOnly": "Выберите файл изображения.",
-    "rateLimited": "Слишком много попыток. Подождите минуту и попробуйте снова."
+    "rateLimited": "Слишком много попыток. Подождите минуту и попробуйте снова.",
+    "highlightFailed": "История опубликована, но добавить в актуальное не удалось",
+    "audioUnavailable": "Этот трек не воспроизводится — ссылка каталога истекла",
+    "audioUnavailableShort": "без звука"
   },
   "validation": {
     "required": "Обязательное поле",

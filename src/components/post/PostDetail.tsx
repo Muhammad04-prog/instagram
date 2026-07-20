@@ -49,12 +49,15 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
   };
 
   return (
-    <div className="flex max-h-[90vh] flex-col md:flex-row">
-      <div className="bg-black md:flex md:w-[60%] md:items-center">
+    <div className="flex max-h-[88vh] flex-col md:h-[88vh] md:flex-row">
+      <div className="bg-black md:flex md:w-[60%] md:items-center md:justify-center">
         <PostCarousel media={post.media} alt={post.caption ?? ""} className="w-full" />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
+      {/* The comment column keeps a floor width: below ~340px IG's own layout
+          starts wrapping usernames onto their own line and the thread stops
+          reading as a thread. */}
+      <div className="border-ig-separator flex min-h-0 flex-1 flex-col md:min-w-[340px] md:border-l">
         <PostHeader
           post={post}
           onDeleted={onDeleted}

@@ -876,7 +876,8 @@
     },
     "/api/profile/me/reposts": {
       "get": {
-        "operationId": "ProfileController_reposts",
+        "description": "Посты, которые я репостнул кнопкой «двойная стрелка» (POST /posts/{id}/repost).",
+        "operationId": "ProfileController_myReposts",
         "parameters": [
           {
             "name": "cursor",
@@ -1232,6 +1233,48 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Reels пользователя (закрытый аккаунт → 403)",
+        "tags": ["profile"]
+      }
+    },
+    "/api/profile/{userId}/reposts": {
+      "get": {
+        "operationId": "ProfileController_reposts",
+        "parameters": [
+          { "name": "userId", "required": true, "in": "path", "schema": { "type": "string" } },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PostBriefDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Репосты пользователя (закрытый аккаунт → 403)",
         "tags": ["profile"]
       }
     },
@@ -2701,6 +2744,27 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Сохранить/убрать (toggle). collection — имя коллекции",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/repost": {
+      "post": {
+        "description": "Пост попадает во вкладку «Репосты» моего профиля; повторный вызов снимает репост. Это НЕ «поделиться» — для отправки в чат/историю используйте POST /posts/{id}/share.",
+        "operationId": "PostsController_repost",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RepostToggleDto" } }
+            }
+          },
+          "400": { "description": "Нельзя репостить собственную публикацию" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Репост (двойная стрелка): вкл/выкл",
         "tags": ["posts"]
       }
     },
@@ -5851,7 +5915,12 @@
     "contact": {}
   },
   "tags": [],
-  "servers": [],
+  "servers": [
+    {
+      "url": "https://backend-instagram-a4k6.onrender.com",
+      "description": "Текущий сервер (APP_URL)"
+    }
+  ],
   "components": {
     "securitySchemes": {
       "access-token": { "scheme": "bearer", "bearerFormat": "JWT", "type": "http", "in": "header" }
@@ -7056,11 +7125,17 @@
           "likesCount": { "type": "number", "nullable": true, "example": 24 },
           "commentsCount": { "type": "number", "example": 3 },
           "viewsCount": { "type": "number", "example": 120 },
+          "repostsCount": { "type": "number", "example": 7 },
           "isLiked": { "type": "boolean", "example": false, "description": "Лайкнул ли Я" },
           "isFavorited": {
             "type": "boolean",
             "example": false,
             "description": "В избранном ли у меня"
+          },
+          "isReposted": {
+            "type": "boolean",
+            "example": false,
+            "description": "Репостнул ли Я (кнопка «двойная стрелка»)"
           },
           "isSeen": {
             "type": "boolean",
@@ -7088,8 +7163,10 @@
           "hashtags",
           "commentsCount",
           "viewsCount",
+          "repostsCount",
           "isLiked",
           "isFavorited",
+          "isReposted",
           "hideLikeCount",
           "commentsDisabled",
           "createdAt"
@@ -7292,6 +7369,18 @@
         "type": "object",
         "properties": { "favorited": { "type": "boolean", "example": true } },
         "required": ["favorited"]
+      },
+      "RepostToggleDto": {
+        "type": "object",
+        "properties": {
+          "reposted": {
+            "type": "boolean",
+            "example": true,
+            "description": "true — репостнул, false — репост снят"
+          },
+          "repostsCount": { "type": "number", "example": 7 }
+        },
+        "required": ["reposted", "repostsCount"]
       },
       "ShareDto": {
         "type": "object",
@@ -8515,6 +8604,7 @@
               "LIKE_NOTE",
               "REPLY_NOTE",
               "SHARE_POST",
+              "REPOST_POST",
               "SAVE_POST",
               "TAG_POST",
               "PROFILE_VIEW",

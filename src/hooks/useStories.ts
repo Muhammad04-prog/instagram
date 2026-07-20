@@ -2,13 +2,14 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { type ApiError } from "@/lib/axios";
 import { PAGE_SIZE } from "@/lib/constants";
 import { cursorParams, MAX_LIMIT, nextCursor } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
 import { storyService, type CreateStoriesInput } from "@/services/story.service";
+import { useOwnStoriesSeenStore } from "@/store/ownStoriesSeen.store";
 import type {
   AnswerStickerDto,
   CreateAddYoursDto,
@@ -149,20 +150,51 @@ export function useLikeStory(userId: string) {
  * The server owns "have I seen this?" now (`StoryDto.isViewed`,
  * `StoryRailItemDto.allViewed`), so the localStorage ring-state store from
  * Phase 6 is gone — the grey ring is finally correct in any browser.
+ *
+ * Three caches carry viewed-state and all three have to move, or the ring stays
+ * gradient after watching: `rail()` (`allViewed`, the ring itself), `mine()` and
+ * `byUser()` (`StoryDto.isViewed`).
+ *
+ * The two story lists are patched in place instead of invalidated: refetching
+ * `byUser` while the viewer is open swaps the array under the running slide.
+ *
+ * ⚠️ My **own** stories are also recorded locally. The server accepts the view
+ * and then ignores it — `isViewed` and `allViewed` both stay `false` forever for
+ * the author — so without the local note my ring would go grey until the next
+ * refetch and then flip back to gradient. See `ownStoriesSeen.store`.
+ *
+ * ⚠️ The returned function is memoised. Callers use it as an effect dependency;
+ * a fresh closure per render re-ran that effect, which wrote to the store, which
+ * re-rendered — "Maximum update depth exceeded" on opening one's own story.
  */
 export function useMarkStorySeen() {
   const queryClient = useQueryClient();
   const sent = useRef(new Set<number>());
+  const markOwnSeen = useOwnStoriesSeenStore((state) => state.markSeen);
 
-  return (storyId: number) => {
-    if (sent.current.has(storyId)) return;
-    sent.current.add(storyId);
+  return useCallback(
+    (storyId: number, isMine = false) => {
+      if (isMine) markOwnSeen(storyId);
+      if (sent.current.has(storyId)) return;
+      sent.current.add(storyId);
 
-    void storyService
-      .view(storyId)
-      .then(() => queryClient.invalidateQueries({ queryKey: queryKeys.stories.rail() }))
-      .catch(() => sent.current.delete(storyId));
-  };
+      const markViewed = (stories: StoryDto[] | undefined) =>
+        stories?.map((story) => (story.id === storyId ? { ...story, isViewed: true } : story));
+
+      void storyService
+        .view(storyId)
+        .then(() => {
+          queryClient.setQueryData<StoryDto[]>(queryKeys.stories.mine(), markViewed);
+          queryClient.setQueriesData<StoryDto[]>(
+            { queryKey: [...queryKeys.stories.all, "user"] },
+            markViewed,
+          );
+          return queryClient.invalidateQueries({ queryKey: queryKeys.stories.rail() });
+        })
+        .catch(() => sent.current.delete(storyId));
+    },
+    [markOwnSeen, queryClient],
+  );
 }
 
 /** Author-only analytics; the server 403s anyone else. */

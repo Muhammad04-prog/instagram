@@ -32,7 +32,7 @@ export function PostModal({ postId }: { postId: number }) {
 
       <DialogContent
         showCloseButton={false}
-        className="bg-ig-bg w-[95vw] max-w-[1100px] gap-0 overflow-hidden rounded-sm p-0 sm:max-w-[1100px]"
+        className="bg-ig-bg w-[95vw] max-w-[1100px] gap-0 overflow-hidden rounded-lg p-0 ring-0 sm:max-w-[1100px]"
       >
         <DialogTitle className="sr-only">{t("title")}</DialogTitle>
         <PostDetail postId={postId} onClose={() => router.back()} />
