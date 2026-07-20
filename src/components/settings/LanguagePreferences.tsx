@@ -3,6 +3,7 @@
 import { Check, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, useTransition } from "react";
+import { useUpdateSettings } from "@/hooks/useSettings";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,7 @@ export function LanguagePreferences() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
+  const updateSettings = useUpdateSettings();
 
   const rows = useMemo(() => {
     const real = routing.locales.map((value) => ({ value, label: REAL_LABELS[value], real: true }));
@@ -102,6 +104,9 @@ export function LanguagePreferences() {
                 disabled={!row.real || pending}
                 onClick={() => {
                   if (!row.real) return;
+                  // Fire-and-forget: the account-wide preference is a nice-to-have
+                  // sync, not something the navigation should wait on.
+                  updateSettings.mutate({ language: row.value });
                   startTransition(() => router.replace(pathname, { locale: row.value as Locale }));
                 }}
                 className={cn(

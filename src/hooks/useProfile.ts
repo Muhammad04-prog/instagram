@@ -111,6 +111,22 @@ export function useMyActivity() {
   });
 }
 
+/** The list `POST /posts/{id}/favorite`'s `collection` field can now be a picker over. */
+export function useMyCollections() {
+  return useQuery({
+    queryKey: queryKeys.profile.collections(),
+    queryFn: () => profileService.getMyCollections(),
+  });
+}
+
+/** Follower growth, profile views, reach, engagement — mine only, by period. */
+export function useMyInsights(period: "7d" | "30d" | "90d" = "7d") {
+  return useQuery({
+    queryKey: queryKeys.profile.insights(period),
+    queryFn: () => profileService.getMyInsights(period),
+  });
+}
+
 export function useMyReposts(enabled = true) {
   return useInfiniteQuery({
     queryKey: queryKeys.profile.reposts(),

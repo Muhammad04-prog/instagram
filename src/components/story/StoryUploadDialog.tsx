@@ -1,16 +1,17 @@
 "use client";
 
-import { Type, Undo2 } from "lucide-react";
+import { ListChecks, Type, Undo2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MusicPicker } from "@/components/post/MusicPicker";
+import { StickerComposer } from "@/components/story/StickerComposer";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { useAddStory } from "@/hooks/useStories";
+import { useAddStory, useCreateSticker } from "@/hooks/useStories";
 import { ORIGINAL_FILTER, PHOTO_FILTERS, filterCss } from "@/lib/filters";
 import { cn } from "@/lib/utils";
-import type { MusicDto } from "@/types/api.types";
+import type { CreateStickerDto, MusicDto } from "@/types/api.types";
 
 /**
  * «Добавить в историю» — full-bleed editor, not a small centered dialog.
@@ -37,10 +38,13 @@ export function StoryUploadDialog({
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
   const [captionOpen, setCaptionOpen] = useState(false);
+  const [stickerOpen, setStickerOpen] = useState(false);
+  const [sticker, setSticker] = useState<CreateStickerDto | null>(null);
   const [filterId, setFilterId] = useState(ORIGINAL_FILTER);
   const [music, setMusic] = useState<MusicDto | null>(null);
   const [closeFriendsOnly, setCloseFriendsOnly] = useState(false);
   const add = useAddStory();
+  const createSticker = useCreateSticker();
 
   const preview = file ? URL.createObjectURL(file) : null;
 
@@ -48,6 +52,8 @@ export function StoryUploadDialog({
     setFile(null);
     setCaption("");
     setCaptionOpen(false);
+    setStickerOpen(false);
+    setSticker(null);
     setFilterId(ORIGINAL_FILTER);
     setMusic(null);
     setCloseFriendsOnly(false);
@@ -65,7 +71,13 @@ export function StoryUploadDialog({
         overlays: caption.trim() ? [{ type: "text", value: caption.trim() }] : undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (created) => {
+          // The sticker is a second call: `POST /stories` has no field for it,
+          // and it needs the id the server just handed back.
+          const story = created[0];
+          if (sticker && story) {
+            createSticker.mutate({ storyId: story.id, dto: sticker });
+          }
           toast.success(t("storyAdded"));
           reset();
           onOpenChange(false);
@@ -135,6 +147,13 @@ export function StoryUploadDialog({
                 >
                   <Type className="size-5" />
                 </ToolButton>
+                <ToolButton
+                  label={t("addSticker")}
+                  active={stickerOpen}
+                  onClick={() => setStickerOpen((v) => !v)}
+                >
+                  <ListChecks className="size-5" />
+                </ToolButton>
                 <ToolButton label={tCommon("cancel")} onClick={() => setFile(null)}>
                   <Undo2 className="size-5" />
                 </ToolButton>
@@ -153,6 +172,18 @@ export function StoryUploadDialog({
                   <p className="absolute inset-x-4 top-10 text-center text-lg font-semibold break-words text-white drop-shadow-lg">
                     {caption}
                   </p>
+                ) : null}
+
+                {sticker && !stickerOpen ? (
+                  <p className="absolute inset-x-4 bottom-24 rounded-full bg-black/55 px-3 py-1.5 text-center text-xs font-semibold text-white backdrop-blur-sm">
+                    {t("stickerReady")}
+                  </p>
+                ) : null}
+
+                {stickerOpen ? (
+                  <div className="absolute inset-x-4 bottom-20 rounded-xl bg-black/70 p-3 backdrop-blur-sm">
+                    <StickerComposer onChange={setSticker} />
+                  </div>
                 ) : null}
 
                 {captionOpen ? (

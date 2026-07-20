@@ -4,6 +4,7 @@ import type {
   CreateLocationDto,
   DeletedDto,
   LocationDto,
+  PostDto,
   UpdateLocationDto,
 } from "@/types/api.types";
 
@@ -23,6 +24,14 @@ export const locationService = {
   getLocations: (params: GetLocationsParams) => http.get<Page<LocationDto>>("/locations", params),
 
   getLocationById: (id: number) => http.get<LocationDto>(`/locations/${id}`),
+
+  /**
+   * New — the "no feed" gap `LocationScreen` used to document is closed.
+   * Same `PostsService.explore` backing as `/search/hashtag/{name}`: closed
+   * accounts and blocks excluded, own posts never included.
+   */
+  getLocationPosts: (id: number, params: CursorParams) =>
+    http.get<Page<PostDto>>(`/locations/${id}/posts`, params),
 
   create: (dto: CreateLocationDto) => http.post<LocationDto>("/locations", dto),
 

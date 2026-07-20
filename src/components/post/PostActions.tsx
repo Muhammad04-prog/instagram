@@ -6,20 +6,34 @@ import { BookmarkIcon, CommentIcon, HeartIcon, ShareIcon } from "@/components/ic
 import { SaveToCollectionDialog } from "@/components/post/SaveToCollectionDialog";
 import { ShareSheet } from "@/components/post/ShareSheet";
 import { useLikePost, useSavePost } from "@/hooks/usePosts";
-import { cn } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
 import type { PostDto } from "@/types/post.types";
 
 /** How long a press must last to mean "choose a collection" rather than "save". */
 const HOLD_MS = 500;
 
-/** Like / comment / share on the left, save on the right (docs/screenshots/img11). */
+/**
+ * Like / comment / share on the left, save on the right (docs/screenshots/img11).
+ *
+ * `showCounts` puts the like/comment numbers right next to their icons —
+ * real IG's current feed-card look — instead of the count living on its own
+ * line below (still how the post-detail modal shows it, img12). There is no
+ * "repost" action here: the API has `GET /profile/me/reposts` (reading what
+ * you've reposted) but nothing that creates one, so a repost button would
+ * press and do nothing real.
+ */
 export function PostActions({
   post,
   onCommentClick,
+  onLikesCountClick,
+  showCounts = false,
   className,
 }: {
   post: PostDto;
   onCommentClick?: () => void;
+  /** Only meaningful with `showCounts` — opens "who liked this". */
+  onLikesCountClick?: () => void;
+  showCounts?: boolean;
   className?: string;
 }) {
   const t = useTranslations("post");
@@ -36,27 +50,45 @@ export function PostActions({
   return (
     <div className={cn("flex items-center justify-between", className)}>
       <div className="flex items-center gap-4">
-        <button
-          type="button"
-          aria-label={t("like")}
-          aria-pressed={post.isLiked}
-          onClick={() => like.mutate(post)}
-          className={cn(
-            "transition-transform active:scale-90",
-            post.isLiked ? "text-ig-danger" : "text-ig-text hover:opacity-60",
-          )}
-        >
-          <HeartIcon filled={post.isLiked} className="size-6" />
-        </button>
+        <span className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={t("like")}
+            aria-pressed={post.isLiked}
+            onClick={() => like.mutate(post)}
+            className={cn(
+              "transition-transform active:scale-90",
+              post.isLiked ? "text-ig-danger" : "text-ig-text hover:opacity-60",
+            )}
+          >
+            <HeartIcon filled={post.isLiked} className="size-6" />
+          </button>
+          {showCounts && post.likesCount ? (
+            <button
+              type="button"
+              onClick={onLikesCountClick}
+              className="text-ig-text text-sm font-semibold hover:opacity-60"
+            >
+              {formatCount(post.likesCount)}
+            </button>
+          ) : null}
+        </span>
 
-        <button
-          type="button"
-          aria-label={t("comment")}
-          onClick={onCommentClick}
-          className="text-ig-text hover:opacity-60"
-        >
-          <CommentIcon className="size-6" />
-        </button>
+        <span className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={t("comment")}
+            onClick={onCommentClick}
+            className="text-ig-text hover:opacity-60"
+          >
+            <CommentIcon className="size-6" />
+          </button>
+          {showCounts && post.commentsCount > 0 ? (
+            <span className="text-ig-text text-sm font-semibold">
+              {formatCount(post.commentsCount)}
+            </span>
+          ) : null}
+        </span>
 
         <button
           type="button"

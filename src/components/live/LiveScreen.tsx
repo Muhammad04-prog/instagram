@@ -1,11 +1,12 @@
 "use client";
 
-import { Mic, MicOff, Users, Video, VideoOff, X } from "lucide-react";
+import { Mic, MicOff, UserPlus, Users, Video, VideoOff, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { LiveCommentBar } from "@/components/live/LiveCommentBar";
 import { LiveEndedStats } from "@/components/live/LiveEndedStats";
 import { type FloatingHeart, LiveHearts } from "@/components/live/LiveHearts";
+import { LiveJoinRequestsSheet } from "@/components/live/LiveJoinRequestsSheet";
 import { LiveStage } from "@/components/live/LiveStage";
 import { LiveViewersSheet } from "@/components/live/LiveViewersSheet";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -23,6 +24,7 @@ import {
   useLikeLive,
   useLive,
   useLiveComment,
+  useLiveComments,
   useLiveReaction,
   useRequestJoinLive,
   useSetLiveAudio,
@@ -30,8 +32,8 @@ import {
 } from "@/hooks/useLive";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { pageItems } from "@/lib/cursor";
 import { useLiveSessionStore } from "@/store/live-session.store";
-import type { LiveCommentDto } from "@/types/api.types";
 
 /**
  * One broadcast, for both sides of it.
@@ -57,10 +59,11 @@ export function LiveScreen({ liveId }: { liveId: string }) {
   const requestJoin = useRequestJoinLive(liveId);
   const setCamera = useSetLiveCamera(liveId);
   const setAudio = useSetLiveAudio(liveId);
+  const { data: liveComments } = useLiveComments(liveId, Boolean(live));
 
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
-  const [mine, setMine] = useState<LiveCommentDto[]>([]);
   const [viewersOpen, setViewersOpen] = useState(false);
+  const [requestsOpen, setRequestsOpen] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   // Nothing tells us the host's answer — there is no request-status endpoint and
   // no socket — so the button can only report that the ask went out.
@@ -194,16 +197,11 @@ export function LiveScreen({ liveId }: { liveId: string }) {
       </div>
 
       <div className="bg-gradient-to-t from-black to-transparent">
-        {/* The one thing a viewer cannot see is everyone else's chat. Say it
-            once, quietly, instead of showing an empty room as if it were real. */}
-        <p className="px-3 pt-2 text-[11px] text-white/50">{t("commentsLocalOnly")}</p>
-
         <LiveCommentBar
-          comments={mine}
+          // The API answers newest → oldest; the bar reads top-to-bottom oldest first.
+          comments={[...pageItems(liveComments ?? [])].reverse()}
           sending={comment.isPending}
-          onSend={(text) =>
-            comment.mutate(text, { onSuccess: (created) => setMine((old) => [...old, created]) })
-          }
+          onSend={(text) => comment.mutate(text)}
           onLike={() => {
             float("❤️");
             like.mutate();
@@ -217,6 +215,14 @@ export function LiveScreen({ liveId }: { liveId: string }) {
         <div className="flex items-center justify-center gap-3 pb-4">
           {isHost ? (
             <>
+              <button
+                type="button"
+                onClick={() => setRequestsOpen(true)}
+                aria-label={t("joinRequests")}
+                className="flex size-10 items-center justify-center rounded-full bg-white/15 text-white"
+              >
+                <UserPlus className="size-5" />
+              </button>
               <ControlButton
                 on={live.isCameraOn}
                 onClick={() => {
@@ -261,6 +267,10 @@ export function LiveScreen({ liveId }: { liveId: string }) {
         onOpenChange={setViewersOpen}
         isHost={isHost}
       />
+
+      {isHost ? (
+        <LiveJoinRequestsSheet liveId={liveId} open={requestsOpen} onOpenChange={setRequestsOpen} />
+      ) : null}
 
       <ConfirmDialog
         open={confirmEnd}

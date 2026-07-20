@@ -1,10 +1,19 @@
 import { http } from "@/lib/axios";
 import type { CursorParams } from "@/lib/cursor";
 import type {
+  AddYoursFeedDto,
+  AddYoursPromptDto,
+  AnswerResultDto,
+  AnswerStickerDto,
+  CreateAddYoursDto,
+  CreateStickerDto,
   DeletedDto,
   ReactionDto,
   ReactionSentDto,
+  StickerDto,
+  StickerResultsDto,
   StoryDto,
+  StoryInsightsDto,
   StoryLikeToggleDto,
   StoryRailItemDto,
   StoryReplyDto,
@@ -88,4 +97,30 @@ export const storyService = {
   /** Author-only. */
   getViewers: (id: number, params: CursorParams) =>
     http.get<StoryViewerDto[]>(`/stories/${id}/viewers`, params),
+
+  /** Author-only — views/likes/reactions/replies + engagement rate. */
+  getInsights: (id: number) => http.get<StoryInsightsDto>(`/stories/${id}/insights`),
+
+  /** Turns an existing story into the first link of an "Add Yours" chain. */
+  createAddYours: (id: number, dto: CreateAddYoursDto) =>
+    http.post<AddYoursPromptDto>(`/stories/${id}/add-yours`, dto),
+
+  /** The prompt + every response story so far (author's response first). */
+  getAddYoursFeed: (promptId: string, params: CursorParams) =>
+    http.get<AddYoursFeedDto>(`/stories/add-yours/${promptId}`, params),
+
+  /** Add an interactive sticker (POLL/QUIZ/QUESTION/SLIDER/COUNTDOWN/LINK) to my own story. */
+  createSticker: (storyId: number, dto: CreateStickerDto) =>
+    http.post<StickerDto>(`/stories/${storyId}/stickers`, dto),
+
+  /** A viewer's own answer, if any, comes back as `myAnswer`; QUIZ hides `correctIndex` until answered. */
+  getStickers: (storyId: number) => http.get<StickerDto[]>(`/stories/${storyId}/stickers`),
+
+  /** Answering again replaces the previous answer. */
+  answerSticker: (storyId: number, stickerId: string, dto: AnswerStickerDto) =>
+    http.post<AnswerResultDto>(`/stories/${storyId}/stickers/${stickerId}/answer`, dto),
+
+  /** Author-only tally. */
+  getStickerResults: (storyId: number, stickerId: string) =>
+    http.get<StickerResultsDto>(`/stories/${storyId}/stickers/${stickerId}/results`),
 };

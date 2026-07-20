@@ -24,6 +24,7 @@ export function VerificationScreen() {
   const t = useTranslations("verification");
   const format = useFormatter();
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmSubscribe, setConfirmSubscribe] = useState(false);
 
   const { data, isPending, isError, refetch } = useVerificationStatus();
   const act = useVerificationAction();
@@ -88,9 +89,7 @@ export function VerificationScreen() {
         {status !== "ACTIVE" ? (
           <button
             type="button"
-            onClick={() =>
-              act.mutate("subscribe", { onSuccess: () => toast.success(t("subscribed")) })
-            }
+            onClick={() => setConfirmSubscribe(true)}
             disabled={act.isPending}
             className={
               canTrial
@@ -122,6 +121,18 @@ export function VerificationScreen() {
         description={t("cancelConfirm")}
         confirmLabel={t("cancel")}
         onConfirm={() => act.mutate("cancel", { onSuccess: () => toast.success(t("canceled")) })}
+      />
+
+      <ConfirmDialog
+        open={confirmSubscribe}
+        onOpenChange={setConfirmSubscribe}
+        title={t("subscribe")}
+        description={t("subscribeConfirm")}
+        confirmLabel={t("subscribe")}
+        destructive={false}
+        onConfirm={() =>
+          act.mutate("subscribe", { onSuccess: () => toast.success(t("subscribed")) })
+        }
       />
     </div>
   );

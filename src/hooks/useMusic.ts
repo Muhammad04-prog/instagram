@@ -17,6 +17,17 @@ const PAGE_SIZE = 20;
 // PostMusicStrip, and it needs it once, on tap — a query with no screen behind
 // it would just be dead code.
 
+/** "Use this audio" — reels built with this track, newest first. */
+export function useMusicReels(id: number, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.music.reels(id),
+    queryFn: ({ pageParam }) => musicService.getReels(id, cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+    enabled,
+  });
+}
+
 /** `q` matches title AND artist. Empty term is the caller's business, not ours. */
 export function useMusicSearch(q: string) {
   return useInfiniteQuery({

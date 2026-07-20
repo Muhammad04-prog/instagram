@@ -98,6 +98,10 @@ export const http = {
     const res = await api.put<T>(url, body, { params: params as never });
     return res.data;
   },
+  patch: async <T>(url: string, body?: unknown, params?: unknown): Promise<T> => {
+    const res = await api.patch<T>(url, body, { params: params as never });
+    return res.data;
+  },
   delete: async <T>(url: string, params?: unknown): Promise<T> => {
     const res = await api.delete<T>(url, { params: params as never });
     return res.data;

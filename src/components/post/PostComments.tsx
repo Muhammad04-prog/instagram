@@ -1,5 +1,6 @@
 "use client";
 
+import { Pin } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons";
@@ -11,8 +12,10 @@ import {
   useComments,
   useDeleteComment,
   useLikeComment,
+  usePinComment,
   useReplyToComment,
 } from "@/hooks/useComments";
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { RichCaption } from "@/components/post/RichCaption";
@@ -28,13 +31,25 @@ import { flattenPages } from "@/lib/cursor";
  * `userName` / `userImage` on every comment, so Phase 5 had to look each writer
  * up by id (bug #6). Comment likes are new.
  */
-export function CommentList({ postId, className }: { postId: number; className?: string }) {
+export function CommentList({
+  postId,
+  postAuthorId,
+  className,
+}: {
+  postId: number;
+  /** Only the post's own author may pin a (root) comment on it. */
+  postAuthorId?: string;
+  className?: string;
+}) {
   const t = useTranslations("post");
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useComments(postId);
 
   if (isPending) return <Loader className={className} />;
 
-  const comments = flattenPages(data);
+  // Pinned first; a stable sort keeps everything else in its arrival order.
+  const comments = [...flattenPages(data)].sort(
+    (a, b) => (b.pinnedAt ? 1 : 0) - (a.pinnedAt ? 1 : 0),
+  );
 
   if (comments.length === 0) {
     return (
@@ -49,7 +64,12 @@ export function CommentList({ postId, className }: { postId: number; className?:
     <div className={className}>
       <ul className="space-y-4">
         {comments.map((comment) => (
-          <CommentThread key={comment.id} comment={comment} postId={postId} />
+          <CommentThread
+            key={comment.id}
+            comment={comment}
+            postId={postId}
+            postAuthorId={postAuthorId}
+          />
         ))}
       </ul>
 
@@ -70,20 +90,28 @@ export function CommentList({ postId, className }: { postId: number; className?:
 function CommentItem({
   comment,
   postId,
+  postAuthorId,
+  pinnable = false,
   onReply,
 }: {
   comment: CommentDto;
   postId: number;
+  postAuthorId?: string;
+  /** Only root comments are offered a pin — a reply has no place to be "on top" of. */
+  pinnable?: boolean;
   /** Absent on a reply — IG's threads are one level deep. */
   onReply?: () => void;
 }) {
   const t = useTranslations("common");
   const tPost = useTranslations("post");
   const format = useFormatter();
+  const { user } = useAuth();
   const remove = useDeleteComment(postId);
   const like = useLikeComment(postId);
+  const pin = usePinComment(postId);
 
   const { author } = comment;
+  const canPin = pinnable && postAuthorId !== undefined && user?.id === postAuthorId;
 
   return (
     <li className="group flex gap-3">
@@ -92,6 +120,13 @@ function CommentItem({
       </Link>
 
       <div className="min-w-0 flex-1">
+        {comment.pinnedAt ? (
+          <p className="text-ig-text-secondary mb-1 flex items-center gap-1 text-xs font-semibold">
+            <Pin className="size-3" />
+            {tPost("pinnedComment")}
+          </p>
+        ) : null}
+
         <p className="text-ig-text text-sm break-words">
           <Link href={ROUTES.profile(author.id)} className="mr-1.5 font-semibold">
             {author.userName}
@@ -111,6 +146,17 @@ function CommentItem({
           {onReply ? (
             <button type="button" onClick={onReply} className="font-semibold">
               {tPost("reply")}
+            </button>
+          ) : null}
+
+          {canPin ? (
+            <button
+              type="button"
+              onClick={() => pin.mutate(comment.id)}
+              disabled={pin.isPending}
+              className="font-semibold opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+            >
+              {comment.pinnedAt ? tPost("unpinComment") : tPost("pinComment")}
             </button>
           ) : null}
 
@@ -152,14 +198,28 @@ function CommentItem({
  * "View replies (N)" line can be drawn without fetching anything — the replies
  * themselves are only fetched when the line is clicked.
  */
-function CommentThread({ comment, postId }: { comment: CommentDto; postId: number }) {
+function CommentThread({
+  comment,
+  postId,
+  postAuthorId,
+}: {
+  comment: CommentDto;
+  postId: number;
+  postAuthorId?: string;
+}) {
   const [repliesOpen, setRepliesOpen] = useState(false);
   const [replying, setReplying] = useState(false);
 
   return (
     <li>
       <ul>
-        <CommentItem comment={comment} postId={postId} onReply={() => setReplying(true)} />
+        <CommentItem
+          comment={comment}
+          postId={postId}
+          postAuthorId={postAuthorId}
+          pinnable
+          onReply={() => setReplying(true)}
+        />
       </ul>
 
       {replying ? (

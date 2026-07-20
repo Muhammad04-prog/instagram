@@ -9,7 +9,6 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { CompassIcon } from "@/components/icons";
 import { useFeed } from "@/hooks/usePosts";
-import { flattenPages } from "@/lib/cursor";
 
 /** `/` — posts of the people I follow, infinite scroll (docs/screenshots/img10). */
 export function Feed() {
@@ -45,9 +44,21 @@ export function Feed() {
 
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
 
-  const posts = flattenPages(data);
+  // `FeedDto` pages are always the envelope shape (never a bare array), so
+  // this reads `.items` directly rather than through the shape-aware
+  // `flattenPages` — its `Page<T>` type requires `nextCursor`, which here is
+  // merely optional, and the mismatch is the only thing standing in the way.
+  const posts = data?.pages.flatMap((page) => page.items) ?? [];
+  // `allCaughtUp`/`suggested` ride on the last loaded page, not the flattened
+  // list — `FeedDto` carries them alongside `items`, one value per page
+  // rather than per post.
+  const lastPage = data?.pages.at(-1);
+  // Only worth showing once there is nothing left to page through — earlier
+  // pages may already say `true` before the whole list has actually loaded.
+  const showCaughtUp = lastPage?.allCaughtUp && !hasNextPage;
+  const suggested = !hasNextPage ? (lastPage?.suggested ?? []) : [];
 
-  if (posts.length === 0) {
+  if (posts.length === 0 && suggested.length === 0) {
     return (
       <EmptyState
         icon={<CompassIcon className="size-8" />}
@@ -64,6 +75,24 @@ export function Feed() {
       ))}
       <div ref={sentinel} className="h-10" />
       {isFetchingNextPage ? <Loader /> : null}
+
+      {showCaughtUp ? (
+        <div className="flex flex-col items-center gap-1 py-8 text-center">
+          <p className="text-ig-text text-base font-semibold">{t("allCaughtUp")}</p>
+          <p className="text-ig-text-secondary text-sm">{t("allCaughtUpDescription")}</p>
+        </div>
+      ) : null}
+
+      {suggested.length > 0 ? (
+        <>
+          <p className="text-ig-text-secondary text-center text-sm font-semibold">
+            {t("suggestedForYou")}
+          </p>
+          {suggested.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </>
+      ) : null}
     </div>
   );
 }

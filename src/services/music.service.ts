@@ -4,6 +4,7 @@ import type {
   MusicDto,
   OnlineProvidersDto,
   OnlineTrackDto,
+  PostDto,
   SaveMusicDto,
   SaveOnlineTrackDto,
 } from "@/types/api.types";
@@ -59,6 +60,10 @@ export const musicService = {
    * would against the origin.
    */
   streamUrl: (id: number) => `/api/proxy/music/${id}/stream`,
+
+  /** "Use this audio" — reels built with this track. Closed/blocked accounts excluded. */
+  getReels: (id: number, params: CursorParams) =>
+    http.get<Page<PostDto>>(`/music/${id}/reels`, params),
 
   /** Idempotent. */
   save: (id: number) => http.post<SaveMusicDto>(`/music/${id}/save`),

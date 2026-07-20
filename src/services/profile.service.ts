@@ -3,11 +3,13 @@ import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   ActivityItemDto,
   AvatarDto,
+  CollectionDto,
   IsFollowingDto,
   MusicDto,
   OtherProfileDto,
   PostDto,
   ProfileDto,
+  ProfileInsightsDto,
   UpdatePrivacyDto,
   UpdateProfileDto,
 } from "@/types/api.types";
@@ -60,4 +62,14 @@ export const profileService = {
   /** "Your activity". */
   getMyActivity: (params: CursorParams) =>
     http.get<ActivityItemDto[]>("/profile/me/activity", params),
+
+  /**
+   * `name` is the same value `POST /posts/{id}/favorite`'s `collection` field
+   * takes — this is what makes that a picker instead of free text.
+   */
+  getMyCollections: () => http.get<CollectionDto[]>("/profile/me/collections"),
+
+  /** Follower growth, profile views, reach, engagement — mine only. */
+  getMyInsights: (period: "7d" | "30d" | "90d" = "7d") =>
+    http.get<ProfileInsightsDto>("/profile/me/insights", { period }),
 };

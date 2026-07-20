@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { BookmarkIcon, GridIcon, RepostIcon, TaggedIcon } from "@/components/icons";
 import { PostGrid, PostGridSkeleton } from "@/components/profile/PostGrid";
 import { HighlightCircles } from "@/components/profile/HighlightCircles";
+import { PendingCollabsBanner } from "@/components/profile/PendingCollabsBanner";
 import { PrivateAccountGate } from "@/components/profile/PrivateAccountGate";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileHeaderSkeleton } from "@/components/profile/ProfileSkeleton";
@@ -41,10 +42,12 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   // /profile/me/reposts — my own only, so it never runs on someone else's page.
   const repostsQuery = useMyReposts(isMe && tab === "reposts");
 
-  const allPosts = useMemo(
-    () => flattenPages((isMe ? myPosts : otherPosts).data),
-    [isMe, myPosts, otherPosts],
-  );
+  const allPosts = useMemo(() => {
+    const flat = flattenPages((isMe ? myPosts : otherPosts).data);
+    // Pinned first (max 3, server-enforced) — a stable sort keeps everything
+    // else in its arrival order.
+    return [...flat].sort((a, b) => (b.pinnedAt ? 1 : 0) - (a.pinnedAt ? 1 : 0));
+  }, [isMe, myPosts, otherPosts]);
   const reels = useMemo(() => flattenPages(reelsQuery.data), [reelsQuery.data]);
   const reposts = useMemo(() => flattenPages(repostsQuery.data), [repostsQuery.data]);
   const tagged = useMemo(() => flattenPages(taggedQuery.data), [taggedQuery.data]);
@@ -74,6 +77,8 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
       {locked ? null : <ProfileTabs value={tab} onChange={setTab} showSaved={isMe} />}
 
       <div className={locked ? "hidden" : "pt-4"}>
+        {tab === "posts" && isMe ? <PendingCollabsBanner /> : null}
+
         {tab === "posts" ? (
           <Panel
             query={posts}

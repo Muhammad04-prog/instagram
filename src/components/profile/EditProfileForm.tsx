@@ -86,14 +86,6 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
     <form onSubmit={onSubmit} className="space-y-8">
       <AvatarUploader profile={profile} />
 
-      <Section title={t("username")} hint={t("usernameChangeUnavailable")}>
-        <Input
-          value={profile.userName}
-          disabled
-          className="border-ig-border bg-ig-bg-secondary text-ig-text-secondary h-11 rounded-lg px-4"
-        />
-      </Section>
-
       <Link
         href={ROUTES.personalInfo}
         className="border-ig-border flex items-center gap-4 rounded-lg border px-4 py-4"
@@ -112,7 +104,7 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
           <Input
             {...register("fullName")}
             placeholder={t("fullNamePlaceholder")}
-            className="border-ig-border bg-ig-bg-secondary text-ig-text h-11 rounded-lg px-4"
+            className="bg-ig-elevated text-ig-text h-11 rounded-xl border-none px-4 shadow-sm"
           />
         </Field>
       </Section>
@@ -123,13 +115,13 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
             {...register("website")}
             inputMode="url"
             placeholder={t("websitePlaceholder")}
-            className="border-ig-border bg-ig-bg-secondary text-ig-text h-11 rounded-lg px-4"
+            className="bg-ig-elevated text-ig-text h-11 rounded-xl border-none px-4 shadow-sm"
           />
         </Field>
       </Section>
 
       <Section title={t("about")}>
-        <div className="border-ig-border bg-ig-bg-secondary focus-within:border-ig-text-secondary rounded-lg border px-4 py-3">
+        <div className="bg-ig-elevated rounded-xl border-none px-4 py-3 shadow-sm">
           <Textarea
             {...register("about")}
             maxLength={ABOUT_MAX_LENGTH}
@@ -165,13 +157,13 @@ export function EditProfileForm({ profile }: { profile: ProfileDto }) {
         description={t("showAccountSuggestionsHint")}
       />
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-4">
         <button
           type="submit"
-          disabled={update.isPending || !isDirty}
-          className="bg-ig-primary hover:bg-ig-primary-hover rounded-lg px-8 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+          disabled={!isDirty || update.isPending}
+          className="bg-ig-primary hover:bg-ig-primary-hover w-auto rounded-lg px-6 py-2.5 font-semibold text-white shadow-sm transition disabled:opacity-50"
         >
-          {update.isPending ? tCommon("loading") : tCommon("submit")}
+          {tCommon("save")}
         </button>
       </div>
     </form>

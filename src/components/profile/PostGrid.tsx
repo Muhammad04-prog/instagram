@@ -1,5 +1,6 @@
 "use client";
 
+import { Pin } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { CarouselIcon, ClipIcon, CommentIcon, HeartIcon } from "@/components/icons";
@@ -71,6 +72,15 @@ function PostGridItem({ post }: { post: GridPost }) {
           <CarouselIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
         ) : clip ? (
           <ClipIcon className="absolute top-2 right-2 size-[18px] text-white drop-shadow" />
+        ) : null}
+
+        {post.pinnedAt ? (
+          <span
+            aria-label={t("pinnedBadge")}
+            className="absolute top-2 left-2 text-white drop-shadow"
+          >
+            <Pin className="size-[18px]" fill="currentColor" />
+          </span>
         ) : null}
 
         <div className="absolute inset-0 flex items-center justify-center gap-7 bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">

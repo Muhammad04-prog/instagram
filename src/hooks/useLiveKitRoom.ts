@@ -1,6 +1,12 @@
 "use client";
 
-import { Room, RoomEvent, type LocalTrack, type RemoteTrack } from "livekit-client";
+import {
+  Room,
+  RoomEvent,
+  createLocalVideoTrack,
+  type LocalTrack,
+  type RemoteTrack,
+} from "livekit-client";
 import { useEffect, useState } from "react";
 
 interface UseLiveKitRoomOptions {
@@ -40,13 +46,29 @@ export function useLiveKitRoom({ wsUrl, token, publish }: UseLiveKitRoomOptions)
 
     let cancelled = false;
     const room = new Room();
+    let standaloneTrack: LocalTrack | null = null;
+
+    if (publish) {
+      // The backend has no live server yet, so the connection below will fail.
+      // Eagerly grab the camera so the host can at least see themselves.
+      createLocalVideoTrack({ facingMode: "user" })
+        .then((track) => {
+          if (cancelled) {
+            track.stop();
+            return;
+          }
+          standaloneTrack = track;
+          setState((s) => ({ ...s, videoTrack: s.videoTrack || track }));
+        })
+        .catch(console.error);
+    }
 
     const pickVideoTrack = (): LocalTrack | RemoteTrack | null => {
       if (publish) {
         for (const publication of room.localParticipant.videoTrackPublications.values()) {
           if (publication.track) return publication.track;
         }
-        return null;
+        return standaloneTrack;
       }
       for (const participant of room.remoteParticipants.values()) {
         for (const publication of participant.videoTrackPublications.values()) {
@@ -66,7 +88,7 @@ export function useLiveKitRoom({ wsUrl, token, publish }: UseLiveKitRoomOptions)
     room.on(RoomEvent.LocalTrackUnpublished, refresh);
     room.on(RoomEvent.ParticipantConnected, refresh);
     room.on(RoomEvent.Disconnected, () => {
-      if (!cancelled) setState((s) => ({ ...s, connected: false, videoTrack: null }));
+      if (!cancelled) setState((s) => ({ ...s, connected: false, videoTrack: standaloneTrack }));
     });
 
     room
@@ -74,7 +96,11 @@ export function useLiveKitRoom({ wsUrl, token, publish }: UseLiveKitRoomOptions)
       .then(async () => {
         if (cancelled) return;
         if (publish) {
-          await room.localParticipant.setCameraEnabled(true);
+          if (standaloneTrack) {
+            await room.localParticipant.publishTrack(standaloneTrack);
+          } else {
+            await room.localParticipant.setCameraEnabled(true);
+          }
           await room.localParticipant.setMicrophoneEnabled(true);
         }
         if (!cancelled) {
@@ -82,11 +108,12 @@ export function useLiveKitRoom({ wsUrl, token, publish }: UseLiveKitRoomOptions)
         }
       })
       .catch((error: Error) => {
-        if (!cancelled) setState((s) => ({ ...s, error }));
+        if (!cancelled) setState((s) => ({ ...s, error, videoTrack: standaloneTrack }));
       });
 
     return () => {
       cancelled = true;
+      if (standaloneTrack) standaloneTrack.stop();
       void room.disconnect();
       setState(initialState);
     };

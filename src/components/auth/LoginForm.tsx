@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthInput } from "@/components/auth/AuthInput";
@@ -22,7 +23,9 @@ export function LoginForm({
 } = {}) {
   const t = useTranslations("auth");
   const tv = useTranslations("validation");
-  const { login } = useAuth();
+  const { login, verifyTwoFactor } = useAuth();
+  const [ticket, setTicket] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   const {
     register,
@@ -34,9 +37,56 @@ export function LoginForm({
     defaultValues: { login: prefillLogin, password: "" },
   });
 
+  // Second step of login: the account has 2FA on, so `login` returned a
+  // ticket instead of tokens (see `TwoFactorRequiredDto`) — this step trades
+  // it for the real pair.
+  if (ticket) {
+    return (
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          verifyTwoFactor.mutate({ ticket, code });
+        }}
+        className="w-full max-w-[420px] space-y-4"
+      >
+        <div className="mb-8 flex items-center gap-4">
+          <button type="button" onClick={() => setTicket(null)} aria-label={t("back")}>
+            <ChevronLeft className="text-ig-text size-6" />
+          </button>
+          <h1 className="text-ig-text text-[17px] font-semibold">{t("twoFactorTitle")}</h1>
+        </div>
+
+        <p className="text-ig-text-secondary text-sm">{t("twoFactorHint")}</p>
+
+        <AuthInput
+          value={code}
+          onChange={(event) => setCode(event.target.value.trim())}
+          placeholder={t("twoFactorCodePlaceholder")}
+          autoComplete="one-time-code"
+          autoFocus
+        />
+
+        <AuthButton
+          type="submit"
+          disabled={!code}
+          loading={verifyTwoFactor.isPending}
+          className="mt-6"
+        >
+          {t("twoFactorConfirm")}
+        </AuthButton>
+      </form>
+    );
+  }
+
   return (
     <form
-      onSubmit={handleSubmit((values) => login.mutate(values))}
+      onSubmit={handleSubmit((values) =>
+        login.mutate(values, {
+          onSuccess: (result) => {
+            if (result.twoFactorRequired) setTicket(result.ticket);
+          },
+        }),
+      )}
       className="w-full max-w-[420px] space-y-4"
     >
       <div className="mb-8 flex items-center gap-4">

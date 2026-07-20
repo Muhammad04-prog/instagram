@@ -12,8 +12,9 @@ import { useRef } from "react";
 import { toast } from "sonner";
 import { type ApiError } from "@/lib/axios";
 import { EXPLORE_PAGE_SIZE, FEED_PAGE_SIZE, PAGE_SIZE, REELS_PAGE_SIZE } from "@/lib/constants";
-import { cursorParams, nextCursor } from "@/lib/cursor";
+import { cursorParams, nextCursor, pageItems, type Page } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
+import { feedService } from "@/services/feed.service";
 import { postService, type CreatePostInput } from "@/services/post.service";
 import { profileService } from "@/services/profile.service";
 import { searchService } from "@/services/search.service";
@@ -25,13 +26,22 @@ import type { PostDto, ReportPostDto, ShareDto } from "@/types/api.types";
  * Cursor-paginated and scoped to me server-side. Softclub needed my UserId
  * passed explicitly or it silently answered an empty feed (bug #21), and it
  * ignored paging entirely — neither is true here.
+ *
+ * Calls the dedicated `GET /feed` (19.07.2026), not `postService.getFeed`
+ * (`/posts/feed`) — the two are duplicates of each other (identical params,
+ * identical `FeedDto` response, identical ranking description), and `/feed`
+ * reads as the resource the backend is consolidating onto. See
+ * `feed.service.ts`.
  */
 export function useFeed() {
   return useInfiniteQuery({
     queryKey: queryKeys.posts.feed(),
-    queryFn: ({ pageParam }) => postService.getFeed(cursorParams(pageParam, FEED_PAGE_SIZE)),
+    queryFn: ({ pageParam }) => feedService.getFeed(cursorParams(pageParam, FEED_PAGE_SIZE)),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => nextCursor(lastPage, FEED_PAGE_SIZE),
+    // `FeedDto.nextCursor` is optional, not just nullable — `Page<T>` declares
+    // it required, so this reads it by hand rather than through `nextCursor()`.
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
   });
 }
 
@@ -124,6 +134,14 @@ export function usePost(postId: number) {
  * Patches one post everywhere it is cached — every feed/grid page and the detail
  * — so an optimistic like never disagrees with itself between the modal and the
  * card underneath it.
+ *
+ * ⚠️ A cached page is not always a bare array: `/posts/reels`, `/posts/feed`,
+ * the profile grids etc. answer with the `{ items, nextCursor, hasMore }`
+ * envelope (see `cursor.ts`), Swagger's "bare array" notwithstanding. Patching
+ * with `page.map(...)` on an envelope threw `page.map is not a function` —
+ * the click never even reached the server — which is why like/save looked
+ * broken everywhere at once. `pageItems` reads either shape; the envelope is
+ * rebuilt with its `items` replaced, not flattened into a bare array.
  */
 function usePatchPost() {
   const queryClient = useQueryClient();
@@ -133,21 +151,24 @@ function usePatchPost() {
       post ? patch(post) : post,
     );
 
-    const patchPages = (data: InfiniteData<PostDto[]> | undefined) =>
+    const patchPages = (data: InfiniteData<Page<PostDto> | PostDto[]> | undefined) =>
       data?.pages
         ? {
             ...data,
-            pages: data.pages.map((page) =>
-              page.map((post) => (post.id === postId ? patch(post) : post)),
-            ),
+            pages: data.pages.map((page) => {
+              const items = pageItems(page).map((post) =>
+                post.id === postId ? patch(post) : post,
+              );
+              return Array.isArray(page) ? items : { ...page, items };
+            }),
           }
         : data;
 
-    queryClient.setQueriesData<InfiniteData<PostDto[]>>(
+    queryClient.setQueriesData<InfiniteData<Page<PostDto> | PostDto[]>>(
       { queryKey: queryKeys.posts.all },
       patchPages,
     );
-    queryClient.setQueriesData<InfiniteData<PostDto[]>>(
+    queryClient.setQueriesData<InfiniteData<Page<PostDto> | PostDto[]>>(
       { queryKey: queryKeys.profile.all },
       patchPages,
     );
@@ -170,7 +191,10 @@ export function useLikePost() {
       patch(post.id, (current) => ({
         ...current,
         isLiked: next,
-        likesCount: Math.max(0, current.likesCount + (next ? 1 : -1)),
+        likesCount:
+          current.likesCount == null
+            ? current.likesCount
+            : Math.max(0, current.likesCount + (next ? 1 : -1)),
       }));
       return { previous: post };
     },
@@ -336,6 +360,162 @@ export function useAddPost() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
     },
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/**
+ * Pin / unpin to the top of the profile grid — toggle, max 3 (server-enforced).
+ * The server answers the full post, so the cache is set directly rather than
+ * guessed at: a 403 ("not your post — or you're at the 3-pin cap") must not
+ * be papered over by an optimistic flip that then has to un-flip itself.
+ */
+export function usePinPost() {
+  const patch = usePatchPost();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (postId: number) => postService.pin(postId),
+    onSuccess: (updated) => patch(updated.id, () => updated),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/**
+ * Hide like count / turn off commenting — either field alone, a partial patch.
+ * Same "trust the server's answer" reasoning as `usePinPost`.
+ */
+export function useUpdatePostPrivacy() {
+  const patch = usePatchPost();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({
+      postId,
+      hideLikeCount,
+      commentsDisabled,
+    }: {
+      postId: number;
+      hideLikeCount?: boolean;
+      commentsDisabled?: boolean;
+    }) => postService.updatePrivacy(postId, { hideLikeCount, commentsDisabled }),
+    onSuccess: (updated) => patch(updated.id, () => updated),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Reels that used this reel as their base — "remixOf" pointing back at it. */
+export function usePostRemixes(postId: number, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.posts.remixes(postId),
+    queryFn: ({ pageParam }) => postService.getRemixes(postId, cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+    enabled: enabled && Number.isFinite(postId),
+  });
+}
+
+/** Author-only analytics; the server 403s anyone else. */
+export function usePostInsights(postId: number, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.posts.insights(postId),
+    queryFn: () => postService.getInsights(postId),
+    enabled: enabled && Number.isFinite(postId),
+  });
+}
+
+/**
+ * My drafts and scheduled posts — not visible in any feed or my own profile
+ * grid until published.
+ *
+ * ⚠️ `POST /posts` (create) has no `status`/`scheduledAt` field in its own
+ * request body — nothing in the documented API can ever put a post into
+ * DRAFT or SCHEDULED in the first place, so this list is honestly always
+ * empty today. The read/publish side is wired for when the backend adds it;
+ * see `docs/BACKEND_REQUEST.md`.
+ */
+export function useDrafts(status?: "DRAFT" | "SCHEDULED") {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.posts.drafts(), status ?? "all"] as const,
+    queryFn: ({ pageParam }) =>
+      postService.getDrafts({ ...cursorParams(pageParam, PAGE_SIZE), status }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+  });
+}
+
+export function usePublishPost() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (postId: number) => postService.publish(postId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.posts.drafts() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.posts.mine() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.posts.feed() });
+    },
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/**
+ * Invited users get a PENDING invite; accepting makes the post show on their
+ * profile too. Takes the post id at call time (not hook-construction time) —
+ * `CreatePost` only learns it once `POST /posts` itself has answered.
+ */
+export function useInviteCollaborators() {
+  const patch = usePatchPost();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ postId, userIds }: { postId: number; userIds: string[] }) =>
+      postService.inviteCollaborators(postId, { userIds }),
+    onSuccess: (updated) => patch(updated.id, () => updated),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Posts I've been invited to co-author and haven't answered yet. */
+export function usePendingCollabs() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.posts.pendingCollabs(),
+    queryFn: ({ pageParam }) => postService.getPendingCollabs(cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+  });
+}
+
+export function useAnswerCollab() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ postId, accept }: { postId: number; accept: boolean }) =>
+      accept ? postService.acceptCollab(postId) : postService.declineCollab(postId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.posts.pendingCollabs() }),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Posts where I've been tagged and haven't confirmed the tag yet ("review"). */
+export function usePendingTags() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.posts.pendingTags(),
+    queryFn: ({ pageParam }) => postService.getPendingTags(cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+  });
+}
+
+export function useAnswerTag() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ postId, accept }: { postId: number; accept: boolean }) =>
+      accept ? postService.acceptTag(postId) : postService.declineTag(postId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.posts.pendingTags() }),
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
 }

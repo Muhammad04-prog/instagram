@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Search, SquarePen } from "lucide-react";
+import { ChevronDown, LogOut, Search, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ChatListItem } from "@/components/chat/ChatListItem";
@@ -8,6 +8,12 @@ import { NewChatDialog } from "@/components/chat/NewChatDialog";
 import { NotesRail } from "@/components/chat/NotesRail";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { RowSkeleton } from "@/components/shared/RowSkeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChat";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -24,7 +30,8 @@ import { flattenPages } from "@/lib/cursor";
  */
 export function ChatList() {
   const t = useTranslations("chat");
-  const { user } = useAuth();
+  const tNav = useTranslations("nav");
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const { data, isPending, isError, refetch } = useChats();
   const [filter, setFilter] = useState("");
@@ -44,10 +51,26 @@ export function ChatList() {
   return (
     <div className="border-ig-border flex h-full w-full flex-col border-r md:w-[397px]">
       <div className="flex items-center justify-between px-4 pt-6 pb-3">
-        <h1 className="text-ig-text flex items-center gap-1 truncate text-xl font-bold">
-          {user?.userName ?? t("title")}
-          <ChevronDown className="size-4 shrink-0" aria-hidden />
-        </h1>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="text-ig-text flex min-w-0 items-center gap-1 text-xl font-bold"
+            >
+              <span className="truncate">{user?.userName ?? t("title")}</span>
+              <ChevronDown className="size-4 shrink-0" aria-hidden />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {/* No concurrent multi-account sessions here — logging out is what
+                actually gets you to a different account, via the saved-profile
+                picker on the login screen. */}
+            <DropdownMenuItem variant="destructive" onSelect={() => void logout()}>
+              <LogOut className="size-4" />
+              {tNav("logout")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           onClick={() => setNewChatOpen(true)}

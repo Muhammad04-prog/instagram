@@ -16,12 +16,15 @@ import {
   useChat,
   useChatMessages,
   useChats,
+  useCloseChat,
   useMarkChatRead,
 } from "@/hooks/useChat";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { chatAvatar, chatLabel, type MessageDto } from "@/types/chat.types";
 import { flattenPages } from "@/lib/cursor";
+import { usePeerCall } from "@/hooks/usePeerCall";
+import { CallModal } from "@/components/chat/CallModal";
 
 /**
  * The header's clickable part. A 1-on-1 header opens the peer's profile; a group
@@ -79,8 +82,17 @@ export function ChatWindow({ chatId, compact = false }: { chatId: number; compac
   const markRead = useMarkChatRead(chatId);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-
+  const closeChat = useCloseChat();
+  const closeChatMutate = closeChat.mutate;
+  const peerCall = usePeerCall(chatId);
   const myUserId = user?.id ?? "";
+  const peerUserId = chat?.participants?.find((p) => p.id !== myUserId)?.id;
+
+  // "Leaving the chat screen" — burns any vanishing messages already seen.
+  // Harmless when vanish mode was never on (the server just reports 0 burned).
+  useEffect(() => {
+    return () => closeChatMutate(chatId);
+  }, [chatId, closeChatMutate]);
 
   // The API returns newest first; the window reads oldest → newest.
   const ordered = [...flattenPages(data)].reverse();
@@ -127,6 +139,7 @@ export function ChatWindow({ chatId, compact = false }: { chatId: number; compac
             <button
               type="button"
               aria-label={t("voiceCall")}
+              onClick={() => peerUserId && peerCall.makeCall(peerUserId, false)}
               className="text-ig-text rounded-full p-2 transition-colors hover:opacity-70"
             >
               <Phone className="size-6" />
@@ -134,6 +147,7 @@ export function ChatWindow({ chatId, compact = false }: { chatId: number; compac
             <button
               type="button"
               aria-label={t("videoCall")}
+              onClick={() => peerUserId && peerCall.makeCall(peerUserId, true)}
               className="text-ig-text rounded-full p-2 transition-colors hover:opacity-70"
             >
               <Video className="size-6" />
@@ -213,6 +227,20 @@ export function ChatWindow({ chatId, compact = false }: { chatId: number; compac
       ) : (
         <MessageInput chatId={chatId} />
       )}
+
+      <CallModal
+        status={peerCall.status}
+        localStream={peerCall.localStream}
+        remoteStream={peerCall.remoteStream}
+        isVideo={peerCall.isVideo}
+        peerName={chat ? chatLabel(chat) : peerCall.incomingCallPeerId}
+        peerUsername={chat?.peer?.userName}
+        peerFullName={chat?.peer?.fullName}
+        peerAvatar={chat ? chatAvatar(chat) : undefined}
+        onAnswer={peerCall.answerCall}
+        onDecline={peerCall.declineCall}
+        onEndCall={peerCall.endCall}
+      />
     </div>
   );
 }

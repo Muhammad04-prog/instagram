@@ -1,9 +1,15 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 import { cn, getImageUrl } from "@/lib/utils";
 
 /**
  * Round avatar with IG's default-person fallback, used whenever the API returns
- * an empty `image`/`avatar` (most accounts have none).
+ * an empty `image`/`avatar` (most accounts have none) — or whenever it returns
+ * one that 404s. Some accounts still carry an `avatarUrl` pointing at the old,
+ * dead `instagram-api.softclub.tj` host (pre-migration data); `onError` catches
+ * that the same way as a missing url, instead of a broken-image icon.
  */
 export function UserAvatar({
   src,
@@ -19,7 +25,11 @@ export function UserAvatar({
   /** For avatars that are visible on first paint (sidebar, profile header). */
   priority?: boolean;
 }) {
-  const url = getImageUrl(src);
+  // Keyed by url rather than a plain boolean so a prop change (this avatar now
+  // belongs to a different user) clears the failure and gets a fresh attempt.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const rawUrl = getImageUrl(src);
+  const url = rawUrl && rawUrl !== failedUrl ? rawUrl : null;
 
   if (!url) {
     return (
@@ -49,6 +59,7 @@ export function UserAvatar({
       priority={priority}
       style={{ width: size, height: size }}
       className={cn("shrink-0 rounded-full object-cover", className)}
+      onError={() => setFailedUrl(url)}
     />
   );
 }

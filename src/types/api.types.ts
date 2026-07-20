@@ -109,6 +109,8 @@ export type NicknameDto = components["schemas"]["NicknameDto"];
 export type MuteDto = components["schemas"]["MuteDto"];
 export type ReportChatDto = components["schemas"]["ReportChatDto"];
 export type CallStartedDto = components["schemas"]["CallStartedDto"];
+export type CallStateDto = components["schemas"]["CallStateDto"];
+export type IceServersDto = components["schemas"]["IceServersDto"];
 export type NotificationDto = components["schemas"]["NotificationDto"];
 export type UnreadCountDto = components["schemas"]["UnreadCountDto"];
 export type ProfileViewDto = components["schemas"]["ProfileViewDto"];
@@ -136,3 +138,54 @@ export type LiveReactionInputDto = components["schemas"]["LiveReactionInputDto"]
 export type JoinRequestDto = components["schemas"]["JoinRequestDto"];
 export type CameraDto = components["schemas"]["CameraDto"];
 export type AudioDto = components["schemas"]["AudioDto"];
+export type SettingsDto = components["schemas"]["SettingsDto"];
+export type UpdateSettingsDto = components["schemas"]["UpdateSettingsDto"];
+export type RestrictActionDto = components["schemas"]["RestrictActionDto"];
+export type PostInsightsDto = components["schemas"]["PostInsightsDto"];
+export type SourceBreakdownDto = components["schemas"]["SourceBreakdownDto"];
+export type UpdatePostPrivacyDto = components["schemas"]["UpdatePostPrivacyDto"];
+export type InviteCollaboratorsDto = components["schemas"]["InviteCollaboratorsDto"];
+export type CollaboratorActionDto = components["schemas"]["CollaboratorActionDto"];
+export type TagActionDto = components["schemas"]["TagActionDto"];
+export type RemixRefDto = components["schemas"]["RemixRefDto"];
+export type StoryInsightsDto = components["schemas"]["StoryInsightsDto"];
+export type AddYoursFeedDto = components["schemas"]["AddYoursFeedDto"];
+export type CreateAddYoursDto = components["schemas"]["CreateAddYoursDto"];
+export type AddYoursPromptDto = components["schemas"]["AddYoursPromptDto"];
+export type CreateStickerDto = components["schemas"]["CreateStickerDto"];
+export type StickerDto = components["schemas"]["StickerDto"];
+export type AnswerStickerDto = components["schemas"]["AnswerStickerDto"];
+export type AnswerResultDto = components["schemas"]["AnswerResultDto"];
+export type StickerResultsDto = components["schemas"]["StickerResultsDto"];
+export type TwoFactorSetupDto = components["schemas"]["TwoFactorSetupDto"];
+export type Enable2faDto = components["schemas"]["Enable2faDto"];
+export type BackupCodesDto = components["schemas"]["BackupCodesDto"];
+export type Disable2faDto = components["schemas"]["Disable2faDto"];
+export type Verify2faDto = components["schemas"]["Verify2faDto"];
+export type SessionDto = components["schemas"]["SessionDto"];
+export type LogoutAllDto = components["schemas"]["LogoutAllDto"];
+export type LogoutAllResultDto = components["schemas"]["LogoutAllResultDto"];
+export type CreateGroupChatDto = components["schemas"]["CreateGroupChatDto"];
+export type GroupCreatedDto = components["schemas"]["GroupCreatedDto"];
+export type UpdateGroupTitleDto = components["schemas"]["UpdateGroupTitleDto"];
+export type AddParticipantsDto = components["schemas"]["AddParticipantsDto"];
+export type ChatParticipantDto = components["schemas"]["ChatParticipantDto"];
+export type VanishDto = components["schemas"]["VanishDto"];
+export type CollectionDto = components["schemas"]["CollectionDto"];
+export type ProfileInsightsDto = components["schemas"]["ProfileInsightsDto"];
+export type NoteReactionDto = components["schemas"]["NoteReactionDto"];
+export type FeedDto = components["schemas"]["FeedDto"];
+
+/**
+ * ⚠️ Inferred, not documented: Swagger's `POST /auth/login` 200 response is
+ * declared as bare `TokensDto` with no branch for the 2FA case, even though
+ * `Verify2faDto.ticket`'s own description says a ticket is "issued at login
+ * (twoFactorRequired)". The exact flag name is a guess; `ticket` (the field
+ * `Verify2faDto` actually consumes) is not. `useAuth`'s login discriminates on
+ * `"ticket" in response` rather than this flag, so a wrong guess here is
+ * harmless either way — see `docs/API_REAL_DTO.md`.
+ */
+export interface TwoFactorRequiredDto {
+  twoFactorRequired: true;
+  ticket: string;
+}

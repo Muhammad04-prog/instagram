@@ -54,6 +54,7 @@ export interface PostGridSummary {
   coverUrl?: string | null;
   likesCount: number;
   commentsCount: number;
+  pinnedAt?: string | null;
 }
 
 export type GridPost = PostDto | PostGridSummary;

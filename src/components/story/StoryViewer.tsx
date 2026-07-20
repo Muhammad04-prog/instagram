@@ -1,11 +1,23 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Eye, Music2, Trash2, X } from "lucide-react";
+import {
+  BarChart2,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Music2,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HeartIcon } from "@/components/icons";
+import { CreateAddYoursDialog } from "@/components/story/CreateAddYoursDialog";
+import { StoryInsightsDialog } from "@/components/story/StoryInsightsDialog";
 import { StoryReplyBar } from "@/components/story/StoryReplyBar";
+import { StoryStickerLayer } from "@/components/story/StoryStickerLayer";
 import { StoryViewersSheet } from "@/components/story/StoryViewersSheet";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState } from "@/components/shared/ErrorState";
@@ -50,8 +62,12 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [viewersOpen, setViewersOpen] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [addYoursOpen, setAddYoursOpen] = useState(false);
   // A reply bar in use must freeze the slide — see `paused` in the timer effect.
   const [replying, setReplying] = useState(false);
+  // A sticker being answered (text/slider) must freeze the slide too.
+  const [stickerBusy, setStickerBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [broken, setBroken] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -86,18 +102,21 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
   // The attached track plays while the slide is up and mirrors the pause state
   // (hold-to-pause, reply bar, viewers sheet). Autoplay-with-sound is allowed
   // because the viewer was opened by a click; a rejected play is swallowed.
+  const frozen =
+    paused || viewersOpen || confirmOpen || replying || stickerBusy || insightsOpen || addYoursOpen;
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (paused || viewersOpen || confirmOpen || replying) {
+    if (frozen) {
       audio.pause();
     } else {
       void audio.play().catch(() => {});
     }
-  }, [paused, viewersOpen, confirmOpen, replying, current]);
+  }, [frozen, current]);
 
   useEffect(() => {
-    if (!current || paused || viewersOpen || confirmOpen || replying) return;
+    if (!current || frozen) return;
 
     const timer = window.setInterval(() => {
       setProgress((value) => {
@@ -110,7 +129,7 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
     }, TICK_MS);
 
     return () => window.clearInterval(timer);
-  }, [current, paused, viewersOpen, confirmOpen, replying, next]);
+  }, [current, frozen, next]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -181,6 +200,26 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
         </time>
 
         <div className="ml-auto flex items-center gap-3">
+          {isMine ? (
+            <button
+              type="button"
+              aria-label={t("viewInsights")}
+              onClick={() => setInsightsOpen(true)}
+              className="text-white/90 hover:text-white"
+            >
+              <BarChart2 className="size-5" />
+            </button>
+          ) : null}
+          {isMine && !current.addYoursPromptId ? (
+            <button
+              type="button"
+              aria-label={t("startAddYours")}
+              onClick={() => setAddYoursOpen(true)}
+              className="text-white/90 hover:text-white"
+            >
+              <Sparkles className="size-5" />
+            </button>
+          ) : null}
           {isMine ? (
             <button
               type="button"
@@ -262,6 +301,19 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
           </>
         ) : null}
 
+        {/* "Add Yours" chain badge — anyone can jump into the relay from here. */}
+        {current.addYoursPromptId ? (
+          <Link
+            href={ROUTES.addYours(current.addYoursPromptId)}
+            onClick={onClose}
+            className="pointer-events-auto absolute top-16 left-1/2 z-[6] -translate-x-1/2 rounded-full bg-black/55 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm"
+          >
+            {t("addYoursBadge")}
+          </Link>
+        ) : null}
+
+        <StoryStickerLayer storyId={current.id} isMine={isMine} onBusyChange={setStickerBusy} />
+
         <button
           type="button"
           aria-label={tCommon("previous")}
@@ -306,7 +358,25 @@ export function StoryViewer({ userId, onClose }: { userId: string; onClose: () =
       </div>
 
       {isMine ? (
-        <StoryViewersSheet storyId={current.id} open={viewersOpen} onOpenChange={setViewersOpen} />
+        <>
+          <StoryViewersSheet
+            storyId={current.id}
+            open={viewersOpen}
+            onOpenChange={setViewersOpen}
+          />
+          <StoryInsightsDialog
+            storyId={current.id}
+            open={insightsOpen}
+            onOpenChange={setInsightsOpen}
+          />
+          {!current.addYoursPromptId ? (
+            <CreateAddYoursDialog
+              storyId={current.id}
+              open={addYoursOpen}
+              onOpenChange={setAddYoursOpen}
+            />
+          ) : null}
+        </>
       ) : null}
 
       {/* Only on someone else's story: replying to yourself is not a thing. */}

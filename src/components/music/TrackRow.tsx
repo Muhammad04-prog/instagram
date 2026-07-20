@@ -3,6 +3,8 @@
 import { Bookmark, Pause, Play } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { useState } from "react";
+import { MusicReelsDialog } from "@/components/music/MusicReelsDialog";
 import { useToggleSaveMusic } from "@/hooks/useMusic";
 import { cn, formatCount, getImageUrl } from "@/lib/utils";
 import { usePlayerStore } from "@/store/player.store";
@@ -18,6 +20,7 @@ export function TrackRow({ track, queue }: { track: MusicDto; queue: MusicDto[] 
   const current = usePlayerStore((state) => state.track);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const save = useToggleSaveMusic();
+  const [reelsOpen, setReelsOpen] = useState(false);
 
   const active = current?.id === track.id;
   const showPause = active && isPlaying;
@@ -67,7 +70,18 @@ export function TrackRow({ track, queue }: { track: MusicDto; queue: MusicDto[] 
         </p>
         <p className="text-ig-text-secondary truncate text-xs">
           {track.artist} · {formatDuration(track.duration)}
-          {track.usesCount > 0 ? ` · ${t("uses", { count: formatCount(track.usesCount) })}` : ""}
+          {track.usesCount > 0 ? (
+            <>
+              {" · "}
+              <button
+                type="button"
+                onClick={() => setReelsOpen(true)}
+                className="hover:text-ig-text underline-offset-2 hover:underline"
+              >
+                {t("uses", { count: formatCount(track.usesCount) })}
+              </button>
+            </>
+          ) : null}
         </p>
       </div>
 
@@ -80,6 +94,10 @@ export function TrackRow({ track, queue }: { track: MusicDto; queue: MusicDto[] 
       >
         <Bookmark className={cn("size-5", track.isSaved && "fill-current")} />
       </button>
+
+      {track.usesCount > 0 ? (
+        <MusicReelsDialog trackId={track.id} open={reelsOpen} onOpenChange={setReelsOpen} />
+      ) : null}
     </li>
   );
 }

@@ -6,7 +6,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { HeartIcon } from "@/components/icons";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
@@ -17,11 +16,9 @@ import { useCreateChat } from "@/hooks/useChat";
 import { useDeleteNote, useNoteLikes, useNoteReplies } from "@/hooks/useNotes";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { noteTextColor } from "@/lib/note-colors";
 import type { NoteDto, UserBriefDto } from "@/types/api.types";
 import { flattenPages } from "@/lib/cursor";
-
-/** Only the first few show inline — the rest are a tap away in the full sheet. */
-const INLINE_LIKES = 3;
 
 /**
  * The compact card real IG shows when you tap your own note bubble: avatar,
@@ -41,99 +38,101 @@ export function NoteOwnCard({
   onWriteNew: () => void;
 }) {
   const t = useTranslations("note");
-  const format = useFormatter();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const remove = useDeleteNote();
-  const { data: likesData } = useNoteLikes(note.id, open && note.likesCount > 0);
-  const likes = flattenPages(likesData).slice(0, INLINE_LIKES);
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[400px] gap-0 rounded-2xl p-6 text-center">
+        <DialogContent className="w-[340px] gap-0 rounded-3xl border-none bg-[#262626] p-6 text-center text-white">
           <DialogTitle className="sr-only">{t("insightsTitle")}</DialogTitle>
 
-          <span className="relative mx-auto inline-flex">
-            <UserAvatar src={note.author.avatarUrl} size={140} />
-            {note.likesCount > 0 ? (
-              <span className="bg-ig-bg text-ig-text border-ig-border absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full border px-1.5 text-xs font-semibold">
-                {note.likesCount > 99 ? "99+" : note.likesCount}
-              </span>
-            ) : null}
-          </span>
-
-          {note.music ? (
-            <p className="text-ig-text-secondary mt-3 flex items-center justify-center gap-1.5 text-sm">
-              <Music className="size-3.5 shrink-0" />
-              <span className="truncate">
-                {note.music.title} · {note.music.artist}
-              </span>
-            </p>
-          ) : null}
-
-          <p className="text-ig-text mt-2 text-lg font-bold break-words">{note.text}</p>
-
-          <p className="text-ig-text-secondary mt-2 text-sm">
-            {note.audience === "FOLLOWERS"
-              ? t("publishedForFollowers")
-              : t("publishedForCloseFriends")}
-            {" · "}
-            <time dateTime={note.createdAt} suppressHydrationWarning>
-              {format.relativeTime(new Date(note.createdAt))}
-            </time>
-          </p>
-
-          {likes.length > 0 ? (
-            <div className="mt-4 space-y-2 text-left">
-              {likes.map((like) => (
-                <div key={like.user.id} className="flex items-center gap-2">
-                  <span className="relative shrink-0">
-                    <UserAvatar src={like.user.avatarUrl} size={32} />
-                    <span className="bg-ig-danger border-ig-bg absolute -bottom-0.5 -left-0.5 flex size-3.5 items-center justify-center rounded-full border">
-                      <HeartIcon filled className="size-2 text-white" />
-                    </span>
+          <div className="mt-8 flex flex-col items-center">
+            <span className="relative mb-4">
+              <div
+                style={{
+                  backgroundColor: note.bgColor || "#363636",
+                  color: noteTextColor(note.bgColor) || "#fff",
+                }}
+                className="absolute -top-12 left-1/2 z-10 flex min-h-[48px] max-w-[200px] min-w-[60px] -translate-x-1/2 items-center justify-center rounded-3xl px-4 py-2 text-sm font-semibold shadow-md"
+              >
+                {note.text ? (
+                  <span className="text-center text-base break-words whitespace-pre-wrap">
+                    {note.text}
                   </span>
-                  <span className="text-ig-text truncate text-sm">{like.user.userName}</span>
-                </div>
-              ))}
+                ) : note.music ? (
+                  <div className="flex flex-col items-center justify-center leading-tight">
+                    <span className="flex items-center gap-1.5 text-sm font-semibold">
+                      <Music className="size-3.5 shrink-0" /> {note.music.title}
+                    </span>
+                    <span className="mt-0.5 text-xs opacity-75">{note.music.artist}</span>
+                  </div>
+                ) : null}
+              </div>
+              <span
+                style={{ backgroundColor: note.bgColor || "#363636" }}
+                className="absolute -top-2 left-1/2 z-10 size-3 -translate-x-[20px] rounded-full shadow-sm"
+              />
+              <span
+                style={{ backgroundColor: note.bgColor || "#363636" }}
+                className="absolute -top-5 left-1/2 z-10 size-2 -translate-x-[30px] rounded-full shadow-sm"
+              />
+              <UserAvatar src={note.author.avatarUrl} size={100} />
+            </span>
 
-              {note.likesCount > likes.length ? (
-                <button
-                  type="button"
-                  onClick={() => setDetailsOpen(true)}
-                  className="text-ig-text-secondary text-sm"
-                >
-                  {t("viewAllLikes")}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+            <span className="mt-2 text-lg font-semibold">{note.author.userName}</span>
 
-          <button
-            type="button"
-            onClick={() => {
-              onOpenChange(false);
-              onWriteNew();
-            }}
-            className="bg-ig-primary mt-6 w-full rounded-lg py-2 text-sm font-semibold text-white"
-          >
-            {t("writeNewNote")}
-          </button>
-          <button
-            type="button"
-            disabled={remove.isPending}
-            onClick={() =>
-              remove.mutate(note.id, {
-                onSuccess: () => {
-                  toast.success(t("noteDeleted"));
-                  onOpenChange(false);
-                },
-              })
-            }
-            className="text-ig-danger mt-3 text-sm font-semibold disabled:opacity-50"
-          >
-            {t("deleteNote")}
-          </button>
+            {note.music && note.text ? (
+              <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-white/70">
+                <Music className="size-3.5 shrink-0" />
+                <span className="truncate">
+                  {note.music.title} · {note.music.artist}
+                </span>
+              </p>
+            ) : null}
+
+            <p className="mt-4 px-2 text-xs leading-snug text-white/50">
+              {note.audience === "FOLLOWERS"
+                ? t("publishedForFollowers")
+                : t("publishedForCloseFriends")}
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-2">
+            {/* Who liked / replied — author-only endpoints, one tap deeper. */}
+            <button
+              type="button"
+              onClick={() => setDetailsOpen(true)}
+              className="w-full rounded-xl py-3 text-sm font-semibold text-white hover:bg-white/5"
+            >
+              {t("viewAllLikes")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onOpenChange(false);
+                onWriteNew();
+              }}
+              className="w-full rounded-xl bg-[#0095f6] py-3 text-sm font-semibold text-white hover:bg-[#1877f2]"
+            >
+              {t("writeNewNote")}
+            </button>
+            <button
+              type="button"
+              disabled={remove.isPending}
+              onClick={() =>
+                remove.mutate(note.id, {
+                  onSuccess: () => {
+                    toast.success(t("noteDeleted"));
+                    onOpenChange(false);
+                  },
+                })
+              }
+              className="w-full rounded-xl py-3 text-sm font-semibold text-[#ed4956] hover:bg-white/5 disabled:opacity-50"
+            >
+              {t("deleteNote")}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 

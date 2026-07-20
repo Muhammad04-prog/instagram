@@ -1,7 +1,10 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
+import Image from "next/image";
+import { useState } from "react";
 import { HeartIcon } from "@/components/icons";
+import { NoteViewDialog } from "@/components/chat/NoteViewDialog";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
@@ -16,7 +19,7 @@ import {
 } from "@/hooks/useNotifications";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import { useUiStore } from "@/store/ui.store";
 import type { NotificationDto } from "@/types/api.types";
 import { flattenPages } from "@/lib/cursor";
@@ -116,6 +119,7 @@ function NotificationRow({ item }: { item: NotificationDto }) {
   const router = useRouter();
   const markRead = useMarkNotificationRead();
   const closePanel = useUiStore((s) => s.closePanel);
+  const [noteViewOpen, setNoteViewOpen] = useState(false);
 
   const { actor } = item;
 
@@ -130,6 +134,13 @@ function NotificationRow({ item }: { item: NotificationDto }) {
 
   const open = () => {
     if (!item.isRead) markRead.mutate(item.id);
+    // A note has no page of its own — it's a rail bubble, and may already have
+    // expired from that rail (24h TTL) — so this opens `GET /notes/{id}` in a
+    // dialog instead of navigating anywhere.
+    if (item.noteId) {
+      setNoteViewOpen(true);
+      return;
+    }
     closePanel();
     router.push(targetOf(item));
   };
@@ -169,18 +180,30 @@ function NotificationRow({ item }: { item: NotificationDto }) {
           </time>
         </p>
 
-        {/* A follow wants a button back. Everything else would want the post's
-            thumbnail — the notification carries no image, so none is invented. */}
+        {/* A follow wants a button back; a post-related row gets its thumbnail
+            (`postThumbUrl`, 17.07.2026) instead — never both at once. */}
         {item.type === "FOLLOW" || item.type === "FOLLOW_REQUEST" ? (
           <span onClick={(event) => event.stopPropagation()}>
             <FollowButton userId={actor.id} userName={actor.userName} variant="link" />
           </span>
+        ) : item.postThumbUrl ? (
+          <Image
+            src={getImageUrl(item.postThumbUrl) ?? ""}
+            alt=""
+            width={44}
+            height={44}
+            className="size-11 shrink-0 rounded object-cover"
+          />
         ) : null}
 
         {!item.isRead ? (
           <span aria-label={t("unread")} className="bg-ig-primary size-2 shrink-0 rounded-full" />
         ) : null}
       </div>
+
+      {item.noteId ? (
+        <NoteViewDialog noteId={item.noteId} open={noteViewOpen} onOpenChange={setNoteViewOpen} />
+      ) : null}
     </li>
   );
 }

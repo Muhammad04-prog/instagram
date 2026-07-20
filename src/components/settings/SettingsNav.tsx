@@ -7,16 +7,19 @@ import {
   AtSign,
   BadgeCheck,
   Ban,
+  BarChart2,
   Bell,
   Briefcase,
   CircleHelp,
   CircleUserRound,
+  Fingerprint,
   Globe,
   Heart,
   History,
   Infinity as InfinityIcon,
   KeyRound,
   Languages,
+  Laptop2,
   Lock,
   MapPin,
   MessageCircle,
@@ -57,6 +60,13 @@ interface NavItem {
  * "Управление аккаунтом" group for the real endpoints IG tucks inside its
  * Accounts Centre (password, activity, Meta Verified, …) that we expose here
  * directly, plus "Помощь".
+ *
+ * `twoFactor` / `loginActivity` (19.07.2026, `auth/2fa/*` + `auth/sessions`)
+ * have no screenshot of their own — no img shows this build's settings list
+ * going that deep — but real IG groups both with password exactly here
+ * ("Password and security"), so that is where they went. `insightsNav`
+ * (`profile/me/insights`, same date) joins `activity` for the same reason —
+ * real IG keeps account analytics right next to it.
  *
  * Icon pass (cosmetic-only, not redrawn this round): `lucide-react`'s
  * `UserPen` (real IG uses a plain person outline for Edit profile), `Ban`
@@ -132,7 +142,10 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: ROUTES.settings, key: "appearanceNav", Icon: Palette },
       { href: ROUTES.changePassword, key: "changePassword", Icon: KeyRound },
+      { href: ROUTES.twoFactor, key: "twoFactor", Icon: Fingerprint },
+      { href: ROUTES.loginActivity, key: "loginActivity", Icon: Laptop2 },
       { href: ROUTES.activity, key: "activity", Icon: Activity },
+      { href: ROUTES.insights, key: "insightsNav", Icon: BarChart2 },
       { href: ROUTES.verified, key: "verified", Icon: BadgeCheck },
       { href: ROUTES.locations, key: "locations", Icon: MapPin },
       { href: ROUTES.deleteAccount, key: "deleteAccount", Icon: Trash2 },
@@ -172,10 +185,8 @@ export function SettingsNav() {
   }, [isAdmin, query, t]);
 
   return (
-    <nav className="w-full shrink-0 md:w-[350px]">
-      {/* img39: this title measures the same glyph height as EditProfileScreen's
-          h1 (23 physical px at DPR 1.25 on both) — text-xl, not text-2xl. */}
-      <h1 className="text-ig-text px-3 pb-6 text-xl font-bold">{t("title")}</h1>
+    <nav className="w-full px-4 pt-8 pb-10">
+      <h1 className="text-ig-text px-2 pb-6 text-2xl font-bold">{t("title")}</h1>
 
       <div className="relative mb-6 px-1">
         <Search className="text-ig-text-secondary pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
@@ -183,7 +194,7 @@ export function SettingsNav() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="bg-ig-bg-secondary text-ig-text placeholder:text-ig-text-secondary h-10 w-full rounded-xl pr-4 pl-10 text-sm outline-none"
+          className="bg-ig-elevated text-ig-text placeholder:text-ig-text-secondary h-10 w-full rounded-xl pr-4 pl-10 text-sm shadow-sm outline-none"
         />
       </div>
 
@@ -205,8 +216,8 @@ export function SettingsNav() {
               {group.items.map(({ href, key, Icon }) => {
                 const active = pathname === href;
                 const rowClassName = cn(
-                  "text-ig-text flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm",
-                  active ? "bg-ig-button-secondary font-semibold" : "hover:bg-ig-bg-secondary",
+                  "text-ig-text flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-sm transition-colors",
+                  active ? "bg-ig-elevated font-semibold shadow-sm" : "hover:bg-ig-elevated/50",
                 );
 
                 // "Центр аккаунтов" opens a full-viewport modal (img), not a page.

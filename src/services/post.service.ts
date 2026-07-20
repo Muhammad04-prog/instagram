@@ -2,18 +2,24 @@ import { http } from "@/lib/axios";
 import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   ArchiveDto,
+  CollaboratorActionDto,
   CommentDto,
   CommentLikeToggleDto,
   CreateCommentDto,
   DeletedDto,
   FavoriteToggleDto,
+  FeedDto,
+  InviteCollaboratorsDto,
   LikeToggleDto,
   PostDto,
+  PostInsightsDto,
   ReportCreatedDto,
   ReportPostDto,
   ShareDto,
   ShareResultDto,
+  TagActionDto,
   UpdatePostDto,
+  UpdatePostPrivacyDto,
   UserBriefDto,
   ViewDto,
 } from "@/types/api.types";
@@ -50,7 +56,12 @@ export const postService = {
    */
   getPosts: (params: CursorParams) => http.get<Page<PostDto>>("/posts", params),
 
-  getFeed: (params: CursorParams) => http.get<Page<PostDto>>("/posts/feed", params),
+  /**
+   * Superseded by `feedService.getFeed` (`GET /feed`, 19.07.2026) — same
+   * params, same `FeedDto` response, same ranking. Kept typed for completeness
+   * of the tag, same as `getPosts` above; nothing calls this one anymore.
+   */
+  getFeed: (params: CursorParams) => http.get<FeedDto>("/posts/feed", params),
 
   getReels: (params: CursorParams) => http.get<Page<PostDto>>("/posts/reels", params),
 
@@ -117,4 +128,48 @@ export const postService = {
 
   getCommentReplies: (commentId: number, params: CursorParams) =>
     http.get<Page<CommentDto>>(`/posts/comments/${commentId}/replies`, params),
+
+  /** Only your own — `status` filters DRAFT vs SCHEDULED; omitted, both. */
+  getDrafts: (params: CursorParams & { status?: "DRAFT" | "SCHEDULED" }) =>
+    http.get<Page<PostDto>>("/posts/drafts", params),
+
+  /** Publishes a draft/scheduled post immediately, dropping any scheduled job. */
+  publish: (id: number) => http.put<PostDto>(`/posts/${id}/publish`),
+
+  /** Toggle → max 3 pinned posts; server enforces the cap. */
+  pin: (id: number) => http.patch<PostDto>(`/posts/${id}/pin`),
+
+  /** Any subset of the two fields — a partial patch, not a full replacement. */
+  updatePrivacy: (id: number, dto: UpdatePostPrivacyDto) =>
+    http.patch<PostDto>(`/posts/${id}/privacy`, dto),
+
+  getRemixes: (id: number, params: CursorParams) =>
+    http.get<Page<PostDto>>(`/posts/${id}/remixes`, params),
+
+  /** Author-only — 403 otherwise. */
+  getInsights: (id: number) => http.get<PostInsightsDto>(`/posts/${id}/insights`),
+
+  inviteCollaborators: (id: number, dto: InviteCollaboratorsDto) =>
+    http.post<PostDto>(`/posts/${id}/collaborators`, dto),
+
+  getPendingCollabs: (params: CursorParams) =>
+    http.get<Page<PostDto>>("/posts/collabs/pending", params),
+
+  acceptCollab: (id: number) =>
+    http.post<CollaboratorActionDto>(`/posts/${id}/collaborators/accept`),
+
+  declineCollab: (id: number) =>
+    http.post<CollaboratorActionDto>(`/posts/${id}/collaborators/decline`),
+
+  getPendingTags: (params: CursorParams) => http.get<Page<PostDto>>("/posts/tags/pending", params),
+
+  /** Accepted tag → post shows up in "Photos of you". */
+  acceptTag: (id: number) => http.post<TagActionDto>(`/posts/${id}/tag/accept`),
+
+  /** Declined/removed tag → post stays out of "Photos of you". */
+  declineTag: (id: number) => http.post<TagActionDto>(`/posts/${id}/tag/decline`),
+
+  /** Toggle — only the post's own author may pin a comment on it. */
+  pinComment: (postId: number, commentId: number) =>
+    http.patch<CommentDto>(`/posts/${postId}/comments/${commentId}/pin`),
 };

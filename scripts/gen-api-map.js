@@ -61,16 +61,20 @@ for (const svc of serviceFiles) {
  * too, or the map under-reports them as unwired.
  */
 const serverCalls = new Map();
+// Query strings (`?rt=${refreshToken}`) are call-site detail, not part of the
+// endpoint's identity — strip them before normalizing, or a query-string call
+// like GET /auth/sessions?rt=… never matches its own swagger path.
+const stripQuery = (url) => url.replace(/\$\{[^}]+\}/g, "{id}").replace(/\?.*$/, "");
 for (const s of sources) {
   const re = /fetch\(\s*`\$\{API_URL\}([^`]+)`\s*,\s*\{[\s\S]{0,120}?method:\s*"(\w+)"/g;
   let m;
   while ((m = re.exec(s.text))) {
-    serverCalls.set(`${m[2].toUpperCase()} /api${m[1].replace(/\$\{[^}]+\}/g, "{id}")}`, s.file);
+    serverCalls.set(`${m[2].toUpperCase()} /api${stripQuery(m[1])}`, s.file);
   }
   // A fetch without an explicit method is a GET.
   const reGet = /fetch\(\s*`\$\{API_URL\}([^`]+)`\s*,\s*\{\s*headers/g;
   while ((m = reGet.exec(s.text))) {
-    serverCalls.set(`GET /api${m[1].replace(/\$\{[^}]+\}/g, "{id}")}`, s.file);
+    serverCalls.set(`GET /api${stripQuery(m[1])}`, s.file);
   }
 }
 
@@ -187,12 +191,15 @@ lines.push(
   "`/chats/calls/ice-servers`, `/live/{id}/requests`, `NotificationDto.requestId`), и заодно",
 );
 lines.push("принёс групповые чаты и внешний каталог музыки. Под фронт это отдельные фазы — см.");
-lines.push("[`ROADMAP_V2.md`](./ROADMAP_V2.md). Единственное сознательное исключение:");
+lines.push("[`ROADMAP_V2.md`](./ROADMAP_V2.md). Сознательные исключения:");
 lines.push("");
 lines.push("| Endpoint | Почему не подключён |");
 lines.push("| -------- | ------------------- |");
 lines.push(
   "| `GET /posts` | **Не блокер, а дубль:** сетку Explore питает `/search/explore` — ранжированный endpoint, сделанный ровно под неё. `/posts` отдаёт то же самое плоским списком. Отдельного экрана под него нет ни в одном скриншоте, и выдумывать его ради галочки в карте не стали. |",
+);
+lines.push(
+  "| `GET /posts/feed` | **Тоже дубль (19.07.2026):** тот же `FeedDto`, те же параметры, то же описание ранжирования, что у нового `GET /feed`. `useFeed` теперь зовёт `/feed` как более новый специализированный ресурс — вызывать оба значило бы дублировать один и тот же запрос. |",
 );
 lines.push("");
 lines.push("Полный список неподключённых — строки `[ ]` в таблицах ниже.");

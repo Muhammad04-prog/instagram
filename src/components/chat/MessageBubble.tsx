@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MoreHorizontal, SmilePlus } from "lucide-react";
+import { Check, Eye, MoreHorizontal, SmilePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
@@ -13,7 +13,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { canEditMessage, EditMessageDialog } from "@/components/chat/EditMessageDialog";
-import { useDeleteMessage, useToggleMessageReaction } from "@/hooks/useChat";
+import { SharedPostBubble } from "@/components/chat/SharedPostBubble";
+import { VoiceMessagePlayer } from "@/components/chat/VoiceMessagePlayer";
+import {
+  useDeleteMessage,
+  useOpenViewOnceMessage,
+  useToggleMessageReaction,
+} from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { themeBubble } from "@/lib/chat-themes";
 import { cn, getImageUrl } from "@/lib/utils";
@@ -56,6 +62,15 @@ export function MessageBubble({
   const [pickerOpen, setPickerOpen] = useState(false);
   const deleteMessage = useDeleteMessage(message.chatId);
   const react = useToggleMessageReaction(message.chatId);
+  const openViewOnce = useOpenViewOnceMessage(message.chatId);
+  // The "open" response hands back the real media exactly once — kept here,
+  // not in the cache, since a later fetch is documented to hide it again for
+  // everyone but the sender.
+  const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
+  // Some media still points at the old, dead `instagram-api.softclub.tj` host
+  // (pre-migration data) and 404s — this swaps the bubble to a text fallback
+  // instead of a broken-image icon.
+  const [mediaFailed, setMediaFailed] = useState(false);
 
   // One reaction per person: mine is the one I can take back.
   const myReaction = message.reactions.find((r) => r.userId === user?.id)?.emoji ?? null;
@@ -64,7 +79,11 @@ export function MessageBubble({
   const pending = message.id < 0;
   // Optimistic rows have no server id, so they cannot be part of a bulk delete.
   const selectable = mine && !pending && !message.isDeleted;
-  const fileUrl = message.mediaUrl ? getImageUrl(message.mediaUrl) : null;
+  // A view-once attachment is only hidden from the *other* side — mine always shows.
+  const viewOnceHidden = message.viewOnce && !mine && !revealedUrl;
+  const fileUrl = viewOnceHidden
+    ? null
+    : (revealedUrl ?? (message.mediaUrl ? getImageUrl(message.mediaUrl) : null));
 
   return (
     <div
@@ -148,18 +167,73 @@ export function MessageBubble({
           pending && "opacity-60",
         )}
       >
-        {fileUrl && isAttachment(message) ? (
+        {message.type === "POST_SHARE" && message.sharedPostId ? (
+          <SharedPostBubble postId={message.sharedPostId} />
+        ) : viewOnceHidden ? (
+          message.viewOnceOpened ? (
+            <p className="text-ig-text-secondary flex items-center gap-1.5 px-2 py-1 text-sm italic">
+              <Eye className="size-3.5" />
+              {t("viewOnceOpened")}
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                openViewOnce.mutate(message.id, {
+                  onSuccess: (opened) =>
+                    setRevealedUrl(opened.mediaUrl ? getImageUrl(opened.mediaUrl) : null),
+                })
+              }
+              disabled={openViewOnce.isPending}
+              className="flex items-center gap-1.5 px-2 py-1 text-sm font-semibold disabled:opacity-50"
+            >
+              <Eye className="size-3.5" />
+              {t("viewOnceTapToView")}
+            </button>
+          )
+        ) : fileUrl && isAttachment(message) ? (
           message.type === "IMAGE" ? (
-            <Image
-              src={fileUrl}
-              alt={message.text ?? ""}
-              width={240}
-              height={240}
-              className="mb-1 max-h-80 w-60 rounded-2xl object-cover"
-              unoptimized
-            />
+            mediaFailed ? (
+              <p className="text-ig-text-secondary px-2 py-1 text-sm italic">
+                {t("attachmentUnavailable")}
+              </p>
+            ) : (
+              <Image
+                src={fileUrl}
+                alt={message.text ?? ""}
+                width={240}
+                height={240}
+                className="mb-1 max-h-80 w-60 rounded-2xl object-cover"
+                unoptimized
+                onError={() => setMediaFailed(true)}
+              />
+            )
           ) : message.type === "VIDEO" ? (
-            <video src={fileUrl} controls className="mb-1 w-60 rounded-2xl" />
+            mediaFailed ? (
+              <p className="text-ig-text-secondary px-2 py-1 text-sm italic">
+                {t("attachmentUnavailable")}
+              </p>
+            ) : (
+              <video
+                src={fileUrl}
+                controls
+                onError={() => setMediaFailed(true)}
+                className="mb-1 w-60 rounded-2xl"
+              />
+            )
+          ) : message.type === "AUDIO" ? (
+            mediaFailed ? (
+              <p className="text-ig-text-secondary px-2 py-1 text-sm italic">
+                {t("attachmentUnavailable")}
+              </p>
+            ) : (
+              <VoiceMessagePlayer
+                src={fileUrl}
+                seed={message.id}
+                durationHint={message.duration}
+                onError={() => setMediaFailed(true)}
+              />
+            )
           ) : (
             <a
               href={fileUrl}

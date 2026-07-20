@@ -54,6 +54,38 @@ export function useLiveViewers(id: string, enabled = true) {
   });
 }
 
+/** Newest → oldest, everyone's — polled like everything else here (no socket). */
+export function useLiveComments(id: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.live.comments(id),
+    queryFn: () => liveService.getComments(id, {}),
+    enabled,
+    refetchInterval: LIVE_POLL_MS,
+  });
+}
+
+/** Host-only — pending join requests, so a host can actually answer one. */
+export function useLiveJoinRequests(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.live.requests(id),
+    queryFn: () => liveService.getRequests(id, "PENDING"),
+    enabled,
+    refetchInterval: LIVE_POLL_MS,
+  });
+}
+
+export function useAnswerLiveJoinRequest(id: string) {
+  const queryClient = useQueryClient();
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: ({ requestId, accept }: { requestId: number; accept: boolean }) =>
+      accept ? liveService.acceptRequest(requestId) : liveService.declineRequest(requestId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.live.requests(id) }),
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
 /** Host-only, and only worth asking once the broadcast has ended. */
 export function useLiveStats(id: string, enabled = true) {
   return useQuery({

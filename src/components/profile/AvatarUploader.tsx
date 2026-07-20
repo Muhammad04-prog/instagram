@@ -33,12 +33,11 @@ export function AvatarUploader({ profile }: { profile: ProfileDto }) {
   };
 
   return (
-    <div className="bg-ig-bg-secondary border-ig-border flex items-center gap-4 rounded-2xl border px-4 py-3">
-      <UserAvatar src={profile.avatarUrl} alt={profile.userName} size={56} />
+    <div className="bg-ig-elevated flex items-center gap-5 rounded-2xl border-none px-6 py-4 shadow-sm">
+      <UserAvatar src={profile.avatarUrl} alt={profile.userName} size={64} />
 
       <div className="min-w-0 flex-1">
-        <p className="text-ig-text truncate text-sm font-semibold">{profile.userName}</p>
-        <p className="text-ig-text-secondary truncate text-sm">{profile.fullName}</p>
+        <p className="text-ig-text truncate text-base font-bold">{profile.userName}</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -57,7 +56,7 @@ export function AvatarUploader({ profile }: { profile: ProfileDto }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="bg-ig-primary hover:bg-ig-primary-hover rounded-lg px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+          className="rounded-lg bg-[#0064e0] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#0055c4] disabled:opacity-50"
         >
           {profile.avatarUrl ? t("changePhoto") : t("newPhoto")}
         </button>
