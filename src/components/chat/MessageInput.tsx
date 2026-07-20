@@ -1,6 +1,8 @@
 "use client";
 
 import { Heart, ImageIcon, Loader2, Mic, SmilePlus, Square, X } from "lucide-react";
+import { EmojiPicker } from "@/components/chat/EmojiPicker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Mp3Encoder } from "@breezystack/lamejs";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -58,6 +60,7 @@ export function MessageInput({ chatId }: { chatId: number }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [recording, setRecording] = useState(false);
   const [encoding, setEncoding] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -141,13 +144,27 @@ export function MessageInput({ chatId }: { chatId: number }) {
       ) : null}
 
       <div className="border-ig-border flex items-center gap-3 rounded-full border px-4 py-2">
-        <button
-          type="button"
-          aria-label={t("emoji")}
-          className="text-ig-text-secondary shrink-0 transition-colors hover:opacity-70"
-        >
-          <SmilePlus className="size-6" />
-        </button>
+        {/* Was a dead button with no handler at all — the panel it is supposed
+            to open (docs/screenshots/img22) had never been built. */}
+        <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label={t("emoji")}
+              className="text-ig-text-secondary shrink-0 transition-colors hover:opacity-70"
+            >
+              <SmilePlus className="size-6" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="top"
+            align="start"
+            sideOffset={12}
+            className="w-auto border-none bg-transparent p-0 shadow-none"
+          >
+            <EmojiPicker onPick={(emoji) => setDraft(chatId, draft + emoji)} />
+          </PopoverContent>
+        </Popover>
 
         <input
           value={draft}

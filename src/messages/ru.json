@@ -506,7 +506,8 @@
     "selectedCount": "{count, plural, one {Выбрано #} few {Выбрано #} many {Выбрано #} other {Выбрано #}}",
     "deleteSelected": "Удалить",
     "calling": "Звоним...",
-    "incomingCall": "Входящий звонок..."
+    "incomingCall": "Входящий звонок...",
+    "emojiSearch": "Поиск смайликов"
   },
   "profile": {
     "posts": "публикаций",

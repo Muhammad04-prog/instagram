@@ -506,7 +506,8 @@
     "selectedCount": "{count, plural, one {# selected} other {# selected}}",
     "deleteSelected": "Delete",
     "calling": "Calling...",
-    "incomingCall": "Incoming call..."
+    "incomingCall": "Incoming call...",
+    "emojiSearch": "Search emoji"
   },
   "profile": {
     "posts": "posts",

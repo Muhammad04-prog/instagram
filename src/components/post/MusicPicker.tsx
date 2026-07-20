@@ -39,6 +39,7 @@ export function MusicPicker({
   onChange: (music: MusicDto | null) => void;
 }) {
   const t = useTranslations("post");
+  const tCommon = useTranslations("common");
   const [term, setTerm] = useState("");
   const debounced = useDebounce(term.trim(), SEARCH_DEBOUNCE_MS);
   const [playing, setPlaying] = useState<string | null>(null);
@@ -118,6 +119,20 @@ export function MusicPicker({
     onChange(track.source);
     setTerm("");
   };
+
+  // ⚠️ Picking a track from an external catalogue has to import it first
+  // (`saveOnline`), and only its response carries the id the post needs. Until
+  // that lands `value` is still null — publishing in that window produced a post
+  // with no music at all, which is what "I chose music and the post has none"
+  // was. Say the import is running so the moment is visible.
+  if (saveOnline.isPending) {
+    return (
+      <div className="border-ig-separator flex items-center gap-2 border-t py-3">
+        <Music className="text-ig-text-secondary size-4 shrink-0 animate-pulse" />
+        <span className="text-ig-text-secondary flex-1 truncate text-sm">{tCommon("loading")}</span>
+      </div>
+    );
+  }
 
   if (value) {
     return (

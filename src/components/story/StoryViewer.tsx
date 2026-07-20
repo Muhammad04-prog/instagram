@@ -30,6 +30,7 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { filterCss } from "@/lib/filters";
 import { cn, getImageUrl } from "@/lib/utils";
+import { useOwnStoriesSeenStore } from "@/store/ownStoriesSeen.store";
 
 /** One parsed overlay from `StoryDto.overlays` (text/sticker; x/y are 0–1). */
 type StoryOverlay = { type?: string; value?: string; x?: number; y?: number };
@@ -77,8 +78,12 @@ export function StoryViewer({
   const markSeen = useMarkStorySeen();
   const likeStory = useLikeStory(userId);
   const deleteStory = useDeleteStory();
+  // Only consulted for my own slides — the server never records a self-view.
+  const ownSeen = useOwnStoriesSeenStore((state) => state.seen);
 
-  const [index, setIndex] = useState(0);
+  // `null` = "wherever playback should start", resolved from seen-state below.
+  // Any navigation pins it to a real number.
+  const [manualIndex, setManualIndex] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [viewersOpen, setViewersOpen] = useState(false);
@@ -97,8 +102,35 @@ export function StoryViewer({
   const progressRef = useRef(0);
 
   const stories = data ?? [];
-  const current = stories[index];
   const isMine = userId === user?.id;
+
+  /**
+   * IG opens an author at their first **unseen** story, not at their oldest one:
+   * someone you watched this morning who has posted again since resumes at the
+   * new one, and the earlier ones are still reachable with ←/the left tap zone.
+   * Everything seen ⇒ start from the beginning, which is the re-watch case.
+   *
+   * Resolved once, into a ref, the first time slides arrive — recomputing it as
+   * `markSeen` flips `isViewed` underneath would drag playback forward a slide
+   * at a time. Kept out of state so nothing is set during render or in an
+   * effect; `manualIndex` takes over the moment the viewer navigates.
+   */
+  const [startAt, setStartAt] = useState<{ userId: string; index: number } | null>(null);
+
+  if (stories.length > 0 && startAt?.userId !== userId) {
+    const firstUnseen = stories.findIndex(
+      (story) => !(story.isViewed || (isMine && ownSeen[story.id] !== undefined)),
+    );
+    // Setting state while rendering *this* component is React's documented way
+    // to derive state from data that has just arrived: it re-renders straight
+    // away, with no effect and no extra paint. It is keyed by author so that
+    // switching authors re-resolves exactly once.
+    setStartAt({ userId, index: firstUnseen === -1 ? 0 : firstUnseen });
+    setManualIndex(null);
+  }
+
+  const index = manualIndex ?? startAt?.index ?? 0;
+  const current = stories[index];
 
   const resetProgress = useCallback(() => {
     progressRef.current = 0;
@@ -120,7 +152,7 @@ export function StoryViewer({
       return;
     }
     resetProgress();
-    setIndex(index + 1);
+    setManualIndex(index + 1);
   }, [index, onClose, onExitForward, resetProgress, stories.length]);
 
   const previous = useCallback(() => {
@@ -131,7 +163,7 @@ export function StoryViewer({
       return;
     }
     resetProgress();
-    setIndex(index - 1);
+    setManualIndex(index - 1);
   }, [index, onExitBackward, resetProgress]);
 
   // Each slide counts as a view exactly once (add-story-view + grey ring).

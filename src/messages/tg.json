@@ -506,7 +506,8 @@
     "selectedCount": "{count, plural, one {# интихоб шуд} other {# интихоб шуд}}",
     "deleteSelected": "Нест кардан",
     "calling": "Занг зада истодааст...",
-    "incomingCall": "Занги даромад..."
+    "incomingCall": "Занги даромад...",
+    "emojiSearch": "Ҷустуҷӯи смайлик"
   },
   "profile": {
     "posts": "нашрия",
