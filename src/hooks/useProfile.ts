@@ -111,6 +111,22 @@ export function useMyActivity() {
   });
 }
 
+/** The list `POST /posts/{id}/favorite`'s `collection` field can now be a picker over. */
+export function useMyCollections() {
+  return useQuery({
+    queryKey: queryKeys.profile.collections(),
+    queryFn: () => profileService.getMyCollections(),
+  });
+}
+
+/** Follower growth, profile views, reach, engagement — mine only, by period. */
+export function useMyInsights(period: "7d" | "30d" | "90d" = "7d") {
+  return useQuery({
+    queryKey: queryKeys.profile.insights(period),
+    queryFn: () => profileService.getMyInsights(period),
+  });
+}
+
 export function useMyReposts(enabled = true) {
   return useInfiniteQuery({
     queryKey: queryKeys.profile.reposts(),
@@ -118,5 +134,21 @@ export function useMyReposts(enabled = true) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
     enabled,
+  });
+}
+
+/**
+ * Someone else's reposts. Separate endpoint and separate cache key from
+ * `useMyReposts` — `/profile/me/reposts` answers only for the signed-in user,
+ * and a private account returns 403 rather than an empty list.
+ */
+export function useUserReposts(userId: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.profile.userReposts(userId),
+    queryFn: ({ pageParam }) =>
+      profileService.getUserReposts(userId, cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => nextCursor(lastPage, PAGE_SIZE),
+    enabled: enabled && Boolean(userId),
   });
 }

@@ -13,11 +13,16 @@ import { useApiError } from "@/hooks/useApiError";
 import { useAuth } from "@/hooks/useAuth";
 import type { ApiError } from "@/lib/axios";
 import { CHAT_POLL_MS, MESSAGES_PAGE_SIZE, PAGE_SIZE } from "@/lib/constants";
-import { cursorParams, nextCursor } from "@/lib/cursor";
+import { cursorParams, nextCursor, pageItems, type Page } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
 import { chatService, type SendMessageInput } from "@/services/chat.service";
 import { useChatStore } from "@/store/chat.store";
-import type { ChatListItemDto, CreateChatDto, MessageDto } from "@/types/api.types";
+import type {
+  ChatListItemDto,
+  CreateChatDto,
+  CreateGroupChatDto,
+  MessageDto,
+} from "@/types/api.types";
 
 /**
  * The chat list.
@@ -94,6 +99,22 @@ export function useAnswerChatRequest() {
   });
 }
 
+/**
+ * STUN/TURN config for the browser's `RTCPeerConnection`.
+ *
+ * Calling still rides PeerJS end-to-end (see `usePeerCall`) — feeding it the
+ * backend's real TURN credentials is what actually gets two phones behind
+ * different NATs to connect, instead of just Google's public STUN.
+ */
+export function useIceServers() {
+  return useQuery({
+    queryKey: queryKeys.chats.iceServers(),
+    queryFn: () => chatService.getIceServers(),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+}
+
 export function useCreateChat() {
   const queryClient = useQueryClient();
   const t = useTranslations("errors");
@@ -143,7 +164,7 @@ export function useSendMessage(chatId: number) {
 
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<InfiniteData<MessageDto[]>>(key);
+      const previous = queryClient.getQueryData<InfiniteData<Page<MessageDto> | MessageDto[]>>(key);
 
       const optimistic: MessageDto = {
         // Negative id marks a message the server has not confirmed yet.
@@ -158,12 +179,25 @@ export function useSendMessage(chatId: number) {
         reactions: [],
         isDeleted: false,
         isRead: false,
+        vanishing: false,
+        viewOnce: false,
+        viewOnceOpened: false,
         sentAt: new Date().toISOString(),
       };
 
-      queryClient.setQueryData<InfiniteData<MessageDto[]>>(key, (data) =>
+      // `chats/{id}/messages` answers with the `{ items, ... }` envelope, not a
+      // bare array (see cursor.ts) — spreading `data.pages[0]` directly threw
+      // "is not iterable" here, so the mutation never even reached the network.
+      queryClient.setQueryData<InfiniteData<Page<MessageDto> | MessageDto[]>>(key, (data) =>
         data
-          ? { ...data, pages: [[optimistic, ...(data.pages[0] ?? [])], ...data.pages.slice(1)] }
+          ? {
+              ...data,
+              pages: data.pages.map((page, i) => {
+                if (i !== 0) return page;
+                const items = [optimistic, ...pageItems(page)];
+                return Array.isArray(page) ? items : { ...page, items };
+              }),
+            }
           : data,
       );
 
@@ -210,11 +244,19 @@ export function useDeleteMessage(chatId: number) {
     mutationFn: (messageId: number) => chatService.deleteMessage(messageId),
     onMutate: async (messageId) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<InfiniteData<MessageDto[]>>(key);
+      const previous = queryClient.getQueryData<InfiniteData<Page<MessageDto> | MessageDto[]>>(key);
 
-      queryClient.setQueryData<InfiniteData<MessageDto[]>>(key, (data) =>
+      // `chats/{id}/messages` answers with the `{ items, ... }` envelope, not a
+      // bare array (see cursor.ts) — filtering `page` directly threw here too.
+      queryClient.setQueryData<InfiniteData<Page<MessageDto> | MessageDto[]>>(key, (data) =>
         data
-          ? { ...data, pages: data.pages.map((page) => page.filter((m) => m.id !== messageId)) }
+          ? {
+              ...data,
+              pages: data.pages.map((page) => {
+                const items = pageItems(page).filter((m) => m.id !== messageId);
+                return Array.isArray(page) ? items : { ...page, items };
+              }),
+            }
           : data,
       );
 
@@ -354,5 +396,121 @@ export function useBulkDeleteMessages(chatId: number) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.chats.list() });
     },
     onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Not idempotent (unlike 1-on-1 `create`) — two groups with the same people are different groups. */
+export function useCreateGroupChat() {
+  const queryClient = useQueryClient();
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (dto: CreateGroupChatDto) => chatService.createGroup(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.chats.list() }),
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/** Any participant may rename — same as IG. */
+export function useUpdateGroupTitle(chatId: number) {
+  const settled = useChatSettings(chatId);
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (title: string) => chatService.updateGroupTitle(chatId, { title }),
+    onSuccess: settled,
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/** Any participant may add — same as IG. */
+export function useAddParticipants(chatId: number) {
+  const settled = useChatSettings(chatId);
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (userIds: string[]) => chatService.addParticipants(chatId, { userIds }),
+    onSuccess: settled,
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/** Admin (creator) only — the server 403s anyone else. */
+export function useRemoveParticipant(chatId: number) {
+  const settled = useChatSettings(chatId);
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (userId: string) => chatService.removeParticipant(chatId, userId),
+    onSuccess: settled,
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/**
+ * Leaving is any participant's own move — unlike `useRemoveParticipant`, this
+ * takes you out of the chat list entirely, so it invalidates the list rather
+ * than the (now unreachable) detail.
+ */
+export function useLeaveGroup() {
+  const queryClient = useQueryClient();
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (chatId: number) => chatService.leaveGroup(chatId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.chats.list() }),
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/**
+ * ⚠️ No field on `ChatDetailDto`/`ChatListItemDto` says whether vanish mode is
+ * currently on — same gap as 2FA's missing "is it enabled?" endpoint. The
+ * caller can only track what *this visit* toggled, not read the true state on
+ * open.
+ */
+export function useSetChatVanish(chatId: number) {
+  const settled = useChatSettings(chatId);
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (enabled: boolean) => chatService.setVanish(chatId, { enabled }),
+    onSuccess: settled,
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/** Fire when leaving the chat screen — burns any vanishing messages already seen. */
+export function useCloseChat() {
+  return useMutation({
+    mutationFn: (chatId: number) => chatService.closeChat(chatId),
+  });
+}
+
+/** The response carries the real media once; the message stays flagged `viewOnceOpened` after. */
+export function useOpenViewOnceMessage(chatId: number) {
+  const queryClient = useQueryClient();
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: (messageId: number) => chatService.openViewOnceMessage(messageId),
+    onSuccess: (opened) => {
+      queryClient.setQueryData<InfiniteData<Page<MessageDto> | MessageDto[]>>(
+        queryKeys.chats.messages(chatId),
+        (data) =>
+          data
+            ? {
+                ...data,
+                pages: data.pages.map((page) => {
+                  const items = pageItems(page).map((message) =>
+                    message.id === opened.id ? opened : message,
+                  );
+                  return Array.isArray(page) ? items : { ...page, items };
+                }),
+              }
+            : data,
+      );
+    },
+    onError: (error) => toast.error(toMessage(error)),
   });
 }

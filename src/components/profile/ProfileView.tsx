@@ -5,13 +5,20 @@ import { useMemo, useState } from "react";
 import { BookmarkIcon, GridIcon, RepostIcon, TaggedIcon } from "@/components/icons";
 import { PostGrid, PostGridSkeleton } from "@/components/profile/PostGrid";
 import { HighlightCircles } from "@/components/profile/HighlightCircles";
+import { PendingCollabsBanner } from "@/components/profile/PendingCollabsBanner";
 import { PrivateAccountGate } from "@/components/profile/PrivateAccountGate";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileHeaderSkeleton } from "@/components/profile/ProfileSkeleton";
 import { ProfileTabs, type ProfileTab } from "@/components/profile/ProfileTabs";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { useFavorites, useMyProfile, useMyReposts, useUserProfile } from "@/hooks/useProfile";
+import {
+  useFavorites,
+  useMyProfile,
+  useMyReposts,
+  useUserProfile,
+  useUserReposts,
+} from "@/hooks/useProfile";
 import { useMyPosts, useUserPosts, useUserReels, useUserTagged } from "@/hooks/usePosts";
 import type { PostDto } from "@/types/post.types";
 import { flattenPages } from "@/lib/cursor";
@@ -38,13 +45,19 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
   const reelsQuery = useUserReels(userId, tab === "reels");
   const taggedQuery = useUserTagged(userId, tab === "tagged");
   const favorites = useFavorites();
-  // /profile/me/reposts — my own only, so it never runs on someone else's page.
-  const repostsQuery = useMyReposts(isMe && tab === "reposts");
+  // Two endpoints, one tab: /profile/me/reposts for myself (it is the only one
+  // that answers for the signed-in user) and /profile/{id}/reposts for everyone
+  // else. Exactly one of them is ever enabled.
+  const myRepostsQuery = useMyReposts(isMe && tab === "reposts");
+  const otherRepostsQuery = useUserReposts(userId, !isMe && tab === "reposts");
+  const repostsQuery = isMe ? myRepostsQuery : otherRepostsQuery;
 
-  const allPosts = useMemo(
-    () => flattenPages((isMe ? myPosts : otherPosts).data),
-    [isMe, myPosts, otherPosts],
-  );
+  const allPosts = useMemo(() => {
+    const flat = flattenPages((isMe ? myPosts : otherPosts).data);
+    // Pinned first (max 3, server-enforced) — a stable sort keeps everything
+    // else in its arrival order.
+    return [...flat].sort((a, b) => (b.pinnedAt ? 1 : 0) - (a.pinnedAt ? 1 : 0));
+  }, [isMe, myPosts, otherPosts]);
   const reels = useMemo(() => flattenPages(reelsQuery.data), [reelsQuery.data]);
   const reposts = useMemo(() => flattenPages(repostsQuery.data), [repostsQuery.data]);
   const tagged = useMemo(() => flattenPages(taggedQuery.data), [taggedQuery.data]);
@@ -74,6 +87,8 @@ export function ProfileView({ userId, isMe }: { userId: string; isMe: boolean })
       {locked ? null : <ProfileTabs value={tab} onChange={setTab} showSaved={isMe} />}
 
       <div className={locked ? "hidden" : "pt-4"}>
+        {tab === "posts" && isMe ? <PendingCollabsBanner /> : null}
+
         {tab === "posts" ? (
           <Panel
             query={posts}

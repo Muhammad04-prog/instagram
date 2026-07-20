@@ -6,18 +6,30 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
+import {
+  useOnlineMusicProviders,
+  useOnlineMusicSearch,
+  useSaveOnlineTrack,
+} from "@/hooks/useMusic";
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants";
 import { musicService } from "@/services/music.service";
 import { pageItems } from "@/lib/cursor";
 import { getImageUrl } from "@/lib/utils";
-import type { MusicDto } from "@/types/api.types";
+import type { MusicDto, OnlineTrackDto } from "@/types/api.types";
+
+/** Either a track we already have, or one still living only in an external catalogue. */
+type PickerTrack = { key: string; source: MusicDto } | { key: string; source: OnlineTrackDto };
+
+const isOnline = (track: PickerTrack["source"]): track is OnlineTrackDto => "provider" in track;
 
 /**
  * "Add music" — `musicId` on `POST /posts`.
  *
- * Empty query shows Trending, as IG does; typing searches title and artist.
- * Tracks can be previewed inline: `streamUrl` honours Range, so a plain <audio>
- * seeks fine. Softclub had no music at all.
+ * Empty query shows Trending, as IG does; typing searches title and artist —
+ * both our own library AND, once there's a term, an external catalogue
+ * (Spotify/Deezer) for whatever we don't have, same as real IG's "search any
+ * song". Tracks can be previewed inline: `streamUrl`/`previewUrl` honours
+ * Range, so a plain <audio> seeks fine. Softclub had no music at all.
  */
 export function MusicPicker({
   value,
@@ -27,10 +39,12 @@ export function MusicPicker({
   onChange: (music: MusicDto | null) => void;
 }) {
   const t = useTranslations("post");
+  const tCommon = useTranslations("common");
   const [term, setTerm] = useState("");
   const debounced = useDebounce(term.trim(), SEARCH_DEBOUNCE_MS);
-  const [playing, setPlaying] = useState<number | null>(null);
+  const [playing, setPlaying] = useState<string | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
+  const saveOnline = useSaveOnlineTrack();
 
   // Two sources, two shapes: search paginates and answers with an envelope,
   // trending returns the rows outright. `pageItems` reads either.
@@ -43,6 +57,15 @@ export function MusicPicker({
     select: pageItems<MusicDto>,
   });
 
+  // Only once there's a term to search — an external catalogue has no
+  // "trending" of its own to show on an empty query.
+  const { data: providersData } = useOnlineMusicProviders();
+  const hasOnlineProvider = (providersData?.providers.length ?? 0) > 0;
+  const { data: onlineData } = useOnlineMusicSearch(debounced, hasOnlineProvider);
+  // Already-imported external tracks would just duplicate a row our own search
+  // is already showing — only surface the ones we genuinely don't have yet.
+  const onlineTracks = (onlineData ?? []).filter((track) => track.musicId === null);
+
   // One <audio> for the whole list, and it must die with the component —
   // otherwise a preview keeps playing after the dialog closes.
   useEffect(() => {
@@ -52,8 +75,8 @@ export function MusicPicker({
     };
   }, []);
 
-  const toggle = (track: MusicDto) => {
-    if (playing === track.id) {
+  const toggle = (track: PickerTrack) => {
+    if (playing === track.key) {
       audio.current?.pause();
       setPlaying(null);
       return;
@@ -62,16 +85,54 @@ export function MusicPicker({
     // A track from an external catalogue has no `streamUrl` — there is no full
     // mp3 of it here, only the catalogue's 30-second `previewUrl`. Either can be
     // absent, and then there is simply nothing to play.
-    const source = track.streamUrl ?? track.previewUrl;
+    const source = isOnline(track.source)
+      ? track.source.previewUrl
+      : (track.source.streamUrl ?? track.source.previewUrl);
     if (!source) return;
 
     audio.current?.pause();
     audio.current = new Audio(source);
     void audio.current
       .play()
-      .then(() => setPlaying(track.id))
+      .then(() => setPlaying(track.key))
       .catch(() => setPlaying(null));
   };
+
+  const select = (track: PickerTrack) => {
+    audio.current?.pause();
+    setPlaying(null);
+
+    if (isOnline(track.source)) {
+      const { provider, externalId } = track.source;
+      saveOnline.mutate(
+        { provider, externalId },
+        {
+          onSuccess: (music) => {
+            onChange(music);
+            setTerm("");
+          },
+        },
+      );
+      return;
+    }
+
+    onChange(track.source);
+    setTerm("");
+  };
+
+  // ⚠️ Picking a track from an external catalogue has to import it first
+  // (`saveOnline`), and only its response carries the id the post needs. Until
+  // that lands `value` is still null — publishing in that window produced a post
+  // with no music at all, which is what "I chose music and the post has none"
+  // was. Say the import is running so the moment is visible.
+  if (saveOnline.isPending) {
+    return (
+      <div className="border-ig-separator flex items-center gap-2 border-t py-3">
+        <Music className="text-ig-text-secondary size-4 shrink-0 animate-pulse" />
+        <span className="text-ig-text-secondary flex-1 truncate text-sm">{tCommon("loading")}</span>
+      </div>
+    );
+  }
 
   if (value) {
     return (
@@ -92,7 +153,15 @@ export function MusicPicker({
     );
   }
 
-  const tracks = data ?? [];
+  const savedTracks: PickerTrack[] = (data ?? []).map((track) => ({
+    key: `saved-${track.id}`,
+    source: track,
+  }));
+  const externalTracks: PickerTrack[] = onlineTracks.map((track) => ({
+    key: `online-${track.provider}-${track.externalId}`,
+    source: track,
+  }));
+  const tracks = [...savedTracks, ...externalTracks];
 
   return (
     <div className="border-ig-separator relative border-t py-3">
@@ -115,62 +184,94 @@ export function MusicPicker({
             </li>
           ) : null}
 
-          {tracks.map((track) => (
-            <li
-              key={track.id}
-              className="hover:bg-ig-bg-secondary flex items-center gap-2 px-3 py-2"
-            >
-              <button
-                type="button"
-                onClick={() => toggle(track)}
-                aria-label={playing === track.id ? t("pause") : t("play")}
-                className="text-ig-text shrink-0"
-              >
-                {track.coverUrl ? (
-                  <span className="relative block size-9 overflow-hidden rounded">
-                    <Image
-                      src={getImageUrl(track.coverUrl) ?? ""}
-                      alt=""
-                      fill
-                      sizes="36px"
-                      className="object-cover"
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/40">
-                      {playing === track.id ? (
-                        <Pause className="size-3 text-white" />
-                      ) : (
-                        <Play className="size-3 text-white" />
-                      )}
-                    </span>
-                  </span>
-                ) : playing === track.id ? (
-                  <Pause className="size-4" />
-                ) : (
-                  <Play className="size-4" />
-                )}
-              </button>
+          {savedTracks.map((track) => (
+            <MusicPickerRow
+              key={track.key}
+              track={track}
+              playing={playing === track.key}
+              onToggle={() => toggle(track)}
+              onSelect={() => select(track)}
+              playLabel={t("play")}
+              pauseLabel={t("pause")}
+            />
+          ))}
 
-              <button
-                type="button"
-                onClick={() => {
-                  audio.current?.pause();
-                  setPlaying(null);
-                  onChange(track);
-                  setTerm("");
-                }}
-                className="min-w-0 flex-1 text-left"
-              >
-                <span className="text-ig-text block truncate text-sm font-semibold">
-                  {track.title}
-                </span>
-                <span className="text-ig-text-secondary block truncate text-xs">
-                  {track.artist}
-                </span>
-              </button>
+          {externalTracks.length > 0 ? (
+            <li className="text-ig-text-secondary px-3 pt-2 text-xs font-semibold">
+              {t("moreTracks")}
             </li>
+          ) : null}
+
+          {externalTracks.map((track) => (
+            <MusicPickerRow
+              key={track.key}
+              track={track}
+              playing={playing === track.key}
+              onToggle={() => toggle(track)}
+              onSelect={() => select(track)}
+              playLabel={t("play")}
+              pauseLabel={t("pause")}
+            />
           ))}
         </ul>
       ) : null}
     </div>
+  );
+}
+
+function MusicPickerRow({
+  track,
+  playing,
+  onToggle,
+  onSelect,
+  playLabel,
+  pauseLabel,
+}: {
+  track: PickerTrack;
+  playing: boolean;
+  onToggle: () => void;
+  onSelect: () => void;
+  playLabel: string;
+  pauseLabel: string;
+}) {
+  const { title, artist, coverUrl } = track.source;
+
+  return (
+    <li className="hover:bg-ig-bg-secondary flex items-center gap-2 px-3 py-2">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={playing ? pauseLabel : playLabel}
+        className="text-ig-text shrink-0"
+      >
+        {coverUrl ? (
+          <span className="relative block size-9 overflow-hidden rounded">
+            <Image
+              src={getImageUrl(coverUrl) ?? ""}
+              alt=""
+              fill
+              sizes="36px"
+              className="object-cover"
+            />
+            <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+              {playing ? (
+                <Pause className="size-3 text-white" />
+              ) : (
+                <Play className="size-3 text-white" />
+              )}
+            </span>
+          </span>
+        ) : playing ? (
+          <Pause className="size-4" />
+        ) : (
+          <Play className="size-4" />
+        )}
+      </button>
+
+      <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
+        <span className="text-ig-text block truncate text-sm font-semibold">{title}</span>
+        <span className="text-ig-text-secondary block truncate text-xs">{artist}</span>
+      </button>
+    </li>
   );
 }

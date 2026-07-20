@@ -50,7 +50,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Вход по userName ИЛИ email ИЛИ phone */
+    /**
+     * Вход по userName ИЛИ email ИЛИ phone
+     * @description Если у аккаунта включена 2FA — вместо токенов вернётся { twoFactorRequired: true, ticket }; второй шаг — POST /auth/2fa/verify с тикетом и кодом.
+     */
     post: operations["AuthController_login"];
     delete?: never;
     options?: never;
@@ -197,6 +200,134 @@ export interface paths {
     put?: never;
     /** Свободен ли userName (live-валидация формы регистрации) */
     post: operations["AuthController_checkUsername"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/2fa/setup": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Начать настройку 2FA — вернуть секрет и otpauth-URI для QR
+     * @description Ещё НЕ включает 2FA: сначала подтвердите кодом через /2fa/enable.
+     */
+    post: operations["AuthController_setup2fa"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/2fa/enable": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Подтвердить код → включить 2FA и получить резервные коды
+     * @description Резервные коды показываются ОДИН раз — сохраните их.
+     */
+    post: operations["AuthController_enable2fa"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/2fa/disable": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Отключить 2FA (нужен действующий код или резервный) */
+    post: operations["AuthController_disable2fa"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/2fa/verify": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Второй шаг логина: тикет + код → пара токенов */
+    post: operations["AuthController_verify2fa"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/sessions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Активные сессии (устройства)
+     * @description Передайте текущий refresh-токен в ?rt=…, чтобы пометить свою сессию (current).
+     */
+    get: operations["AuthController_sessions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/sessions/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Завершить конкретную сессию (её refresh перестаёт работать) */
+    delete: operations["AuthController_revokeSession"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/sessions/logout-all": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Выйти со всех устройств, кроме текущего */
+    post: operations["AuthController_logoutAll"];
     delete?: never;
     options?: never;
     head?: never;
@@ -506,8 +637,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Мои репосты */
-    get: operations["ProfileController_reposts"];
+    /**
+     * Мои репосты
+     * @description Посты, которые я репостнул кнопкой «двойная стрелка» (POST /posts/{id}/repost).
+     */
+    get: operations["ProfileController_myReposts"];
     put?: never;
     post?: never;
     delete?: never;
@@ -545,6 +679,26 @@ export interface paths {
      * @description Лайки, комментарии, просмотры и поисковые запросы одним списком, с фильтром по дате.
      */
     get: operations["ProfileController_activity"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/profile/me/insights": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Аналитика аккаунта за период (только себе)
+     * @description period=7d|30d|90d. Прирост подписчиков, просмотры профиля, охват, вовлечённость.
+     */
+    get: operations["ProfileController_insights"];
     put?: never;
     post?: never;
     delete?: never;
@@ -674,6 +828,23 @@ export interface paths {
     };
     /** Reels пользователя (закрытый аккаунт → 403) */
     get: operations["ProfileController_reels"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/profile/{userId}/reposts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Репосты пользователя (закрытый аккаунт → 403) */
+    get: operations["ProfileController_reposts"];
     put?: never;
     post?: never;
     delete?: never;
@@ -1006,6 +1177,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/music/{id}/reels": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * «Use this audio» — все reels с этим треком
+     * @description Reels (видео-посты), использующие данный трек. Закрытые аккаунты и блок исключены.
+     */
+    get: operations["MusicController_reels"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/music/{id}": {
     parameters: {
       query?: never;
@@ -1041,47 +1232,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/spotify/search": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Поиск треков в Spotify (устарел — см. GET /music/online)
-     * @description Ищет ТОЛЬКО в Spotify. Пока у владельца Spotify-приложения нет Premium, отвечает 503. Для поиска любой песни мира используйте /music/online — он работает без подписок.
-     */
-    get: operations["SpotifyController_search"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/spotify/tracks/{spotifyId}/save": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Сохранить трек из Spotify
-     * @description Импортирует трек в вашу музыку (дедуп по provider+externalId) и помечает сохранённым. Дальше он доступен как обычный трек: в /profile/me/saved-music, в постах и историях.
-     */
-    post: operations["SpotifyController_save"];
-    /** Убрать трек из сохранённых */
-    delete: operations["SpotifyController_unsave"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/api/posts": {
     parameters: {
       query?: never;
@@ -1111,8 +1261,8 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Лента подписок
-     * @description userId берётся ИЗ JWT (не из query!). Курсорная пагинация. Цель — < 300 мс: один запрос с include, без N+1.
+     * Лента подписок (ранжированная)
+     * @description userId берётся ИЗ JWT (не из query!). При FEED_RANKED=true лента ранжируется (близость к автору + свежесть + вовлечённость − уже просмотренное); иначе — хронология. В ответе: items (страница), suggested (рекомендации не-подписок), allCaughtUp («Вы всё посмотрели»). Курсор — смещение в ранжированном списке.
      */
     get: operations["PostsController_feed"];
     put?: never;
@@ -1149,6 +1299,26 @@ export interface paths {
     };
     /** Мои публикации */
     get: operations["PostsController_my"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/drafts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Мои черновики и запланированные (не видны в лентах/профиле)
+     * @description status=DRAFT или SCHEDULED для фильтра; без него — оба.
+     */
+    get: operations["PostsController_drafts"];
     put?: never;
     post?: never;
     delete?: never;
@@ -1228,6 +1398,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/posts/tags/pending": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Мои неподтверждённые отметки (ревью)
+     * @description Публикации, где меня отметили, но я ещё не принял. Принять → «Фото с вами».
+     */
+    get: operations["PostsController_pendingTags"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/collabs/pending": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Мои приглашения в соавторы (ожидают ответа)
+     * @description Посты, куда меня позвали соавтором и я ещё не принял/отклонил.
+     */
+    get: operations["PostsController_pendingCollabs"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/posts/{id}": {
     parameters: {
       query?: never;
@@ -1260,6 +1470,60 @@ export interface paths {
     post: operations["PostsController_archive"];
     /** Вернуть из архива */
     delete: operations["PostsController_unarchive"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/pin": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Закрепить / открепить публикацию (max 3) */
+    patch: operations["PostsController_pin"];
+    trace?: never;
+  };
+  "/api/posts/{id}/privacy": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Изменить настройки отображения лайков и комментариев */
+    patch: operations["PostsController_togglePrivacy"];
+    trace?: never;
+  };
+  "/api/posts/{id}/publish": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Опубликовать черновик/запланированный пост сейчас
+     * @description Снимает отложенную задачу (если была) и публикует немедленно.
+     */
+    put: operations["PostsController_publish"];
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -1299,6 +1563,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/posts/{id}/remixes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Ремиксы этого reel (снятые «рядом» с ним)
+     * @description Reels других авторов, у которых remixOf = этот reel. Закрытые/блок исключены.
+     */
+    get: operations["PostsController_remixes"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/posts/{id}/view": {
     parameters: {
       query?: never;
@@ -1308,8 +1592,31 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Просмотр (считается 1 раз на пользователя) */
+    /**
+     * Просмотр (считается 1 раз на пользователя)
+     * @description source (feed/explore/profile/hashtag/reels) пишется при первом просмотре — для insights.
+     */
     post: operations["PostsController_view"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/insights": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Аналитика поста (только автору)
+     * @description Охват, лайки/комменты/сохранения/шеры, engagement-rate, подписчики vs нет, источники.
+     */
+    get: operations["PostsController_insights"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1333,6 +1640,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/posts/{id}/repost": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Репост (двойная стрелка): вкл/выкл
+     * @description Пост попадает во вкладку «Репосты» моего профиля; повторный вызов снимает репост. Это НЕ «поделиться» — для отправки в чат/историю используйте POST /posts/{id}/share.
+     */
+    post: operations["PostsController_repost"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/posts/{id}/share": {
     parameters: {
       query?: never;
@@ -1344,6 +1671,60 @@ export interface paths {
     put?: never;
     /** Поделиться: в чат (toUserId) / в историю (toStory) / ссылка */
     post: operations["PostsController_share"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/collaborators": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Пригласить соавторов (только автор)
+     * @description Соавторы получают PENDING-приглашение; приняв, видят пост в своём профиле.
+     */
+    post: operations["PostsController_inviteCollaborators"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/collaborators/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Принять приглашение в соавторы */
+    post: operations["PostsController_acceptCollab"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/collaborators/decline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Отклонить приглашение в соавторы */
+    post: operations["PostsController_declineCollab"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1367,6 +1748,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/posts/{id}/tag/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Принять отметку на публикации
+     * @description Меня отметили → подтверждаю → пост появляется в моём «Фото с вами».
+     */
+    post: operations["PostsController_acceptTag"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{id}/tag/decline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Отклонить/убрать отметку на публикации
+     * @description Скрываю отметку: пост НЕ показывается в «Фото с вами».
+     */
+    post: operations["PostsController_declineTag"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/posts/{id}/comments": {
     parameters: {
       query?: never;
@@ -1383,6 +1804,120 @@ export interface paths {
     /** Добавить комментарий */
     post: operations["PostsController_addComment"];
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/posts/{postId}/comments/{id}/pin": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Закрепить / открепить комментарий к публикации (только автор поста) */
+    patch: operations["PostsController_pinComment"];
+    trace?: never;
+  };
+  "/api/settings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Мои настройки (уведомления, приватность взаимодействий, язык) */
+    get: operations["SettingsController_get"];
+    /**
+     * Изменить настройки
+     * @description Push/email, кто может отмечать/упоминать/писать/комментировать, GIF в комментариях, репосты историй, скрытые слова, язык. Любое подмножество полей.
+     */
+    put: operations["SettingsController_update"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/settings/restricted": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Аккаунты с ограничениями */
+    get: operations["SettingsController_restricted"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/settings/restricted/{userId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Ограничить аккаунт */
+    post: operations["SettingsController_restrict"];
+    /** Снять ограничение */
+    delete: operations["SettingsController_unrestrict"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/spotify/search": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Поиск музыки (Deezer + Spotify)
+     * @description Ищет песню в доступном каталоге: сначала Deezer (работает без подписок), Spotify подключается сам, когда у владельца приложения появится Premium. Поле spotifyId — составной id (PROVIDER:externalId), шлите его в save/unsave как есть.
+     */
+    get: operations["SpotifyController_search"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/spotify/tracks/{spotifyId}/save": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Сохранить трек из Spotify
+     * @description Импортирует трек в вашу музыку (дедуп по provider+externalId) и помечает сохранённым. Дальше он доступен как обычный трек: в /profile/me/saved-music, в постах и историях.
+     */
+    post: operations["SpotifyController_save"];
+    /** Убрать трек из сохранённых */
+    delete: operations["SpotifyController_unsave"];
     options?: never;
     head?: never;
     patch?: never;
@@ -1455,6 +1990,26 @@ export interface paths {
     };
     /** Истории пользователя */
     get: operations["StoriesController_byUser"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stories/add-yours/{promptId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Лента цепочки «Add Yours» (промпт + истории-ответы)
+     * @description Кто ответил на промпт. Автор промпта — первым. Закрытые/блок/close-friends фильтруются.
+     */
+    get: operations["StoriesController_addYoursFeed"];
     put?: never;
     post?: never;
     delete?: never;
@@ -1549,6 +2104,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/stories/{id}/add-yours": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Создать промпт «Add Yours» на своей истории («Добавь своё…»)
+     * @description Запускает цепочку-эстафету. Сама история становится первым звеном.
+     */
+    post: operations["StoriesController_createAddYours"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stories/{id}/insights": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Аналитика истории (только автору): просмотры, лайки, реакции, ответы */
+    get: operations["StoriesController_insights"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/stories/{id}/viewers": {
     parameters: {
       query?: never;
@@ -1617,6 +2209,64 @@ export interface paths {
     post?: never;
     /** Удалить актуальное (истории остаются) */
     delete: operations["HighlightsController_remove"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stories/{id}/stickers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Стикеры истории (для зрителя; правильный ответ QUIZ скрыт до ответа) */
+    get: operations["StoryStickersController_list"];
+    put?: never;
+    /**
+     * Добавить интерактивный стикер на СВОЮ историю
+     * @description POLL/QUIZ/QUESTION/SLIDER/COUNTDOWN/LINK. LINK — только для verified.
+     */
+    post: operations["StoryStickersController_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stories/{id}/stickers/{stickerId}/answer": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Ответить на стикер
+     * @description POLL/QUIZ → optionIndex, QUESTION → text, SLIDER → sliderValue. Повтор меняет ответ.
+     */
+    post: operations["StoryStickersController_answer"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stories/{id}/stickers/{stickerId}/results": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Итоги стикера (только автору истории) */
+    get: operations["StoryStickersController_results"];
+    put?: never;
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -1710,6 +2360,26 @@ export interface paths {
      * @description Создаёт Message(type=NOTE_REPLY, noteId, noteSnapshot). Нельзя отвечать на свою.
      */
     post: operations["NotesController_reply"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/notes/{id}/reaction": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Эмодзи-реакция на заметку → в личку автору
+     * @description Как реакция на историю: эмодзи уходит сообщением автору. Нельзя на свою заметку.
+     */
+    post: operations["NotesController_reaction"];
     delete?: never;
     options?: never;
     head?: never;
@@ -2176,6 +2846,66 @@ export interface paths {
     /** Заглушить/включить уведомления чата */
     put: operations["ChatController_setMute"];
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/{id}/vanish": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Vanish mode — режим исчезающих сообщений
+     * @description Пока включён, новые сообщения исчезают у обоих при закрытии чата (POST /:id/close).
+     */
+    put: operations["ChatController_setVanish"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/{id}/close": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Закрыть чат (уйти с экрана) — сжечь увиденные исчезающие сообщения
+     * @description Vanishing-сообщения, которые вы уже видели, удаляются у всех участников.
+     */
+    post: operations["ChatController_closeChat"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/chats/messages/{id}/open": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Открыть медиа «просмотр один раз»
+     * @description Возвращает media один раз; после открытия оно скрывается для всех, кроме автора.
+     */
+    post: operations["ChatController_openViewOnce"];
     delete?: never;
     options?: never;
     head?: never;
@@ -2920,6 +3650,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/feed": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Получить ленту публикаций (ранжированную)
+     * @description Возвращает посты от подписок с алгоритмическим ранжированием (близость + свежесть + вовлечённость).
+     */
+    get: operations["FeedController_getFeed"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3086,6 +3836,21 @@ export interface components {
        * @example false
        */
       isRead: boolean;
+      /**
+       * @description Отправлено в vanish mode (исчезнет при закрытии чата)
+       * @example false
+       */
+      vanishing: boolean;
+      /**
+       * @description Медиа «просмотр один раз»
+       * @example false
+       */
+      viewOnce: boolean;
+      /**
+       * @description view-once медиа уже открыто (media скрыто)
+       * @example false
+       */
+      viewOnceOpened: boolean;
       /** Format: date-time */
       sentAt: string;
     };
@@ -3143,6 +3908,79 @@ export interface components {
        * @example true
        */
       available: boolean;
+    };
+    TwoFactorSetupDto: {
+      /**
+       * @description base32-секрет для ручного ввода
+       * @example JBSWY3DPEHPK3PXP
+       */
+      secret: string;
+      /**
+       * @description URI для QR-кода
+       * @example otpauth://totp/Instagram:eraj?secret=...&issuer=Instagram
+       */
+      otpauthUri: string;
+    };
+    Enable2faDto: {
+      /**
+       * @description 6-значный код из приложения-аутентификатора
+       * @example 123456
+       */
+      code: string;
+    };
+    BackupCodesDto: {
+      /**
+       * @description Показываются ОДИН раз
+       * @example [
+       *       "ab12-cd34",
+       *       "ef56-7890"
+       *     ]
+       */
+      backupCodes: string[];
+    };
+    Disable2faDto: {
+      /**
+       * @description 6-значный код из приложения-аутентификатора
+       * @example 123456
+       */
+      code: string;
+    };
+    Verify2faDto: {
+      /** @description Тикет, выданный при логине (twoFactorRequired) */
+      ticket: string;
+      /**
+       * @description Код из приложения ИЛИ резервный код (ab12-cd34)
+       * @example 123456
+       */
+      code: string;
+    };
+    SessionDto: {
+      /** @description id сессии (для DELETE /auth/sessions/:id) */
+      id: string;
+      /** @example Mozilla/5.0 … */
+      userAgent?: string | null;
+      /** @example 203.0.113.7 */
+      ip?: string | null;
+      /**
+       * @description Это текущая сессия (её refresh прислали)
+       * @example false
+       */
+      current: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    LogoutAllDto: {
+      /** @description Текущий refresh-токен — эта сессия НЕ будет отозвана */
+      refreshToken: string;
+    };
+    LogoutAllResultDto: {
+      /**
+       * @description Сколько сессий отозвано (кроме текущей)
+       * @example 3
+       */
+      revoked: number;
     };
     UploadedMediaDto: {
       /**
@@ -3339,9 +4177,14 @@ export interface components {
       /** @description Первое медиа — обложка в сетке */
       coverUrl?: string | null;
       /** @example 24 */
-      likesCount: number;
+      likesCount?: number | null;
       /** @example 3 */
       commentsCount: number;
+      /**
+       * Format: date-time
+       * @example null
+       */
+      pinnedAt?: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -3380,7 +4223,46 @@ export interface components {
       /** @description Текст — для COMMENT и SEARCH */
       text?: string;
     };
+    ProfileInsightsDto: {
+      /** @example 7d */
+      period: string;
+      /**
+       * @description Дней в периоде
+       * @example 7
+       */
+      days: number;
+      /**
+       * @description Новых подписчиков за период
+       * @example 34
+       */
+      followersGained: number;
+      /**
+       * @description Просмотров профиля за период
+       * @example 512
+       */
+      profileViews: number;
+      /**
+       * @description Опубликовано постов за период
+       * @example 6
+       */
+      postsPublished: number;
+      /**
+       * @description Уникальных аккаунтов, посмотревших мои посты
+       * @example 1240
+       */
+      accountsReached: number;
+      /**
+       * @description Уникальных аккаунтов, взаимодействовавших (лайк/коммент/сохр/шер)
+       * @example 320
+       */
+      accountsEngaged: number;
+    };
     UpdateProfileDto: {
+      /**
+       * @description Новый username. Если занят — 409; регистр не важен (Oo1 == oo1).
+       * @example oo1_gm
+       */
+      userName?: string;
       /** @example Фотограф из Душанбе */
       about?: string;
       /**
@@ -3667,44 +4549,11 @@ export interface components {
        */
       isSaved: boolean;
     };
-    SaveMusicDto: {
-      /**
-       * @description true — сохранён, false — убран из сохранённых
-       * @example true
-       */
-      saved: boolean;
-      /** @example Трек сохранён */
-      message: string;
-    };
-    SpotifyTrackDto: {
-      /**
-       * @description id трека в Spotify
-       * @example 7qiZfU4dY1lWllzX7mPBI3
-       */
-      spotifyId: string;
-      /** @example Shape of You */
-      title: string;
-      /** @example Ed Sheeran */
-      artist: string;
-      /** @example https://i.scdn.co/image/ab67616d... */
-      albumCover?: string | null;
-      /**
-       * @description 30-секундный отрывок (у части треков отсутствует → null)
-       * @example https://p.scdn.co/mp3-preview/...
-       */
-      previewUrl?: string | null;
-      /** @example https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3 */
-      spotifyUrl: string;
-      /**
-       * @description Длительность в секундах
-       * @example 233
-       */
-      durationSec: number;
-      /**
-       * @description Уже сохранён мной (импортирован в мою музыку)
-       * @example false
-       */
-      isSaved: boolean;
+    RemixRefDto: {
+      /** @example 42 */
+      id: number;
+      /** @description Автор оригинального reel */
+      author: components["schemas"]["UserBriefDto"];
     };
     PostMediaDto: {
       /** @example http://localhost:9000/instagram/images/2026/07/a.webp */
@@ -3765,6 +4614,15 @@ export interface components {
       isReel: boolean;
       /** @example false */
       isArchived: boolean;
+      /** @description Оригинальный reel, если это ремикс. Фронт рисует «Remix of @author». */
+      remixOf?: components["schemas"]["RemixRefDto"] | null;
+      /**
+       * @description DRAFT/SCHEDULED/PUBLISHED
+       * @enum {string}
+       */
+      status?: "DRAFT" | "SCHEDULED" | "PUBLISHED";
+      /** @description Когда опубликуется (SCHEDULED) */
+      scheduledAt?: string | null;
       /** @description Автор — НИКОГДА не null */
       author: components["schemas"]["UserBriefDto"];
       media: components["schemas"]["PostMediaDto"][];
@@ -3772,6 +4630,8 @@ export interface components {
       music?: components["schemas"]["AttachedMusicDto"] | null;
       /** @description Отмеченные на фото */
       taggedUsers: components["schemas"]["UserBriefDto"][];
+      /** @description Соавторы (принявшие приглашение) — пост в профиле у каждого */
+      collaborators: components["schemas"]["UserBriefDto"][];
       /**
        * @example [
        *       "travel",
@@ -3780,11 +4640,13 @@ export interface components {
        */
       hashtags: string[];
       /** @example 24 */
-      likesCount: number;
+      likesCount?: number | null;
       /** @example 3 */
       commentsCount: number;
       /** @example 120 */
       viewsCount: number;
+      /** @example 7 */
+      repostsCount: number;
       /**
        * @description Лайкнул ли Я
        * @example false
@@ -3795,8 +4657,50 @@ export interface components {
        * @example false
        */
       isFavorited: boolean;
+      /**
+       * @description Репостнул ли Я (кнопка «двойная стрелка»)
+       * @example false
+       */
+      isReposted: boolean;
+      /**
+       * @description Смотрел ли Я этот пост (для ранжированной ленты — просмотренные уходят вниз)
+       * @example false
+       */
+      isSeen?: boolean;
+      /**
+       * Format: date-time
+       * @example null
+       */
+      pinnedAt?: string | null;
+      /** @example false */
+      hideLikeCount: boolean;
+      /** @example false */
+      commentsDisabled: boolean;
       /** Format: date-time */
       createdAt: string;
+    };
+    SaveMusicDto: {
+      /**
+       * @description true — сохранён, false — убран из сохранённых
+       * @example true
+       */
+      saved: boolean;
+      /** @example Трек сохранён */
+      message: string;
+    };
+    FeedDto: {
+      items: components["schemas"]["PostDto"][];
+      /** @description Курсор следующей страницы */
+      nextCursor?: string | null;
+      /** @example true */
+      hasMore: boolean;
+      /**
+       * @description «Вы всё посмотрели» — непросмотренного нет
+       * @example false
+       */
+      allCaughtUp: boolean;
+      /** @description Рекомендованные посты (не-подписки), в конце ленты */
+      suggested: components["schemas"]["PostDto"][];
     };
     DeletedDto: {
       /** @example true */
@@ -3841,6 +4745,11 @@ export interface components {
        * @example true
        */
       canDelete: boolean;
+      /**
+       * Format: date-time
+       * @example null
+       */
+      pinnedAt?: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -3851,6 +4760,12 @@ export interface components {
     ArchiveDto: {
       /** @example true */
       isArchived: boolean;
+    };
+    UpdatePostPrivacyDto: {
+      /** @example false */
+      hideLikeCount?: boolean;
+      /** @example false */
+      commentsDisabled?: boolean;
     };
     LikeToggleDto: {
       /** @example true */
@@ -3867,9 +4782,59 @@ export interface components {
        */
       counted: boolean;
     };
+    SourceBreakdownDto: {
+      /** @example explore */
+      source: string;
+      /** @example 128 */
+      count: number;
+    };
+    PostInsightsDto: {
+      /**
+       * @description Охват — сколько уникальных аккаунтов посмотрело
+       * @example 340
+       */
+      reach: number;
+      /** @example 52 */
+      likes: number;
+      /** @example 8 */
+      comments: number;
+      /**
+       * @description Сохранения
+       * @example 12
+       */
+      saves: number;
+      /** @example 5 */
+      shares: number;
+      /**
+       * @description (likes+comments+saves+shares)/reach
+       * @example 0.226
+       */
+      engagementRate: number;
+      /**
+       * @description Просмотры от подписчиков автора
+       * @example 210
+       */
+      fromFollowers: number;
+      /**
+       * @description Просмотры не от подписчиков
+       * @example 130
+       */
+      fromNonFollowers: number;
+      /** @description Топ-источники трафика */
+      sources: components["schemas"]["SourceBreakdownDto"][];
+    };
     FavoriteToggleDto: {
       /** @example true */
       favorited: boolean;
+    };
+    RepostToggleDto: {
+      /**
+       * @description true — репостнул, false — репост снят
+       * @example true
+       */
+      reposted: boolean;
+      /** @example 7 */
+      repostsCount: number;
     };
     ShareDto: {
       /**
@@ -3897,9 +4862,143 @@ export interface components {
       /** @example Ссылка на публикацию */
       message: string;
     };
+    InviteCollaboratorsDto: {
+      /** @description id соавторов (приглашение, статус PENDING) */
+      userIds: string[];
+    };
+    CollaboratorActionDto: {
+      /**
+       * @example ACCEPTED
+       * @enum {string}
+       */
+      status: "ACCEPTED" | "DECLINED";
+    };
     ReportPostDto: {
       /** @example Спам */
       reason: string;
+    };
+    TagActionDto: {
+      /**
+       * @description Итог: ACCEPTED → пост в «Фото с вами», DECLINED → скрыт
+       * @example ACCEPTED
+       * @enum {string}
+       */
+      status: "PENDING" | "ACCEPTED" | "DECLINED";
+    };
+    SettingsDto: {
+      /** @example true */
+      pushEnabled: boolean;
+      /** @example true */
+      emailEnabled: boolean;
+      /** @enum {string} */
+      whoCanTag: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /** @enum {string} */
+      whoCanMention: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /** @enum {string} */
+      whoCanMessage: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /** @enum {string} */
+      whoCanComment: "EVERYONE" | "FOLLOWERS" | "MUTUAL" | "OFF";
+      /** @example true */
+      allowGifComments: boolean;
+      /** @example true */
+      allowStoryReshare: boolean;
+      /**
+       * @example [
+       *       "спам"
+       *     ]
+       */
+      hiddenWords: string[];
+      /** @example ru */
+      language: string;
+    };
+    UpdateSettingsDto: {
+      /**
+       * @description Push-уведомления
+       * @example true
+       */
+      pushEnabled?: boolean;
+      /**
+       * @description Уведомления по email
+       * @example true
+       */
+      emailEnabled?: boolean;
+      /**
+       * @description Кто может отмечать меня
+       * @enum {string}
+       */
+      whoCanTag?: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /**
+       * @description Кто может @упоминать меня
+       * @enum {string}
+       */
+      whoCanMention?: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /**
+       * @description Кто может писать мне (иначе — в запросы)
+       * @enum {string}
+       */
+      whoCanMessage?: "EVERYONE" | "FOLLOWING" | "NOBODY";
+      /**
+       * @description Кто может комментировать мои публикации
+       * @enum {string}
+       */
+      whoCanComment?: "EVERYONE" | "FOLLOWERS" | "MUTUAL" | "OFF";
+      /**
+       * @description Разрешить GIF в комментариях
+       * @example true
+       */
+      allowGifComments?: boolean;
+      /**
+       * @description Разрешить репосты моих историй
+       * @example true
+       */
+      allowStoryReshare?: boolean;
+      /**
+       * @description Скрытые слова: комментарии с этими словами отклоняются
+       * @example [
+       *       "спам",
+       *       "реклама"
+       *     ]
+       */
+      hiddenWords?: string[];
+      /**
+       * @description Язык интерфейса (код)
+       * @example ru
+       */
+      language?: string;
+    };
+    RestrictActionDto: {
+      /** @example true */
+      restricted: boolean;
+    };
+    SpotifyTrackDto: {
+      /**
+       * @description id трека в Spotify
+       * @example 7qiZfU4dY1lWllzX7mPBI3
+       */
+      spotifyId: string;
+      /** @example Shape of You */
+      title: string;
+      /** @example Ed Sheeran */
+      artist: string;
+      /** @example https://i.scdn.co/image/ab67616d... */
+      albumCover?: string | null;
+      /**
+       * @description 30-секундный отрывок (у части треков отсутствует → null)
+       * @example https://p.scdn.co/mp3-preview/...
+       */
+      previewUrl?: string | null;
+      /** @example https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3 */
+      spotifyUrl: string;
+      /**
+       * @description Длительность в секундах
+       * @example 233
+       */
+      durationSec: number;
+      /**
+       * @description Уже сохранён мной (импортирован в мою музыку)
+       * @example false
+       */
+      isSaved: boolean;
     };
     StoryDto: {
       /** @example 12 */
@@ -3937,8 +5036,15 @@ export interface components {
       filter?: string | null;
       /** @example false */
       closeFriendsOnly: boolean;
+      /**
+       * @description Сохранится ли в архив после истечения 24ч
+       * @example true
+       */
+      saveToArchive: boolean;
       /** @description id поста, если история — репост */
       fromPostId?: number | null;
+      /** @description id промпта «Add Yours», если история — часть цепочки */
+      addYoursPromptId?: string | null;
       /**
        * @description Смотрел ли Я — считается на СЕРВЕРЕ
        * @example false
@@ -3980,6 +5086,36 @@ export interface components {
        */
       latestAt: string;
     };
+    AddYoursPromptDto: {
+      /** @example b3f1c2e4-... */
+      id: string;
+      /** @example Покажи свой завтрак 🍳 */
+      text: string;
+      /** @example 🍳 */
+      emoji?: string | null;
+      /** @description Кто запустил цепочку */
+      creator: components["schemas"]["UserBriefDto"];
+      /**
+       * @description id истории, где создан промпт
+       * @example 42
+       */
+      originStoryId: number;
+      /**
+       * @description Сколько историй уже ответило
+       * @example 7
+       */
+      responsesCount: number;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    AddYoursFeedDto: {
+      prompt: components["schemas"]["AddYoursPromptDto"];
+      /** @description Истории-ответы (автор промпта — первым) */
+      items: components["schemas"]["StoryDto"][];
+      nextCursor?: string | null;
+      /** @example false */
+      hasMore: boolean;
+    };
     StoryLikeToggleDto: {
       /**
        * @description boolean, НЕ строка "Liked" (баг softclub #15)
@@ -4013,6 +5149,39 @@ export interface components {
     StoryReplyDto: {
       /** @example Классная история! */
       text: string;
+    };
+    CreateAddYoursDto: {
+      /** @example Покажи свой завтрак 🍳 */
+      text: string;
+      /**
+       * @description Необязательный эмодзи стикера
+       * @example 🍳
+       */
+      emoji?: string;
+    };
+    StoryInsightsDto: {
+      /**
+       * @description Просмотры (уникальные зрители)
+       * @example 210
+       */
+      views: number;
+      /** @example 18 */
+      likes: number;
+      /**
+       * @description Эмодзи-реакции
+       * @example 7
+       */
+      reactions: number;
+      /**
+       * @description Ответы на историю
+       * @example 4
+       */
+      replies: number;
+      /**
+       * @description (likes+reactions+replies)/views
+       * @example 0.138
+       */
+      engagementRate: number;
     };
     StoryViewerDto: {
       /** @description id записи просмотра (StoryView) — ключ строки в списке */
@@ -4082,6 +5251,80 @@ export interface components {
       storyIds?: number[];
       coverUrl?: string;
     };
+    CreateStickerDto: {
+      /** @enum {string} */
+      type: "POLL" | "QUIZ" | "QUESTION" | "SLIDER" | "COUNTDOWN" | "LINK";
+      /**
+       * @description Параметры по типу. POLL {question, options[]}; QUIZ {question, options[], correctIndex}; QUESTION {prompt}; SLIDER {question, emoji}; COUNTDOWN {title, endsAt}; LINK {url, label}.
+       * @example {
+       *       "question": "Заходишь?",
+       *       "options": [
+       *         "Да",
+       *         "Нет"
+       *       ]
+       *     }
+       */
+      config: {
+        [key: string]: unknown;
+      };
+      /** @description Положение {x,y,scale,rotate} */
+      geometry?: {
+        [key: string]: unknown;
+      };
+    };
+    StickerDto: {
+      id: string;
+      /** @enum {string} */
+      type: "POLL" | "QUIZ" | "QUESTION" | "SLIDER" | "COUNTDOWN" | "LINK";
+      config: {
+        [key: string]: unknown;
+      };
+      geometry?: {
+        [key: string]: unknown;
+      } | null;
+      myAnswer?: {
+        optionIndex?: number | null;
+        text?: string | null;
+        sliderValue?: number | null;
+      };
+    };
+    AnswerStickerDto: {
+      /**
+       * @description POLL/QUIZ — индекс варианта
+       * @example 0
+       */
+      optionIndex?: number;
+      /** @description QUESTION — свободный текст */
+      text?: string;
+      /**
+       * @description SLIDER — значение 0..1
+       * @example 0.75
+       */
+      sliderValue?: number;
+    };
+    AnswerResultDto: {
+      /** @example true */
+      ok: boolean;
+      /** @description QUIZ — правильный вариант (раскрывается после ответа) */
+      correctIndex?: number;
+    };
+    StickerResultsDto: {
+      /** @enum {string} */
+      type: "POLL" | "QUIZ" | "QUESTION" | "SLIDER" | "COUNTDOWN" | "LINK";
+      /**
+       * @description Всего ответов
+       * @example 12
+       */
+      total: number;
+      /** @description POLL/QUIZ — по вариантам: {index, count, percent} */
+      options?: Record<string, never>[];
+      /** @description QUIZ — доля правильных, % */
+      correctPercent?: number;
+      /** @description SLIDER — среднее значение 0..1 */
+      average?: number;
+      /** @description QUESTION — ответы: {user, text} */
+      responses?: Record<string, never>[];
+    };
     NoteMusicDto: {
       /** @example 35 */
       id: number;
@@ -4118,6 +5361,8 @@ export interface components {
       music?: components["schemas"]["NoteMusicDto"] | null;
       /** @example #FFB6C1 */
       bgColor?: string | null;
+      /** @example #222222 */
+      textColor?: string | null;
       /**
        * @description Кому видна: подписчикам или только близким друзьям
        * @example FOLLOWERS
@@ -4165,6 +5410,11 @@ export interface components {
        */
       bgColor?: string;
       /**
+       * @description Цвет текста заметки (hex)
+       * @example #222222
+       */
+      textColor?: string;
+      /**
        * @description Кому видна заметка: FOLLOWERS — всем подписчикам, CLOSE_FRIENDS — только близким друзьям.
        * @default FOLLOWERS
        * @enum {string}
@@ -4178,6 +5428,8 @@ export interface components {
       musicId?: number;
       /** @example #87CEEB */
       bgColor?: string;
+      /** @example #222222 */
+      textColor?: string;
     };
     NoteLikeToggleDto: {
       /** @example true */
@@ -4207,6 +5459,13 @@ export interface components {
        * @example 128
        */
       messageId: number;
+    };
+    NoteReactionDto: {
+      /**
+       * @description Эмодзи-реакция на заметку (уходит в личку автору, как в историях)
+       * @example ❤️
+       */
+      emoji: string;
     };
     NoteReplyItemDto: {
       /** @example 15 */
@@ -4555,6 +5814,13 @@ export interface components {
       /** @example true */
       muted: boolean;
     };
+    VanishDto: {
+      /**
+       * @description true — включить режим исчезновения
+       * @example true
+       */
+      enabled: boolean;
+    };
     ReportChatDto: {
       /** @example Спам */
       reason: string;
@@ -4593,6 +5859,7 @@ export interface components {
         | "LIKE_NOTE"
         | "REPLY_NOTE"
         | "SHARE_POST"
+        | "REPOST_POST"
         | "SAVE_POST"
         | "TAG_POST"
         | "PROFILE_VIEW"
@@ -4601,7 +5868,8 @@ export interface components {
         | "LIVE_STARTED"
         | "LIVE_JOIN_REQUEST"
         | "LIVE_JOIN_ACCEPTED"
-        | "LIVE_JOIN_DECLINED";
+        | "LIVE_JOIN_DECLINED"
+        | "STORY_STICKER_RESPONSE";
       /** @description Последний из тех, кто совершил действие */
       actor: components["schemas"]["UserBriefDto"];
       /**
@@ -4748,6 +6016,16 @@ export interface components {
       trialEndsAt?: string | null;
       /** Format: date-time */
       currentPeriodEnd?: string | null;
+      /**
+       * @description Цена подписки в $/мес (после 7 дней бесплатного триала)
+       * @example 10
+       */
+      priceUsd: number;
+      /**
+       * @description Сколько дней бесплатного триала даётся
+       * @example 7
+       */
+      trialDays: number;
     };
     AdminUserDto: {
       id: string;
@@ -4911,7 +6189,9 @@ export interface operations {
   AuthController_register: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        "user-agent": string;
+      };
       path?: never;
       cookie?: never;
     };
@@ -4948,7 +6228,9 @@ export interface operations {
   AuthController_login: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        "user-agent": string;
+      };
       path?: never;
       cookie?: never;
     };
@@ -5183,6 +6465,182 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["UsernameAvailableDto"];
+        };
+      };
+    };
+  };
+  AuthController_setup2fa: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TwoFactorSetupDto"];
+        };
+      };
+    };
+  };
+  AuthController_enable2fa: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["Enable2faDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BackupCodesDto"];
+        };
+      };
+      /** @description Неверный код */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AuthController_disable2fa: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["Disable2faDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MessageDto"];
+        };
+      };
+      /** @description Неверный код */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AuthController_verify2fa: {
+    parameters: {
+      query?: never;
+      header: {
+        "user-agent": string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["Verify2faDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TokensDto"];
+        };
+      };
+      /** @description Тикет/код неверен или истёк */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AuthController_sessions: {
+    parameters: {
+      query?: {
+        rt?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SessionDto"][];
+        };
+      };
+    };
+  };
+  AuthController_revokeSession: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MessageDto"];
+        };
+      };
+    };
+  };
+  AuthController_logoutAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LogoutAllDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LogoutAllResultDto"];
         };
       };
     };
@@ -5601,7 +7059,7 @@ export interface operations {
       };
     };
   };
-  ProfileController_reposts: {
+  ProfileController_myReposts: {
     parameters: {
       query?: {
         /** @description Курсор последнего элемента предыдущей страницы */
@@ -5666,6 +7124,28 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ActivityItemDto"][];
+        };
+      };
+    };
+  };
+  ProfileController_insights: {
+    parameters: {
+      query?: {
+        /** @description Период аналитики */
+        period?: "7d" | "30d" | "90d";
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProfileInsightsDto"];
         };
       };
     };
@@ -5829,6 +7309,31 @@ export interface operations {
     };
   };
   ProfileController_reels: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostBriefDto"][];
+        };
+      };
+    };
+  };
+  ProfileController_reposts: {
     parameters: {
       query?: {
         /** @description Курсор последнего элемента предыдущей страницы */
@@ -6351,6 +7856,31 @@ export interface operations {
       };
     };
   };
+  MusicController_reels: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"][];
+        };
+      };
+    };
+  };
   MusicController_byId: {
     parameters: {
       query?: never;
@@ -6399,71 +7929,6 @@ export interface operations {
       header?: never;
       path: {
         id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SaveMusicDto"];
-        };
-      };
-    };
-  };
-  SpotifyController_search: {
-    parameters: {
-      query: {
-        /** @description Название трека / исполнитель */
-        q: string;
-        limit?: components["schemas"]["Object"];
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SpotifyTrackDto"][];
-        };
-      };
-    };
-  };
-  SpotifyController_save: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        spotifyId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["MusicDto"];
-        };
-      };
-    };
-  };
-  SpotifyController_unsave: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        spotifyId: string;
       };
       cookie?: never;
     };
@@ -6561,7 +8026,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["PostDto"][];
+          "application/json": components["schemas"]["FeedDto"];
         };
       };
     };
@@ -6597,6 +8062,31 @@ export interface operations {
         limit?: components["schemas"]["Object"];
         /** @description true → архивные */
         archived?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"][];
+        };
+      };
+    };
+  };
+  PostsController_drafts: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+        /** @description Фильтр: только DRAFT или только SCHEDULED. Без него — оба. */
+        status?: "DRAFT" | "SCHEDULED";
       };
       header?: never;
       path?: never;
@@ -6709,6 +8199,52 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CommentDto"][];
+        };
+      };
+    };
+  };
+  PostsController_pendingTags: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"][];
+        };
+      };
+    };
+  };
+  PostsController_pendingCollabs: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"][];
         };
       };
     };
@@ -6836,6 +8372,94 @@ export interface operations {
       };
     };
   };
+  PostsController_pin: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"];
+        };
+      };
+      /** @description Это не ваша публикация */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PostsController_togglePrivacy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdatePostPrivacyDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"];
+        };
+      };
+      /** @description Это не ваша публикация */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PostsController_publish: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"];
+        };
+      };
+      /** @description Это не ваша публикация */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   PostsController_like: {
     parameters: {
       query?: never;
@@ -6882,9 +8506,37 @@ export interface operations {
       };
     };
   };
+  PostsController_remixes: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"][];
+        };
+      };
+    };
+  };
   PostsController_view: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Источник просмотра (для insights автора). По умолчанию не пишется. */
+        source?: "feed" | "explore" | "profile" | "hashtag" | "reels" | "direct";
+      };
       header?: never;
       path: {
         id: number;
@@ -6900,6 +8552,34 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["ViewDto"];
         };
+      };
+    };
+  };
+  PostsController_insights: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostInsightsDto"];
+        };
+      };
+      /** @description Это не ваша публикация */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -6923,6 +8603,34 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["FavoriteToggleDto"];
         };
+      };
+    };
+  };
+  PostsController_repost: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RepostToggleDto"];
+        };
+      };
+      /** @description Нельзя репостить собственную публикацию */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -6951,6 +8659,80 @@ export interface operations {
       };
     };
   };
+  PostsController_inviteCollaborators: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["InviteCollaboratorsDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PostDto"];
+        };
+      };
+      /** @description Это не ваша публикация */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PostsController_acceptCollab: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CollaboratorActionDto"];
+        };
+      };
+    };
+  };
+  PostsController_declineCollab: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CollaboratorActionDto"];
+        };
+      };
+    };
+  };
   PostsController_report: {
     parameters: {
       query?: never;
@@ -6972,6 +8754,48 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  PostsController_acceptTag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagActionDto"];
+        };
+      };
+    };
+  };
+  PostsController_declineTag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagActionDto"];
+        };
       };
     };
   };
@@ -7026,6 +8850,203 @@ export interface operations {
       };
     };
   };
+  PostsController_pinComment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        postId: number;
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CommentDto"];
+        };
+      };
+      /** @description Только автор публикации может закреплять комментарии */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  SettingsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingsDto"];
+        };
+      };
+    };
+  };
+  SettingsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateSettingsDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingsDto"];
+        };
+      };
+    };
+  };
+  SettingsController_restricted: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserBriefDto"][];
+        };
+      };
+    };
+  };
+  SettingsController_restrict: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RestrictActionDto"];
+        };
+      };
+    };
+  };
+  SettingsController_unrestrict: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RestrictActionDto"];
+        };
+      };
+    };
+  };
+  SpotifyController_search: {
+    parameters: {
+      query: {
+        /** @description Название трека / исполнитель */
+        q: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SpotifyTrackDto"][];
+        };
+      };
+    };
+  };
+  SpotifyController_save: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        spotifyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MusicDto"];
+        };
+      };
+    };
+  };
+  SpotifyController_unsave: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        spotifyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SaveMusicDto"];
+        };
+      };
+    };
+  };
   StoriesController_rail: {
     parameters: {
       query?: never;
@@ -7066,6 +9087,8 @@ export interface operations {
           filter?: string;
           /** @example false */
           closeFriendsOnly?: boolean;
+          /** @example true */
+          saveToArchive?: boolean;
           /** @example 12 */
           fromPostId?: number;
         };
@@ -7137,6 +9160,31 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["StoryDto"][];
+        };
+      };
+    };
+  };
+  StoriesController_addYoursFeed: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path: {
+        promptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AddYoursFeedDto"];
         };
       };
     };
@@ -7278,6 +9326,66 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["ReactionSentDto"];
         };
+      };
+    };
+  };
+  StoriesController_createAddYours: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateAddYoursDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AddYoursPromptDto"];
+        };
+      };
+      /** @description Это не ваша история */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  StoriesController_insights: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StoryInsightsDto"];
+        };
+      };
+      /** @description Аналитика видна только автору */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -7426,6 +9534,114 @@ export interface operations {
         };
       };
       /** @description Это не ваше актуальное */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  StoryStickersController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StickerDto"][];
+        };
+      };
+    };
+  };
+  StoryStickersController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateStickerDto"];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StickerDto"];
+        };
+      };
+      /** @description Это не ваша история / LINK без галочки */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  StoryStickersController_answer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+        stickerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AnswerStickerDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AnswerResultDto"];
+        };
+      };
+    };
+  };
+  StoryStickersController_results: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+        stickerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StickerResultsDto"];
+        };
+      };
+      /** @description Итоги видит только автор истории */
       403: {
         headers: {
           [name: string]: unknown;
@@ -7618,6 +9834,31 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["NoteReplyDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NoteReplySentDto"];
+        };
+      };
+    };
+  };
+  NotesController_reaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NoteReactionDto"];
       };
     };
     responses: {
@@ -8348,6 +10589,73 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["OkDto"];
+        };
+      };
+    };
+  };
+  ChatController_setVanish: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VanishDto"];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OkDto"];
+        };
+      };
+    };
+  };
+  ChatController_closeChat: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DeletedCountDto"];
+        };
+      };
+    };
+  };
+  ChatController_openViewOnce: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MessageDto"];
         };
       };
     };
@@ -9377,6 +11685,29 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["LiveStatsDto"];
+        };
+      };
+    };
+  };
+  FeedController_getFeed: {
+    parameters: {
+      query?: {
+        /** @description Курсор последнего элемента предыдущей страницы */
+        cursor?: string;
+        limit?: components["schemas"]["Object"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FeedDto"];
         };
       };
     };

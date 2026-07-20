@@ -1,17 +1,22 @@
 "use client";
 
-import { Music } from "lucide-react";
+import { Music, SmilePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { HeartIcon } from "@/components/icons";
-import { NoteInsightsSheet } from "@/components/chat/NoteInsightsSheet";
-import { useLikeNote, useReplyToNote } from "@/hooks/useNotes";
+import { NoteOwnCard } from "@/components/chat/NoteInsightsSheet";
+import { UserAvatar } from "@/components/shared/UserAvatar";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useLikeNote, useReactToNote, useReplyToNote } from "@/hooks/useNotes";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { noteTextColor } from "@/lib/note-colors";
 import { cn } from "@/lib/utils";
 import type { NoteDto } from "@/types/api.types";
+
+/** Real IG's "most popular" quick-react row — one tap sends it as a reply. */
+const QUICK_EMOJI = ["😂", "😮", "😍", "😢", "👏", "🔥", "🎉", "💯", "❤️", "🥰", "😘", "🤩"];
 
 /**
  * The thought bubble sitting on an avatar.
@@ -22,15 +27,71 @@ import type { NoteDto } from "@/types/api.types";
  * Mine opens who liked and who replied — the two endpoints only its author may
  * read. (Tapping the avatar still opens the composer.)
  */
-export function NoteBubble({ note }: { note: NoteDto }) {
+export function NoteBubble({ note, onWriteNew }: { note: NoteDto; onWriteNew?: () => void }) {
   const t = useTranslations("note");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [text, setText] = useState("");
+  const [emojiOpen, setEmojiOpen] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioSrc = note.music?.streamUrl ?? note.music?.previewUrl ?? undefined;
+
+  useEffect(() => {
+    if (!open && !insightsOpen && audioRef.current) {
+      audioRef.current.pause();
+    }
+  }, [open, insightsOpen]);
+
+  const handleOpen = () => {
+    if (note.isMine) {
+      setInsightsOpen(true);
+    } else {
+      setOpen((value) => !value);
+    }
+
+    if (audioRef.current && audioSrc) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  };
 
   const like = useLikeNote();
   const reply = useReplyToNote();
+  const react = useReactToNote();
+
+  const sendReply = (value: string) => {
+    reply.mutate(
+      { id: note.id, text: value },
+      {
+        onSuccess: (result) => {
+          toast.success(t("replySent", { userName: note.author.userName }));
+          setOpen(false);
+          setEmojiOpen(false);
+          setText("");
+          // The reply became a message — go where it landed.
+          router.push(ROUTES.chatById(result.chatId));
+        },
+      },
+    );
+  };
+
+  // Its own endpoint (`POST /notes/{id}/reaction`), not a text reply that
+  // happens to be one emoji — real IG's quick-react row sends a reaction.
+  const sendReaction = (emoji: string) => {
+    react.mutate(
+      { id: note.id, emoji },
+      {
+        onSuccess: (result) => {
+          toast.success(t("replySent", { userName: note.author.userName }));
+          setOpen(false);
+          setEmojiOpen(false);
+          router.push(ROUTES.chatById(result.chatId));
+        },
+      },
+    );
+  };
 
   const color = note.bgColor ?? undefined;
   const fg = noteTextColor(note.bgColor);
@@ -44,7 +105,7 @@ export function NoteBubble({ note }: { note: NoteDto }) {
     <>
       <button
         type="button"
-        onClick={() => (note.isMine ? setInsightsOpen(true) : setOpen((value) => !value))}
+        onClick={handleOpen}
         aria-expanded={note.isMine ? undefined : open}
         style={{ backgroundColor: color, color: fg }}
         className="absolute -top-7 left-1/2 z-10 flex h-8 max-w-[120px] -translate-x-1/2 items-center gap-1 rounded-full px-3 text-[11px]"
@@ -59,63 +120,115 @@ export function NoteBubble({ note }: { note: NoteDto }) {
         className="absolute -top-1 left-2 size-2 rounded-full"
       />
 
-      {open ? (
-        <div className="bg-ig-elevated border-ig-separator absolute top-9 left-1/2 z-20 w-56 -translate-x-1/2 rounded-xl border p-3 shadow-lg">
-          <p className="text-ig-text mb-2 text-sm break-words">{note.text}</p>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-[340px] gap-0 rounded-3xl border-none bg-[#262626] p-6 text-center text-white">
+          <DialogTitle className="sr-only">{t("replyPlaceholder")}</DialogTitle>
 
-          {note.music ? (
-            <p className="text-ig-text-secondary mb-2 flex items-center gap-1 truncate text-xs">
-              <Music className="size-3 shrink-0" />
-              {note.music.title} · {note.music.artist}
-            </p>
-          ) : null}
+          <div className="mt-6 flex flex-col items-center">
+            <span className="relative mb-4">
+              <div
+                style={{ backgroundColor: color || "#363636", color: fg || "#fff" }}
+                className="absolute -top-16 left-1/2 z-10 flex min-h-[48px] max-w-[240px] min-w-[100px] -translate-x-1/2 flex-col items-center justify-center rounded-3xl px-4 py-3 text-sm font-semibold shadow-md"
+              >
+                {note.text ? (
+                  <span className="text-center text-base break-words whitespace-pre-wrap">
+                    {note.text}
+                  </span>
+                ) : note.music ? (
+                  <div className="flex flex-col items-center justify-center leading-tight">
+                    <span className="flex items-center gap-1.5 text-sm font-semibold">
+                      <Music className="size-3.5 shrink-0" /> {note.music.title}
+                    </span>
+                    <span className="mt-0.5 text-xs opacity-75">{note.music.artist}</span>
+                  </div>
+                ) : null}
+              </div>
+              <span
+                style={{ backgroundColor: color || "#363636" }}
+                className="absolute -top-2 left-1/2 z-10 size-3 -translate-x-[20px] rounded-full shadow-sm"
+              />
+              <span
+                style={{ backgroundColor: color || "#363636" }}
+                className="absolute -top-5 left-1/2 z-10 size-2 -translate-x-[30px] rounded-full shadow-sm"
+              />
+              <UserAvatar src={note.author.avatarUrl} size={100} />
+            </span>
+
+            <span className="mt-2 text-lg font-semibold">{note.author.userName}</span>
+
+            {note.music && note.text ? (
+              <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-white/70">
+                <Music className="size-3.5 shrink-0" />
+                <span className="truncate">
+                  {note.music.title} · {note.music.artist}
+                </span>
+              </p>
+            ) : null}
+          </div>
 
           <form
             onSubmit={(event) => {
               event.preventDefault();
               const value = text.trim();
-              if (!value) return;
-              reply.mutate(
-                { id: note.id, text: value },
-                {
-                  onSuccess: (result) => {
-                    toast.success(t("replySent", { userName: note.author.userName }));
-                    setOpen(false);
-                    setText("");
-                    // The reply became a message — go where it landed.
-                    router.push(ROUTES.chatById(result.chatId));
-                  },
-                },
-              );
+              if (value) sendReply(value);
             }}
-            className="flex items-center gap-2"
+            className="mt-6"
           >
-            <input
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              placeholder={t("replyPlaceholder")}
-              aria-label={t("replyPlaceholder")}
-              className="border-ig-separator text-ig-text placeholder:text-ig-text-secondary min-w-0 flex-1 border-b bg-transparent pb-1 text-xs outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => like.mutate(note.id)}
-              aria-label={t("like")}
-              aria-pressed={note.isLiked}
-              className="shrink-0"
-            >
-              <HeartIcon
-                filled={note.isLiked}
-                className={cn("size-4", note.isLiked ? "text-ig-danger" : "text-ig-text")}
+            <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-3">
+              <input
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder={t("replyPlaceholder")}
+                className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50"
               />
-            </button>
+              <button
+                type="button"
+                onClick={() => like.mutate(note.id)}
+                className="mr-2 shrink-0 text-white"
+              >
+                <HeartIcon
+                  filled={note.isLiked}
+                  className={cn("size-5", note.isLiked ? "text-ig-danger" : "text-white")}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmojiOpen((value) => !value)}
+                className="shrink-0 text-white"
+              >
+                <SmilePlus className="size-5" />
+              </button>
+            </div>
+
+            {emojiOpen ? (
+              <ul className="mt-4 grid grid-cols-6 gap-2">
+                {QUICK_EMOJI.map((emoji) => (
+                  <li key={emoji}>
+                    <button
+                      type="button"
+                      onClick={() => sendReaction(emoji)}
+                      className="flex size-10 items-center justify-center rounded-full text-xl hover:bg-white/10"
+                    >
+                      {emoji}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </form>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
 
       {note.isMine ? (
-        <NoteInsightsSheet noteId={note.id} open={insightsOpen} onOpenChange={setInsightsOpen} />
+        <NoteOwnCard
+          note={note}
+          open={insightsOpen}
+          onOpenChange={setInsightsOpen}
+          onWriteNew={() => onWriteNew?.()}
+        />
       ) : null}
+
+      {audioSrc && <audio ref={audioRef} src={audioSrc} loop hidden />}
     </>
   );
 }

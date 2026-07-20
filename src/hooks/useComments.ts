@@ -100,3 +100,20 @@ export function useLikeComment(postId: number) {
     onError: (error: ApiError) => toast.error(error.message || t("network")),
   });
 }
+
+/**
+ * Pin / unpin a comment — only the post's own author may do this (403
+ * otherwise). The list is re-sorted client-side by `pinnedAt` (see
+ * `CommentList`) rather than trusted to arrive pre-sorted, so a plain
+ * invalidate after the toggle is enough here.
+ */
+export function usePinComment(postId: number) {
+  const invalidate = useCommentInvalidation(postId);
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: (commentId: number) => postService.pinComment(postId, commentId),
+    onSuccess: invalidate,
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}

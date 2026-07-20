@@ -1,7 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { SwitchAccountDialog } from "@/components/auth/SwitchAccountDialog";
 import { FollowButton } from "@/components/profile/FollowButton";
+import { ProfileHoverCard } from "@/components/profile/ProfileHoverCard";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
@@ -25,6 +28,7 @@ export function RightSidebar() {
   const { user } = useAuth();
   const { data: profile, isPending } = useMyProfile();
   const { data: suggestions } = useSuggestions();
+  const [switchOpen, setSwitchOpen] = useState(false);
 
   return (
     <aside className="hidden w-[320px] shrink-0 pt-9 pl-16 xl:block">
@@ -41,7 +45,11 @@ export function RightSidebar() {
             </Link>
             <p className="text-ig-text-secondary truncate text-sm">{profile.fullName}</p>
           </div>
-          <button type="button" className="text-ig-primary text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setSwitchOpen(true)}
+            className="text-ig-primary shrink-0 text-xs font-semibold hover:opacity-70"
+          >
             {t("switch")}
           </button>
         </div>
@@ -49,9 +57,12 @@ export function RightSidebar() {
 
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-ig-text-secondary text-sm font-semibold">{t("suggestions")}</h2>
-        <button type="button" className="text-ig-text text-xs font-semibold">
+        <Link
+          href={ROUTES.suggestions}
+          className="text-ig-text text-xs font-semibold hover:opacity-70"
+        >
           {t("seeAllSuggestions")}
-        </button>
+        </Link>
       </div>
 
       <ul className="space-y-3">
@@ -59,19 +70,23 @@ export function RightSidebar() {
           ?.filter((candidate) => candidate.id !== user?.id)
           .map((candidate) => (
             <li key={candidate.id} className="flex items-center gap-3">
-              <Link href={ROUTES.profile(candidate.id)}>
-                <UserAvatar src={candidate.avatarUrl ?? null} size={44} />
-              </Link>
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={ROUTES.profile(candidate.id)}
-                  className="text-ig-text block text-sm font-semibold"
-                >
-                  <UserNameWithBadge
-                    userName={candidate.userName}
-                    isVerified={candidate.isVerified}
-                  />
+              <ProfileHoverCard userId={candidate.id}>
+                <Link href={ROUTES.profile(candidate.id)}>
+                  <UserAvatar src={candidate.avatarUrl ?? null} size={44} />
                 </Link>
+              </ProfileHoverCard>
+              <div className="min-w-0 flex-1">
+                <ProfileHoverCard userId={candidate.id} className="max-w-full">
+                  <Link
+                    href={ROUTES.profile(candidate.id)}
+                    className="text-ig-text block truncate text-sm font-semibold"
+                  >
+                    <UserNameWithBadge
+                      userName={candidate.userName}
+                      isVerified={candidate.isVerified}
+                    />
+                  </Link>
+                </ProfileHoverCard>
                 {/* `followedBy` is the mutual follows — IG's "Followed by X + N others". */}
                 <p className="text-ig-text-secondary truncate text-xs">
                   {candidate.followedBy.length > 0
@@ -90,6 +105,8 @@ export function RightSidebar() {
       <p className="text-ig-text-secondary mt-6 text-xs uppercase">
         {tFooter("copyright", { year: new Date().getFullYear() })}
       </p>
+
+      <SwitchAccountDialog open={switchOpen} onOpenChange={setSwitchOpen} />
     </aside>
   );
 }

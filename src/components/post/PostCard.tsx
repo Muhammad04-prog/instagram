@@ -12,7 +12,7 @@ import { CommentForm } from "@/components/post/PostComments";
 import { PostHeader } from "@/components/post/PostHeader";
 import { RichCaption } from "@/components/post/RichCaption";
 import { useLikePost, useViewPost } from "@/hooks/usePosts";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { formatCount } from "@/lib/utils";
 import type { PostDto } from "@/types/post.types";
@@ -22,6 +22,7 @@ const CAPTION_CLAMP = 100;
 /** One feed post (docs/screenshots/img10, img11): header, media, actions, caption, comments. */
 export function PostCard({ post }: { post: PostDto }) {
   const t = useTranslations("post");
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [burst, setBurst] = useState(false);
   const [likesOpen, setLikesOpen] = useState(false);
@@ -60,7 +61,7 @@ export function PostCard({ post }: { post: PostDto }) {
   const shown = expanded || !isLong ? caption : `${caption.slice(0, CAPTION_CLAMP)}…`;
 
   return (
-    <article ref={ref} className="border-ig-separator border-b pb-4">
+    <article ref={ref} className="border-ig-separator mb-4 border-b pb-4">
       <PostHeader post={post} />
 
       <div className="relative">
@@ -68,7 +69,9 @@ export function PostCard({ post }: { post: PostDto }) {
           media={post.media}
           alt={caption}
           onDoubleTap={onDoubleTap}
-          className="overflow-hidden rounded-sm"
+          // Rounded + hairline border is current IG's feed card; the old
+          // square-cornered media read as a raw image dropped on the page.
+          className="border-ig-separator overflow-hidden rounded-lg border"
         />
 
         <AnimatePresence>
@@ -88,21 +91,19 @@ export function PostCard({ post }: { post: PostDto }) {
 
       {post.music ? <PostMusicStrip music={post.music} /> : null}
 
-      <PostActions post={post} className="pt-2" />
-
-      {/* The count opens the real list — softclub could only ever show a number. */}
-      {post.likesCount > 0 ? (
-        <button
-          type="button"
-          onClick={() => setLikesOpen(true)}
-          className="text-ig-text block pt-1 text-sm font-semibold hover:opacity-60"
-        >
-          {t("likes", { count: post.likesCount })}
-        </button>
-      ) : null}
+      {/* The count opens the real list — softclub could only ever show a number.
+          Inline next to the heart, not on its own line — matches current IG's
+          feed-card look rather than the old stacked count. */}
+      <PostActions
+        post={post}
+        showCounts
+        onLikesCountClick={() => setLikesOpen(true)}
+        onCommentClick={() => router.push(ROUTES.post(post.id))}
+        className="pt-3"
+      />
 
       {caption ? (
-        <p className="text-ig-text pt-1 text-sm break-words whitespace-pre-line">
+        <p className="text-ig-text pt-2 text-sm break-words whitespace-pre-line">
           <Link href={ROUTES.profile(post.author.id)} className="mr-1.5 font-semibold">
             {post.author.userName}
           </Link>
@@ -120,12 +121,17 @@ export function PostCard({ post }: { post: PostDto }) {
       ) : null}
 
       {post.commentsCount > 0 ? (
-        <Link href={ROUTES.post(post.id)} className="text-ig-text-secondary mt-1 block text-sm">
+        <Link
+          href={ROUTES.post(post.id)}
+          className="text-ig-text-secondary mt-1.5 block text-sm hover:opacity-60"
+        >
           {t("viewAllComments", { count: formatCount(post.commentsCount) })}
         </Link>
       ) : null}
 
-      <CommentForm postId={post.id} className="border-ig-separator mt-1 border-t" />
+      {post.commentsDisabled ? null : (
+        <CommentForm postId={post.id} className="border-ig-separator mt-2 border-t" />
+      )}
 
       <PostLikesDialog postId={post.id} open={likesOpen} onOpenChange={setLikesOpen} />
     </article>

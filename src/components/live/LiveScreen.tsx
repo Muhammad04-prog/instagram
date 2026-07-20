@@ -1,11 +1,12 @@
 "use client";
 
-import { Mic, MicOff, Users, Video, VideoOff, X } from "lucide-react";
+import { Mic, MicOff, UserPlus, Users, Video, VideoOff, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { LiveCommentBar } from "@/components/live/LiveCommentBar";
 import { LiveEndedStats } from "@/components/live/LiveEndedStats";
 import { type FloatingHeart, LiveHearts } from "@/components/live/LiveHearts";
+import { LiveJoinRequestsSheet } from "@/components/live/LiveJoinRequestsSheet";
 import { LiveStage } from "@/components/live/LiveStage";
 import { LiveViewersSheet } from "@/components/live/LiveViewersSheet";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -15,6 +16,7 @@ import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { useLiveKitRoom } from "@/hooks/useLiveKitRoom";
 import {
   useEndLive,
   useJoinLive,
@@ -22,14 +24,17 @@ import {
   useLikeLive,
   useLive,
   useLiveComment,
+  useLiveComments,
   useLiveReaction,
   useRequestJoinLive,
+  useLiveJoinRequests,
   useSetLiveAudio,
   useSetLiveCamera,
 } from "@/hooks/useLive";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import type { LiveCommentDto } from "@/types/api.types";
+import { pageItems } from "@/lib/cursor";
+import { useLiveSessionStore } from "@/store/live-session.store";
 
 /**
  * One broadcast, for both sides of it.
@@ -55,10 +60,11 @@ export function LiveScreen({ liveId }: { liveId: string }) {
   const requestJoin = useRequestJoinLive(liveId);
   const setCamera = useSetLiveCamera(liveId);
   const setAudio = useSetLiveAudio(liveId);
+  const { data: liveComments } = useLiveComments(liveId, Boolean(live));
 
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
-  const [mine, setMine] = useState<LiveCommentDto[]>([]);
   const [viewersOpen, setViewersOpen] = useState(false);
+  const [requestsOpen, setRequestsOpen] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   // Nothing tells us the host's answer — there is no request-status endpoint and
   // no socket — so the button can only report that the ask went out.
@@ -67,6 +73,33 @@ export function LiveScreen({ liveId }: { liveId: string }) {
 
   const isHost = Boolean(user && live && live.host.id === user.id);
   const ended = live?.status === "ENDED";
+
+  // Host-only, and polled — a request arriving mid-stream has to surface on the
+  // control bar without the host opening the sheet to go looking for it.
+  const { data: joinRequests } = useLiveJoinRequests(liveId, isHost && !ended);
+  const pendingRequests = joinRequests?.length ?? 0;
+
+  // The host's LiveKit token only ever exists once, handed back by
+  // `POST /live/start` on the *previous* screen (GoLiveScreen) — this route
+  // mounts fresh, so it is bridged through a store instead of being re-fetched
+  // (there is no endpoint to re-fetch a host token). Read into local state
+  // with a lazy initializer — a pure, side-effect-free read of `getState()`,
+  // so it is safe to run twice under Strict Mode's dev double-invoke — and
+  // deliberately NOT read through a live store subscription: `useLiveKitRoom`
+  // treats `wsUrl`/`token` turning undefined as "the call ended" and tears the
+  // connection down, so once captured here the local copy must stay stable
+  // for this screen's lifetime regardless of what happens to the store.
+  const [hostCredentials] = useState<{ token: string; wsUrl: string } | null>(() => {
+    const stored = useLiveSessionStore.getState().hostCredentials;
+    return stored?.liveId === liveId ? { token: stored.token, wsUrl: stored.wsUrl } : null;
+  });
+  useEffect(() => {
+    useLiveSessionStore.getState().clearHostCredentials(liveId);
+  }, [liveId]);
+
+  const wsUrl = isHost ? hostCredentials?.wsUrl : join.data?.wsUrl;
+  const token = isHost ? hostCredentials?.token : join.data?.token;
+  const liveKit = useLiveKitRoom({ wsUrl, token, publish: isHost });
 
   // A viewer must be registered in the room to count, and must be dropped when
   // they walk away — including on a hard close, hence pagehide as well.
@@ -120,8 +153,23 @@ export function LiveScreen({ liveId }: { liveId: string }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
-      <header className="flex items-center gap-3 p-3">
+    // Video fills the whole screen and every control floats over it, the way IG
+    // does it. The old column layout gave the stage `flex-1` and stacked the
+    // comments *below* it, which cropped the picture into the top half and left
+    // a dead black slab underneath (the bug in the report).
+    <div className="fixed inset-0 z-50 bg-black">
+      <div className="absolute inset-0">
+        <LiveStage
+          live={live}
+          tokenReady={isHost || join.isSuccess}
+          isHost={isHost}
+          videoTrack={liveKit.videoTrack}
+          connecting={liveKit.connecting}
+        />
+        <LiveHearts hearts={hearts} />
+      </div>
+
+      <header className="absolute inset-x-0 top-0 z-10 flex items-center gap-3 bg-gradient-to-b from-black/70 via-black/30 to-transparent p-3 pb-10">
         <Link href={ROUTES.profile(live.host.id)} className="flex min-w-0 items-center gap-2">
           <UserAvatar src={live.host.avatarUrl} size={32} />
           <span className="min-w-0">
@@ -158,22 +206,12 @@ export function LiveScreen({ liveId }: { liveId: string }) {
         </button>
       </header>
 
-      <div className="relative flex flex-1 flex-col overflow-hidden">
-        <LiveStage live={live} tokenReady={isHost || join.isSuccess} isHost={isHost} />
-        <LiveHearts hearts={hearts} />
-      </div>
-
-      <div className="bg-gradient-to-t from-black to-transparent">
-        {/* The one thing a viewer cannot see is everyone else's chat. Say it
-            once, quietly, instead of showing an empty room as if it were real. */}
-        <p className="px-3 pt-2 text-[11px] text-white/50">{t("commentsLocalOnly")}</p>
-
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/50 to-transparent pt-20">
         <LiveCommentBar
-          comments={mine}
+          // The API answers newest → oldest; the bar reads top-to-bottom oldest first.
+          comments={[...pageItems(liveComments ?? [])].reverse()}
           sending={comment.isPending}
-          onSend={(text) =>
-            comment.mutate(text, { onSuccess: (created) => setMine((old) => [...old, created]) })
-          }
+          onSend={(text) => comment.mutate(text)}
           onLike={() => {
             float("❤️");
             like.mutate();
@@ -187,9 +225,28 @@ export function LiveScreen({ liveId }: { liveId: string }) {
         <div className="flex items-center justify-center gap-3 pb-4">
           {isHost ? (
             <>
+              {/* Polled while the host is on screen, so a request that arrives
+                  mid-stream is visible without opening the sheet to check. */}
+              <button
+                type="button"
+                onClick={() => setRequestsOpen(true)}
+                aria-label={t("joinRequests")}
+                className="relative flex size-10 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
+              >
+                <UserPlus className="size-5" />
+                {pendingRequests > 0 ? (
+                  <span className="bg-ig-badge absolute -top-0.5 -right-0.5 flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+                    {pendingRequests > 9 ? "9+" : pendingRequests}
+                  </span>
+                ) : null}
+              </button>
               <ControlButton
                 on={live.isCameraOn}
-                onClick={() => setCamera.mutate({ on: !live.isCameraOn })}
+                onClick={() => {
+                  const next = !live.isCameraOn;
+                  setCamera.mutate({ on: next });
+                  void liveKit.room?.localParticipant.setCameraEnabled(next);
+                }}
                 labelOn={t("cameraOff")}
                 labelOff={t("cameraOn")}
                 IconOn={Video}
@@ -197,7 +254,11 @@ export function LiveScreen({ liveId }: { liveId: string }) {
               />
               <ControlButton
                 on={live.isAudioOn}
-                onClick={() => setAudio.mutate(!live.isAudioOn)}
+                onClick={() => {
+                  const next = !live.isAudioOn;
+                  setAudio.mutate(next);
+                  void liveKit.room?.localParticipant.setMicrophoneEnabled(next);
+                }}
                 labelOn={t("audioOff")}
                 labelOff={t("audioOn")}
                 IconOn={Mic}
@@ -223,6 +284,10 @@ export function LiveScreen({ liveId }: { liveId: string }) {
         onOpenChange={setViewersOpen}
         isHost={isHost}
       />
+
+      {isHost ? (
+        <LiveJoinRequestsSheet liveId={liveId} open={requestsOpen} onOpenChange={setRequestsOpen} />
+      ) : null}
 
       <ConfirmDialog
         open={confirmEnd}

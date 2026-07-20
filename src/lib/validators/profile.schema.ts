@@ -11,6 +11,11 @@ export const ABOUT_MAX_LENGTH = 150;
  * Phase 4 could not offer "Website" or occupation and said so rather than fake
  * them. `UpdateProfileDto` here takes fullName, website, occupation, dob,
  * locationId and the three profile toggles.
+ *
+ * `occupation` is dropped from this form — real (non-business) Instagram
+ * accounts don't expose it. `dob` and `gender` moved to their own
+ * "Personal information" page/schema below, mirroring how real IG nests them
+ * under Accounts Center rather than the main Edit Profile screen.
  */
 export const editProfileSchema = (t: Translator) =>
   z.object({
@@ -25,20 +30,22 @@ export const editProfileSchema = (t: Translator) =>
       .max(200, t("maxLength", { count: 200 }))
       .optional()
       .or(z.literal("")),
-    occupation: z
-      .string()
-      .max(100, t("maxLength", { count: 100 }))
-      .optional()
-      .or(z.literal("")),
-    gender: z.enum(["MALE", "FEMALE", "OTHER", "HIDDEN"]),
-    dob: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, t("dob"))
-      .optional()
-      .or(z.literal("")),
     showThreadsBadge: z.boolean(),
     isAiAuthor: z.boolean(),
     showAccountSuggestions: z.boolean(),
   });
 
 export type EditProfileValues = z.infer<ReturnType<typeof editProfileSchema>>;
+
+/** "Personal information" — just dob + gender, split out of the main Edit Profile form. */
+export const personalInfoSchema = (t: Translator) =>
+  z.object({
+    gender: z.enum(["MALE", "FEMALE", "OTHER", "HIDDEN"]),
+    dob: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, t("dob"))
+      .optional()
+      .or(z.literal("")),
+  });
+
+export type PersonalInfoValues = z.infer<ReturnType<typeof personalInfoSchema>>;

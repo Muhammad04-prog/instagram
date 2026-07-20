@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import Cropper from "react-easy-crop";
 import { toast } from "sonner";
+import { CollaboratorPicker } from "@/components/post/CollaboratorPicker";
 import { EditMediaStep } from "@/components/post/EditMediaStep";
 import { LocationPicker } from "@/components/post/LocationPicker";
 import { MusicPicker } from "@/components/post/MusicPicker";
@@ -11,7 +12,7 @@ import { TagPeoplePicker } from "@/components/post/TagPeoplePicker";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useAddPost } from "@/hooks/usePosts";
+import { useAddPost, useInviteCollaborators } from "@/hooks/usePosts";
 import { useMyProfile } from "@/hooks/useProfile";
 import { useRouter } from "@/i18n/navigation";
 import { cropImageToFile, type CropArea } from "@/lib/crop";
@@ -40,14 +41,24 @@ type Step = "pick" | "crop" | "edit" | "caption";
  * at display; the img32 sliders have no field anywhere, so they are baked into
  * the pixels — see `lib/crop.ts`.
  *
- * «Добавить соавторов» from img33 is still absent: there is no co-author field.
+ * «Добавить соавторов» from img33 is real now, but as a second call: `POST
+ * /posts` itself takes no collaborator field, so an invite (if any) goes out
+ * right after creation succeeds, against the post id the server just handed back.
  */
-export function CreatePost() {
+export function CreatePost({
+  embedded = false,
+  onPublished,
+}: {
+  embedded?: boolean;
+  /** Called instead of navigating once the post is live — the modal closes itself. */
+  onPublished?: () => void;
+} = {}) {
   const t = useTranslations("post");
   const tCommon = useTranslations("common");
   const router = useRouter();
   const { data: profile } = useMyProfile();
   const addPost = useAddPost();
+  const inviteCollaborators = useInviteCollaborators();
 
   const [step, setStep] = useState<Step>("pick");
   const [files, setFiles] = useState<File[]>([]);
@@ -64,6 +75,7 @@ export function CreatePost() {
   const [music, setMusic] = useState<MusicDto | null>(null);
   const [location, setLocation] = useState<LocationDto | null>(null);
   const [tagged, setTagged] = useState<UserBriefDto[]>([]);
+  const [collaborators, setCollaborators] = useState<UserBriefDto[]>([]);
   const [cancelOpen, setCancelOpen] = useState(false);
 
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
@@ -107,17 +119,38 @@ export function CreatePost() {
         ...(prepared.every(isVideoFile) ? { isReel: true } : {}),
       },
       {
-        onSuccess: () => {
+        onSuccess: (created) => {
+          if (collaborators.length > 0) {
+            inviteCollaborators.mutate({
+              postId: created.id,
+              userIds: collaborators.map((user) => user.id),
+            });
+          }
           toast.success(t("published"));
-          router.push(ROUTES.myProfile);
+          // In the modal, pushing a route left the intercepted slot mounted —
+          // the dialog stayed open over the new page. The host dismisses it and
+          // decides where to go; only the standalone page navigates itself.
+          if (onPublished) onPublished();
+          else router.push(ROUTES.myProfile);
         },
       },
     );
   };
 
   return (
-    <div className="mx-auto max-w-[900px] px-4 py-8">
-      <div className="border-ig-border bg-ig-bg overflow-hidden rounded-xl border">
+    // `embedded` = already inside the create modal, which supplies the page
+    // padding, the border and the rounding. Keeping them here too drew a card
+    // inside a card and let the header collapse to content width, jamming
+    // «Отмена» against the title.
+    <div className={cn(embedded ? "w-full" : "mx-auto max-w-[900px] px-4 py-8")}>
+      <div
+        className={cn(
+          "overflow-hidden",
+          // Embedded, the dialog already supplies the surface; painting our own
+          // black over its elevated one flattened the modal into the page.
+          embedded ? "bg-transparent" : "border-ig-border bg-ig-bg rounded-xl border",
+        )}
+      >
         <div className="border-ig-separator flex items-center justify-between border-b px-4 py-3">
           <button
             type="button"
@@ -313,6 +346,7 @@ export function CreatePost() {
                   field on softclub, so the button would have saved nothing. */}
               <LocationPicker value={location} onChange={setLocation} />
               <TagPeoplePicker value={tagged} onChange={setTagged} />
+              <CollaboratorPicker value={collaborators} onChange={setCollaborators} />
               <MusicPicker value={music} onChange={setMusic} />
             </div>
           </div>

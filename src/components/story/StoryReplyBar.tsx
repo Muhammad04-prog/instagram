@@ -26,11 +26,14 @@ export function StoryReplyBar({
   authorName,
   onInteractionStart,
   onInteractionEnd,
+  trailing,
 }: {
   storyId: number;
   authorName: string;
   onInteractionStart: () => void;
   onInteractionEnd: () => void;
+  /** Rendered at the end of the input row — the viewer puts its like heart here. */
+  trailing?: React.ReactNode;
 }) {
   const t = useTranslations("story");
   const toMessage = useApiError();
@@ -113,11 +116,16 @@ export function StoryReplyBar({
             }}
             aria-label={t("react")}
             aria-expanded={showReactions}
-            className="text-xl"
+            className="shrink-0 text-xl"
           >
             😍
           </button>
         )}
+
+        {/* The like heart rides in this row, as IG has it. It used to be a
+            separate row underneath, which this absolutely-positioned bar then
+            floated straight over — the heart landed on top of the input. */}
+        {trailing}
       </form>
     </div>
   );

@@ -5,15 +5,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useMyCollections } from "@/hooks/useProfile";
 import { useSavePost } from "@/hooks/usePosts";
 import type { PostDto } from "@/types/post.types";
 
 /**
  * "Save to collection" — the `collection` field on `POST /posts/{id}/favorite`.
  *
- * The API takes a collection **name**, not an id, and has no endpoint listing
- * collections — so this offers a free-text name rather than a picker over
- * something we cannot read back. Saving with no name is the plain save.
+ * The API takes a collection **name**, not an id — but `GET
+ * /profile/me/collections` (19.07.2026) now lists the names back, so existing
+ * collections show as quick-pick chips above the free-text field instead of
+ * asking to retype a name that might already exist.
  */
 export function SaveToCollectionDialog({
   post,
@@ -28,6 +30,7 @@ export function SaveToCollectionDialog({
   const tCommon = useTranslations("common");
   const [name, setName] = useState("");
   const save = useSavePost();
+  const { data: collections } = useMyCollections();
 
   const submit = (collection?: string) =>
     save.mutate(
@@ -59,6 +62,23 @@ export function SaveToCollectionDialog({
           className="space-y-4 p-4"
         >
           <p className="text-ig-text-secondary text-sm">{t("collectionHint")}</p>
+
+          {collections && collections.length > 0 ? (
+            <ul className="flex flex-wrap gap-2">
+              {collections.map((collection) => (
+                <li key={collection.name}>
+                  <button
+                    type="button"
+                    onClick={() => submit(collection.name)}
+                    disabled={save.isPending}
+                    className="bg-ig-button-secondary text-ig-text hover:bg-ig-button-secondary-hover rounded-full px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+                  >
+                    {collection.name} · {collection.postsCount}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           <Input
             value={name}

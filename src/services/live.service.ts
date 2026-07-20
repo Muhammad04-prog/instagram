@@ -1,4 +1,5 @@
 import { http } from "@/lib/axios";
+import type { CursorParams } from "@/lib/cursor";
 import type {
   JoinRequestDto,
   LiveCommentDto,
@@ -12,12 +13,14 @@ import type {
 } from "@/types/api.types";
 
 /**
- * Swagger tag: live (18 endpoints).
+ * Swagger tag: live (20 endpoints).
  *
  * Two halves that fail independently:
  *
  * - **State** — who is live, viewers, comments, hearts, join requests, stats.
  *   Plain REST, works today, and is what every screen here is built on.
+ *   `getComments`/`getRequests` closed the two read-side gaps a 17.07.2026 note
+ *   left here (comment stream, host's requests panel) — both fixed 19.07.2026.
  * - **Video** — carried by LiveKit, not by this API. `start`/`join`/`accept`
  *   hand back `{ token, wsUrl }` for a LiveKit room; playing it needs the
  *   LiveKit client SDK and a reachable server. The backend currently advertises
@@ -50,15 +53,11 @@ export const liveService = {
 
   getViewers: (id: string) => http.get<LiveViewerDto[]>(`/live/${id}/viewers`),
 
-  /**
-   * Posts a comment and returns only *that* comment.
-   *
-   * There is no `GET /live/{id}/comments`, so the stream of everyone else's
-   * comments cannot be read — the API can only send, never receive. The screen
-   * therefore shows your own comments echoed locally and says the rest need the
-   * socket. Requested in `docs/BACKEND_REQUEST.md`.
-   */
   comment: (id: string, text: string) => http.post<LiveCommentDto>(`/live/${id}/comment`, { text }),
+
+  /** Newest → oldest, everyone's — closed the "can only send" gap noted above. */
+  getComments: (id: string, params: CursorParams) =>
+    http.get<LiveCommentDto[]>(`/live/${id}/comments`, params),
 
   /** Deliberately repeatable — each tap is one floating heart. */
   like: (id: string) => http.post<LiveLikeResultDto>(`/live/${id}/like`),
@@ -69,17 +68,15 @@ export const liveService = {
   /** Viewer asks to come on screen; the host gets a notification. */
   requestJoin: (id: string) => http.post<JoinRequestDto>(`/live/${id}/request-join`),
 
-  /**
-   * Host accepts → the guest is handed a publisher token (split screen).
-   *
-   * Accept/decline take a request id, but nothing lists pending requests: no
-   * `GET /live/{id}/requests`. The host can only act on an id that reached them
-   * some other way (the notification), so there is no requests panel to build.
-   */
+  /** Host accepts → the guest is handed a publisher token (split screen). */
   acceptRequest: (requestId: number) => http.post<LiveOkDto>(`/live/requests/${requestId}/accept`),
 
   declineRequest: (requestId: number) =>
     http.post<LiveOkDto>(`/live/requests/${requestId}/decline`),
+
+  /** Host-only — the id these answer. Defaults to none filtered (all statuses). */
+  getRequests: (id: string, status?: "PENDING" | "ACCEPTED" | "DECLINED") =>
+    http.get<JoinRequestDto[]>(`/live/${id}/requests`, status ? { status } : undefined),
 
   /** Video off shows the cover/avatar — audio keeps going either way. */
   setCamera: (id: string, on: boolean, coverUrl?: string) =>

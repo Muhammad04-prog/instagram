@@ -1,6 +1,8 @@
 "use client";
 
+import { Music2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
+import { useEffect } from "react";
 import { PostActions } from "@/components/post/PostActions";
 import { PostCarousel } from "@/components/post/PostCarousel";
 import { CommentForm, CommentList } from "@/components/post/PostComments";
@@ -25,6 +27,19 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
   const router = useRouter();
   const { data: post, isPending, isError, refetch } = usePost(postId);
 
+  // Autoplay the attached track while the post is open — a preview clip loops
+  // for as long as this view is mounted, same as IG's own post-with-audio.
+  const musicSrc = post?.music?.streamUrl ?? post?.music?.previewUrl ?? null;
+  useEffect(() => {
+    if (!musicSrc) return;
+    const audio = new Audio(musicSrc);
+    audio.loop = true;
+    void audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+    };
+  }, [musicSrc]);
+
   if (isPending) return <PostDetailSkeleton />;
   if (isError || !post) return <ErrorState onRetry={() => void refetch()} className="py-20" />;
 
@@ -34,12 +49,15 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
   };
 
   return (
-    <div className="flex max-h-[90vh] flex-col md:flex-row">
-      <div className="bg-black md:flex md:w-[60%] md:items-center">
+    <div className="flex max-h-[88vh] flex-col md:h-[88vh] md:flex-row">
+      <div className="bg-black md:flex md:w-[60%] md:items-center md:justify-center">
         <PostCarousel media={post.media} alt={post.caption ?? ""} className="w-full" />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
+      {/* The comment column keeps a floor width: below ~340px IG's own layout
+          starts wrapping usernames onto their own line and the thread stops
+          reading as a thread. */}
+      <div className="border-ig-separator flex min-h-0 flex-1 flex-col md:min-w-[340px] md:border-l">
         <PostHeader
           post={post}
           onDeleted={onDeleted}
@@ -65,15 +83,28 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
             </div>
           ) : null}
 
-          <CommentList postId={post.id} />
+          <CommentList postId={post.id} postAuthorId={post.author.id} />
         </div>
 
         <div className="border-ig-separator shrink-0 border-t px-4">
           <PostActions post={post} className="pt-3" />
 
-          <p className={cn("text-ig-text pt-2 text-sm font-semibold")}>
-            {t("likes", { count: post.likesCount })}
-          </p>
+          {/* Icon + name only — no tap-to-play affordance here, that stays on
+              the feed card (`PostMusicStrip`). */}
+          {post.music ? (
+            <p className="text-ig-text-secondary flex items-center gap-1.5 pt-2 text-xs">
+              <Music2 className="size-3.5 shrink-0" />
+              <span className="truncate">
+                {post.music.title} · {post.music.artist}
+              </span>
+            </p>
+          ) : null}
+
+          {post.likesCount ? (
+            <p className={cn("text-ig-text pt-2 text-sm font-semibold")}>
+              {t("likes", { count: post.likesCount })}
+            </p>
+          ) : null}
           <time
             dateTime={post.createdAt}
             className="text-ig-text-secondary text-xs"
@@ -82,7 +113,9 @@ export function PostDetail({ postId, onClose }: { postId: number; onClose?: () =
             {format.relativeTime(new Date(post.createdAt), new Date())}
           </time>
 
-          <CommentForm postId={post.id} className="border-ig-separator mt-2 border-t" />
+          {post.commentsDisabled ? null : (
+            <CommentForm postId={post.id} className="border-ig-separator mt-2 border-t" />
+          )}
         </div>
       </div>
     </div>

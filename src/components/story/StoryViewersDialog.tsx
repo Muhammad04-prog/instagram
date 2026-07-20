@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Loader } from "@/components/shared/Loader";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useStoryViewers } from "@/hooks/useStories";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -18,8 +18,12 @@ import { ROUTES } from "@/lib/constants";
  * A real list of people now, with each viewer's like and emoji reaction.
  * Softclub had no such endpoint: `viewerDto` was a pair of counters for the
  * whole story, so Phase 6 could only show two numbers and say so out loud.
+ *
+ * Centred dialog rather than a bottom sheet: the story stage is already a
+ * full-screen overlay, and IG puts this list in the middle of it on web — a
+ * sheet sliding up from the bottom edge is the mobile-app treatment.
  */
-export function StoryViewersSheet({
+export function StoryViewersDialog({
   storyId,
   open,
   onOpenChange,
@@ -35,21 +39,23 @@ export function StoryViewersSheet({
   const likes = viewers.filter((viewer) => viewer.liked).length;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="bg-ig-elevated max-h-[70vh] rounded-t-xl">
-        <SheetHeader>
-          <SheetTitle className="text-ig-text">{t("viewers")}</SheetTitle>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-ig-elevated flex max-h-[70vh] w-[400px] max-w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[400px]">
+        <DialogHeader className="border-ig-separator shrink-0 border-b px-4 py-3">
+          <DialogTitle className="text-ig-text text-center text-base font-semibold">
+            {t("viewers")}
+          </DialogTitle>
+        </DialogHeader>
 
         {isPending ? (
-          <Loader className="py-8" />
+          <Loader className="py-10" />
         ) : isError ? (
-          <ErrorState onRetry={() => void refetch()} className="py-8" />
+          <ErrorState onRetry={() => void refetch()} className="py-10" />
         ) : viewers.length === 0 ? (
-          <EmptyState title={t("noViewers")} className="py-8" />
+          <EmptyState title={t("noViewers")} className="py-10" />
         ) : (
           <>
-            <div className="text-ig-text-secondary flex items-center gap-5 px-4 pb-3 text-sm">
+            <div className="text-ig-text-secondary border-ig-separator flex shrink-0 items-center gap-5 border-b px-4 py-2.5 text-sm">
               <span className="flex items-center gap-1.5">
                 <Eye className="size-4" />
                 {viewers.length}
@@ -60,11 +66,12 @@ export function StoryViewersSheet({
               </span>
             </div>
 
-            <ul className="scrollbar-none space-y-1 overflow-y-auto px-2 pb-6">
+            <ul className="min-h-0 flex-1 scrollbar-none space-y-0.5 overflow-y-auto px-2 py-2">
               {viewers.map((viewer) => (
                 <li key={viewer.user.id}>
                   <Link
                     href={ROUTES.profile(viewer.user.id)}
+                    onClick={() => onOpenChange(false)}
                     className="hover:bg-ig-bg-secondary flex items-center gap-3 rounded-lg px-2 py-2"
                   >
                     <UserAvatar
@@ -95,7 +102,7 @@ export function StoryViewersSheet({
             </ul>
           </>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

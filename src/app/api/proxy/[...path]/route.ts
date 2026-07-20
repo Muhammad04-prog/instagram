@@ -106,9 +106,8 @@ async function forward(request: NextRequest, path: string[]): Promise<Response> 
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
 
-  let upstream: Response;
-  try {
-    upstream = await fetch(target, {
+  const attempt = () =>
+    fetch(target, {
       method: request.method,
       headers,
       body: hasBody ? request.body : undefined,
@@ -118,6 +117,18 @@ async function forward(request: NextRequest, path: string[]): Promise<Response> 
       cache: "no-store",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     } as RequestInit & { duplex?: "half" });
+
+  let upstream: Response;
+  try {
+    upstream = await attempt();
+    // Render's free tier occasionally answers a live backend with a bare 502/503
+    // for one request (edge/proxy hiccup, not a real outage) — seen live
+    // (20.07.2026: /notifications/unread-count 502 while /health was 200 seconds
+    // later). A GET is safe to retry outright; a body has already been streamed
+    // upstream once and cannot be replayed, so writes only get the one try.
+    if (!hasBody && (upstream.status === 502 || upstream.status === 503)) {
+      upstream = await attempt();
+    }
   } catch (error) {
     // A timeout is not the same failure as a refused connection, and the user
     // deserves to be told which. Anything touching media currently hangs ~140s

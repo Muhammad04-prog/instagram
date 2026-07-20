@@ -10,6 +10,20 @@ import { noteService } from "@/services/note.service";
 import type { CreateNoteDto, NoteDto, UpdateNoteDto } from "@/types/api.types";
 
 /**
+ * One note by id — for a note-related notification (`noteId`) or any other
+ * caller that doesn't already have the row from `/notes`. The note may have
+ * expired from that list by the time this is reached; 404 is a real "gone",
+ * not a bug.
+ */
+export function useNote(id: number | null) {
+  return useQuery({
+    queryKey: queryKeys.notes.detail(id ?? 0),
+    queryFn: () => noteService.getById(id as number),
+    enabled: id !== null,
+  });
+}
+
+/**
  * Notes live 24h and the server only returns active ones — so a stale cache
  * would show a bubble that no longer exists. Refetch on focus keeps the rail
  * honest without polling.
@@ -105,6 +119,22 @@ export function useReplyToNote() {
 
   return useMutation({
     mutationFn: ({ id, text }: { id: number; text: string }) => noteService.reply(id, { text }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.chats.all }),
+    onError: (error) => toast.error(toMessage(error)),
+  });
+}
+
+/**
+ * An emoji reaction — same "lands in the author's chat" shape as a reply, but
+ * its own endpoint (and, unlike a reply, not allowed on your own note).
+ */
+export function useReactToNote() {
+  const queryClient = useQueryClient();
+  const toMessage = useApiError();
+
+  return useMutation({
+    mutationFn: ({ id, emoji }: { id: number; emoji: string }) =>
+      noteService.reaction(id, { emoji }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.chats.all }),
     onError: (error) => toast.error(toMessage(error)),
   });

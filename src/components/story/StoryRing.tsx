@@ -10,14 +10,19 @@ import { cn } from "@/lib/utils";
  * Both facts are server truth now. "Seen" used to be a client-side guess kept in
  * localStorage — softclub could not answer "have I viewed this?" — and the green
  * ring could not exist at all, because close friends did not exist.
+ *
+ * Geometry follows live IG's feed rail: a 3px coloured band, a 2px gap punched
+ * out in the page background, then the avatar. The gap is what makes the ring
+ * read as a ring rather than a coloured border.
  */
 export function StoryRing({
   src,
   alt,
   seen,
   closeFriends = false,
-  size = 56,
+  size = 64,
   className,
+  gapClassName,
 }: {
   src: string | null;
   alt: string;
@@ -26,19 +31,30 @@ export function StoryRing({
   closeFriends?: boolean;
   size?: number;
   className?: string;
+  /**
+   * The punched-out gap defaults to the page background. Anywhere the ring sits
+   * on something else — the story deck's dark stage — that has to be overridden
+   * or the gap shows as a pale halo.
+   */
+  gapClassName?: string;
 }) {
   return (
     <span
-      style={{ width: size + 8, height: size + 8 }}
+      style={{ width: size + 10, height: size + 10 }}
       className={cn(
-        "inline-flex items-center justify-center rounded-full p-[2px]",
+        "inline-flex items-center justify-center rounded-full p-[3px] transition-transform duration-150",
         // Seen wins over green: a watched close-friends story still greys out,
         // exactly as a normal one does.
         seen ? "bg-ig-border" : closeFriends ? "bg-ig-close-friends" : "story-ring",
         className,
       )}
     >
-      <span className="bg-ig-bg flex size-full items-center justify-center rounded-full p-[2px]">
+      <span
+        className={cn(
+          "flex size-full items-center justify-center rounded-full p-[2px]",
+          gapClassName ?? "bg-ig-bg",
+        )}
+      >
         <UserAvatar src={src} alt={alt} size={size} />
       </span>
     </span>

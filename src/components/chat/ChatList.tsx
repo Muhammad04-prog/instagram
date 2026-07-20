@@ -1,13 +1,19 @@
 "use client";
 
-import { Search, SquarePen } from "lucide-react";
+import { ChevronDown, LogOut, Search, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ChatListItem } from "@/components/chat/ChatListItem";
 import { NewChatDialog } from "@/components/chat/NewChatDialog";
 import { NotesRail } from "@/components/chat/NotesRail";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { Loader } from "@/components/shared/Loader";
+import { RowSkeleton } from "@/components/shared/RowSkeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChat";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -24,7 +30,8 @@ import { flattenPages } from "@/lib/cursor";
  */
 export function ChatList() {
   const t = useTranslations("chat");
-  const { user } = useAuth();
+  const tNav = useTranslations("nav");
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const { data, isPending, isError, refetch } = useChats();
   const [filter, setFilter] = useState("");
@@ -42,9 +49,28 @@ export function ChatList() {
     });
 
   return (
-    <div className="border-ig-border flex h-full w-full flex-col border-r md:w-[414px]">
-      <div className="flex items-center justify-between px-6 pt-8 pb-4">
-        <h1 className="text-ig-text truncate text-xl font-bold">{user?.userName ?? t("title")}</h1>
+    <div className="border-ig-border flex h-full w-full flex-col border-r md:w-[397px]">
+      <div className="flex items-center justify-between px-4 pt-6 pb-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="text-ig-text flex min-w-0 items-center gap-1 text-xl font-bold"
+            >
+              <span className="truncate">{user?.userName ?? t("title")}</span>
+              <ChevronDown className="size-4 shrink-0" aria-hidden />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {/* No concurrent multi-account sessions here — logging out is what
+                actually gets you to a different account, via the saved-profile
+                picker on the login screen. */}
+            <DropdownMenuItem variant="destructive" onSelect={() => void logout()}>
+              <LogOut className="size-4" />
+              {tNav("logout")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           onClick={() => setNewChatOpen(true)}
@@ -55,7 +81,7 @@ export function ChatList() {
         </button>
       </div>
 
-      <div className="px-6 pb-4">
+      <div className="px-4 pb-3">
         <div className="relative">
           <Search className="text-ig-text-secondary pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <input
@@ -70,20 +96,20 @@ export function ChatList() {
 
       <NotesRail />
 
-      <div className="flex items-center justify-between px-6 pb-2">
+      <div className="flex items-center justify-between px-4 pb-2">
         <h2 className="text-ig-text text-base font-bold">{t("title")}</h2>
         <Link href={ROUTES.chatRequests} className="text-ig-primary text-sm font-semibold">
-          {t("requestsTitle")}
+          {t("requestsTab")}
         </Link>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {isPending ? (
-          <Loader className="py-10" />
+          <RowSkeleton />
         ) : isError ? (
           <ErrorState onRetry={() => void refetch()} />
         ) : chats.length === 0 ? (
-          <p className="text-ig-text-secondary px-6 py-10 text-center text-sm">{t("noChats")}</p>
+          <p className="text-ig-text-secondary px-4 py-10 text-center text-sm">{t("noChats")}</p>
         ) : (
           <ul>
             {chats.map((chat) => (

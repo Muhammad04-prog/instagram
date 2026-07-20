@@ -11,9 +11,9 @@ const QUICK_REACTIONS = ["❤️", "🔥", "👏", "😂", "😮", "💯"];
 /**
  * The comment strip along the bottom.
  *
- * `comments` holds only what this person has sent — see `live.service.ts`, there
- * is no endpoint to read the stream — so the list is short by design and the
- * screen says so above it rather than pretending the room is quiet.
+ * `comments` is everyone's now (`GET /live/{id}/comments`, 19.07.2026) — this
+ * used to only ever hold what the current person had sent, since the API
+ * could send but not read back the stream.
  */
 export function LiveCommentBar({
   comments,

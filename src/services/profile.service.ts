@@ -3,11 +3,13 @@ import type { CursorParams, Page } from "@/lib/cursor";
 import type {
   ActivityItemDto,
   AvatarDto,
+  CollectionDto,
   IsFollowingDto,
   MusicDto,
   OtherProfileDto,
   PostDto,
   ProfileDto,
+  ProfileInsightsDto,
   UpdatePrivacyDto,
   UpdateProfileDto,
 } from "@/types/api.types";
@@ -53,11 +55,30 @@ export const profileService = {
   /** Saved posts — only ever your own. */
   getFavorites: (params: CursorParams) => http.get<Page<PostDto>>("/profile/favorites", params),
 
+  /**
+   * ⚠️ Both repost lists are **paged** — `{ items, nextCursor, hasMore }` —
+   * despite Swagger typing them as a bare `PostBriefDto[]`. Verified against the
+   * live API on 2026-07-20; the real response wins (docs/API_REAL_DTO.md).
+   */
   getMyReposts: (params: CursorParams) => http.get<Page<PostDto>>("/profile/me/reposts", params),
+
+  /** Someone else's reposts tab. A private account they don't follow → 403. */
+  getUserReposts: (userId: string, params: CursorParams) =>
+    http.get<Page<PostDto>>(`/profile/${userId}/reposts`, params),
 
   getSavedMusic: (params: CursorParams) => http.get<MusicDto[]>("/profile/me/saved-music", params),
 
   /** "Your activity". */
   getMyActivity: (params: CursorParams) =>
     http.get<ActivityItemDto[]>("/profile/me/activity", params),
+
+  /**
+   * `name` is the same value `POST /posts/{id}/favorite`'s `collection` field
+   * takes — this is what makes that a picker instead of free text.
+   */
+  getMyCollections: () => http.get<CollectionDto[]>("/profile/me/collections"),
+
+  /** Follower growth, profile views, reach, engagement — mine only. */
+  getMyInsights: (period: "7d" | "30d" | "90d" = "7d") =>
+    http.get<ProfileInsightsDto>("/profile/me/insights", { period }),
 };

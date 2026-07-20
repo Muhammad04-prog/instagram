@@ -7,7 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /** 1234 → "1,234"; 12_500 → "12.5K"; 3_400_000 → "3.4M" (as Instagram shows counters). */
-export function formatCount(value: number): string {
+export function formatCount(value: number | null | undefined): string {
+  if (!value) return "0";
   if (value < 1_000) return String(value);
   if (value < 1_000_000) {
     const k = value / 1_000;

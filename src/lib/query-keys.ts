@@ -1,5 +1,9 @@
 /** Single source of truth for TanStack Query cache keys. */
 export const queryKeys = {
+  auth: {
+    all: ["auth"] as const,
+    sessions: () => [...queryKeys.auth.all, "sessions"] as const,
+  },
   posts: {
     all: ["posts"] as const,
     explore: () => [...queryKeys.posts.all, "explore"] as const,
@@ -14,6 +18,11 @@ export const queryKeys = {
     comments: (postId: number) => [...queryKeys.posts.all, "comments", postId] as const,
     commentReplies: (commentId: number) =>
       [...queryKeys.posts.all, "comment-replies", commentId] as const,
+    drafts: () => [...queryKeys.posts.all, "drafts"] as const,
+    pendingCollabs: () => [...queryKeys.posts.all, "pending-collabs"] as const,
+    pendingTags: () => [...queryKeys.posts.all, "pending-tags"] as const,
+    remixes: (postId: number) => [...queryKeys.posts.all, "remixes", postId] as const,
+    insights: (postId: number) => [...queryKeys.posts.all, "insights", postId] as const,
   },
   stories: {
     all: ["stories"] as const,
@@ -23,6 +32,11 @@ export const queryKeys = {
     archive: () => [...queryKeys.stories.all, "archive"] as const,
     detail: (id: number) => [...queryKeys.stories.all, "detail", id] as const,
     viewers: (id: number) => [...queryKeys.stories.all, "viewers", id] as const,
+    insights: (id: number) => [...queryKeys.stories.all, "insights", id] as const,
+    stickers: (id: number) => [...queryKeys.stories.all, "stickers", id] as const,
+    stickerResults: (id: number, stickerId: string) =>
+      [...queryKeys.stories.all, "sticker-results", id, stickerId] as const,
+    addYours: (promptId: string) => [...queryKeys.stories.all, "add-yours", promptId] as const,
   },
   chats: {
     all: ["chats"] as const,
@@ -30,6 +44,7 @@ export const queryKeys = {
     detail: (chatId: number) => [...queryKeys.chats.all, "detail", chatId] as const,
     messages: (chatId: number) => [...queryKeys.chats.all, "messages", chatId] as const,
     requests: () => [...queryKeys.chats.all, "requests"] as const,
+    iceServers: () => [...queryKeys.chats.all, "ice-servers"] as const,
   },
   follow: {
     all: ["follow"] as const,
@@ -42,6 +57,7 @@ export const queryKeys = {
   users: {
     all: ["users"] as const,
     search: (q: string) => [...queryKeys.users.all, "search", q] as const,
+    byUserName: (userName: string) => [...queryKeys.users.all, "by-username", userName] as const,
     suggestions: () => [...queryKeys.users.all, "suggestions"] as const,
     searchTexts: () => [...queryKeys.users.all, "search-texts"] as const,
     searchedUsers: () => [...queryKeys.users.all, "searched-users"] as const,
@@ -52,8 +68,11 @@ export const queryKeys = {
     byId: (userId: string) => [...queryKeys.profile.all, "by-id", userId] as const,
     favorites: () => [...queryKeys.profile.all, "favorites"] as const,
     reposts: () => [...queryKeys.profile.all, "reposts"] as const,
+    userReposts: (userId: string) => [...queryKeys.profile.all, "reposts", userId] as const,
     savedMusic: () => [...queryKeys.profile.all, "saved-music"] as const,
     activity: () => [...queryKeys.profile.all, "activity"] as const,
+    collections: () => [...queryKeys.profile.all, "collections"] as const,
+    insights: (period: string) => [...queryKeys.profile.all, "insights", period] as const,
   },
   highlights: {
     all: ["highlights"] as const,
@@ -72,6 +91,7 @@ export const queryKeys = {
   notes: {
     all: ["notes"] as const,
     list: () => [...queryKeys.notes.all, "list"] as const,
+    detail: (id: number) => [...queryKeys.notes.all, "detail", id] as const,
     likes: (id: number) => [...queryKeys.notes.all, "likes", id] as const,
     replies: (id: number) => [...queryKeys.notes.all, "replies", id] as const,
   },
@@ -97,6 +117,9 @@ export const queryKeys = {
     trending: () => [...queryKeys.music.all, "trending"] as const,
     detail: (id: number) => [...queryKeys.music.all, "detail", id] as const,
     saved: () => [...queryKeys.music.all, "saved"] as const,
+    onlineProviders: () => [...queryKeys.music.all, "online-providers"] as const,
+    online: (q: string) => [...queryKeys.music.all, "online", q] as const,
+    reels: (id: number) => [...queryKeys.music.all, "reels", id] as const,
   },
   spotify: {
     all: ["spotify"] as const,
@@ -109,10 +132,18 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.live.all, "detail", id] as const,
     viewers: (id: string) => [...queryKeys.live.all, "viewers", id] as const,
     stats: (id: string) => [...queryKeys.live.all, "stats", id] as const,
+    comments: (id: string) => [...queryKeys.live.all, "comments", id] as const,
+    requests: (id: string) => [...queryKeys.live.all, "requests", id] as const,
   },
   locations: {
     all: ["locations"] as const,
     list: (q: string) => [...queryKeys.locations.all, "list", q] as const,
     detail: (id: number) => [...queryKeys.locations.all, "detail", id] as const,
+    posts: (id: number) => [...queryKeys.locations.all, "posts", id] as const,
+  },
+  settings: {
+    all: ["settings"] as const,
+    me: () => [...queryKeys.settings.all, "me"] as const,
+    restricted: () => [...queryKeys.settings.all, "restricted"] as const,
   },
 } as const;

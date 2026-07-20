@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "instagram-api.softclub.tj",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "backend-instagram-a4k6.onrender.com",
         pathname: "/**",
       },
@@ -27,6 +32,16 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "i.scdn.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn-images.dzcdn.net",
         pathname: "/**",
       },
     ],

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 export function LiveRing({
   src,
   alt,
-  size = 56,
+  size = 64,
   className,
 }: {
   src: string | null;
@@ -26,9 +26,11 @@ export function LiveRing({
 
   return (
     <span className={cn("relative inline-flex", className)}>
+      {/* Same band/gap geometry as `StoryRing`, so live hosts line up with
+          everyone else in the rail instead of sitting 2px small. */}
       <span
-        style={{ width: size + 8, height: size + 8 }}
-        className="story-ring inline-flex items-center justify-center rounded-full p-[2px]"
+        style={{ width: size + 10, height: size + 10 }}
+        className="story-ring inline-flex items-center justify-center rounded-full p-[3px]"
       >
         <span className="bg-ig-bg flex size-full items-center justify-center rounded-full p-[2px]">
           <UserAvatar src={src} alt={alt} size={size} />

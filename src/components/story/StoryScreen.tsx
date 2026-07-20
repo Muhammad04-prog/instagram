@@ -1,6 +1,6 @@
 "use client";
 
-import { StoryViewer } from "@/components/story/StoryViewer";
+import { StoryDeck } from "@/components/story/StoryDeck";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 
@@ -8,5 +8,5 @@ import { ROUTES } from "@/lib/constants";
 export function StoryScreen({ userId }: { userId: string }) {
   const router = useRouter();
 
-  return <StoryViewer userId={userId} onClose={() => router.push(ROUTES.home)} />;
+  return <StoryDeck userId={userId} onClose={() => router.push(ROUTES.home)} />;
 }

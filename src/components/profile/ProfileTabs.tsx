@@ -8,17 +8,23 @@ export type ProfileTab = "posts" | "saved" | "reels" | "reposts" | "tagged";
 
 /**
  * Icon-only tab bar, in the order and style of docs/screenshots/img35 —
- * grid → saved → reels → reposts → tagged, active one underlined. "Saved" and
- * "Reposts" exist on my own profile only — both endpoints are /profile/me/*.
+ * grid → saved → reels → reposts → tagged, active one underlined.
+ *
+ * "Saved" is mine only (`/profile/favorites` has no per-user twin). "Reposts"
+ * used to be too, but `GET /profile/{userId}/reposts` landed on 2026-07-20, so
+ * it now shows on anyone's profile — hence its own flag rather than riding on
+ * `showSaved`.
  */
 export function ProfileTabs({
   value,
   onChange,
   showSaved,
+  showReposts = true,
 }: {
   value: ProfileTab;
   onChange: (tab: ProfileTab) => void;
   showSaved: boolean;
+  showReposts?: boolean;
 }) {
   const t = useTranslations("profile");
 
@@ -27,7 +33,7 @@ export function ProfileTabs({
     ...(showSaved ? [{ id: "saved" as const, label: t("saved"), icon: <BookmarkIcon /> }] : []),
     // Reels wore the repost arrow — RepostIcon — which is now where it belongs.
     { id: "reels", label: t("reels"), icon: <ReelsIcon /> },
-    ...(showSaved ? [{ id: "reposts" as const, label: t("reposts"), icon: <RepostIcon /> }] : []),
+    ...(showReposts ? [{ id: "reposts" as const, label: t("reposts"), icon: <RepostIcon /> }] : []),
     { id: "tagged", label: t("tagged"), icon: <TaggedIcon /> },
   ];
 

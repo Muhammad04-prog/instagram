@@ -4,14 +4,29 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { UserNameWithBadge } from "@/components/shared/VerifiedBadge";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ReportChatDialog } from "@/components/chat/ReportChatDialog";
-import { useSetChatMuted, useSetChatNickname, useSetChatTheme } from "@/hooks/useChat";
+import { GroupParticipantPicker } from "@/components/chat/GroupParticipantPicker";
+import {
+  useAddParticipants,
+  useLeaveGroup,
+  useRemoveParticipant,
+  useSetChatMuted,
+  useSetChatNickname,
+  useSetChatTheme,
+  useSetChatVanish,
+  useUpdateGroupTitle,
+} from "@/hooks/useChat";
+import { useRouter } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
 import { CHAT_THEMES } from "@/lib/chat-themes";
 import { cn } from "@/lib/utils";
 import { chatAvatar, chatLabel, type ChatDetailDto } from "@/types/chat.types";
+import type { ChatParticipantDto } from "@/types/api.types";
 
 /**
  * Chat details: theme, the peer's nickname, mute.
@@ -34,14 +49,27 @@ export function ChatSettingsDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("chat");
+  const router = useRouter();
   // Bound once so the null check below still holds inside the submit handler.
   const peer = chat.peer;
   const setTheme = useSetChatTheme(chat.id);
   const setNickname = useSetChatNickname(chat.id);
   const setMuted = useSetChatMuted(chat.id);
+  const setVanish = useSetChatVanish(chat.id);
+  const updateTitle = useUpdateGroupTitle(chat.id);
+  const addParticipants = useAddParticipants(chat.id);
+  const removeParticipant = useRemoveParticipant(chat.id);
+  const leaveGroup = useLeaveGroup();
   const [reportOpen, setReportOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<ChatParticipantDto | null>(null);
 
   const [nickname, setNicknameValue] = useState("");
+  const [groupTitle, setGroupTitle] = useState(chat.title ?? "");
+  // ⚠️ No field anywhere says whether vanish mode is already on (same gap as
+  // 2FA's missing status) — this tracks only what *this visit* toggled.
+  const [vanishOn, setVanishOn] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,6 +85,91 @@ export function ChatSettingsDialog({
             <UserAvatar src={chatAvatar(chat)} alt={chatLabel(chat)} size={44} />
             <span className="text-ig-text text-sm font-semibold">{chatLabel(chat)}</span>
           </div>
+
+          {chat.isGroup ? (
+            <section className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-ig-text text-sm font-semibold">{t("groupName")}</h3>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    updateTitle.mutate(groupTitle.trim(), {
+                      onSuccess: () => toast.success(t("groupNameSaved")),
+                    });
+                  }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    value={groupTitle}
+                    onChange={(event) => setGroupTitle(event.target.value.slice(0, 50))}
+                    aria-label={t("groupName")}
+                    className="border-ig-border text-ig-text h-10 flex-1 rounded-lg"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!groupTitle.trim() || updateTitle.isPending}
+                    className="text-ig-primary text-sm font-semibold disabled:opacity-40"
+                  >
+                    {t("save")}
+                  </button>
+                </form>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-ig-text text-sm font-semibold">
+                    {t("groupParticipants")} ({chat.participantsCount})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setAddOpen(true)}
+                    className="text-ig-primary text-sm font-semibold"
+                  >
+                    {t("addParticipants")}
+                  </button>
+                </div>
+                <ul className="max-h-48 space-y-1 overflow-y-auto">
+                  {chat.participants.map((participant) => (
+                    <li key={participant.id} className="flex items-center gap-3 py-1">
+                      <UserAvatar
+                        src={participant.avatarUrl ?? null}
+                        alt={participant.userName}
+                        size={36}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-ig-text truncate text-sm font-semibold">
+                          <UserNameWithBadge
+                            userName={participant.userName}
+                            isVerified={participant.isVerified}
+                          />
+                        </p>
+                        {participant.isAdmin ? (
+                          <p className="text-ig-text-secondary text-xs">{t("youAdmin")}</p>
+                        ) : null}
+                      </div>
+                      {chat.isAdmin && !participant.isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => setRemoveTarget(participant)}
+                          className="text-ig-danger shrink-0 text-xs font-semibold"
+                        >
+                          {t("removeParticipant")}
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setLeaveConfirmOpen(true)}
+                className="text-ig-danger text-sm font-semibold"
+              >
+                {t("leaveGroup")}
+              </button>
+            </section>
+          ) : null}
 
           <section className="space-y-3">
             <h3 className="text-ig-text text-sm font-semibold">{t("theme")}</h3>
@@ -131,6 +244,25 @@ export function ChatSettingsDialog({
             />
           </label>
 
+          <label className="flex cursor-pointer items-center gap-4">
+            <span className="min-w-0 flex-1">
+              <span className="text-ig-text block text-sm font-semibold">{t("vanishMode")}</span>
+              <span className="text-ig-text-secondary block text-xs">{t("vanishModeHint")}</span>
+            </span>
+            <Switch
+              checked={vanishOn}
+              disabled={setVanish.isPending}
+              onCheckedChange={(enabled) =>
+                setVanish.mutate(enabled, {
+                  onSuccess: () => {
+                    setVanishOn(enabled);
+                    toast.success(enabled ? t("vanishModeOn") : t("vanishModeOff"));
+                  },
+                })
+              }
+            />
+          </label>
+
           <button
             type="button"
             onClick={() => setReportOpen(true)}
@@ -141,6 +273,61 @@ export function ChatSettingsDialog({
         </div>
 
         <ReportChatDialog chatId={chat.id} open={reportOpen} onOpenChange={setReportOpen} />
+
+        {chat.isGroup ? (
+          <>
+            <GroupParticipantPicker
+              open={addOpen}
+              onOpenChange={setAddOpen}
+              exclude={chat.participants.map((participant) => participant.id)}
+              onSubmit={(userIds) =>
+                addParticipants.mutate(userIds, {
+                  onSuccess: () => {
+                    toast.success(t("participantsAdded"));
+                    setAddOpen(false);
+                  },
+                })
+              }
+              pending={addParticipants.isPending}
+            />
+
+            <ConfirmDialog
+              open={removeTarget !== null}
+              onOpenChange={(next) => !next && setRemoveTarget(null)}
+              title={t("removeParticipant")}
+              description={
+                removeTarget
+                  ? t("removeParticipantConfirm", { userName: removeTarget.userName })
+                  : ""
+              }
+              confirmLabel={t("removeParticipant")}
+              onConfirm={() => {
+                if (!removeTarget) return;
+                removeParticipant.mutate(removeTarget.id, {
+                  onSuccess: () => toast.success(t("participantRemoved")),
+                });
+                setRemoveTarget(null);
+              }}
+            />
+
+            <ConfirmDialog
+              open={leaveConfirmOpen}
+              onOpenChange={setLeaveConfirmOpen}
+              title={t("leaveGroup")}
+              description={t("leaveGroupConfirm")}
+              confirmLabel={t("leaveGroup")}
+              onConfirm={() =>
+                leaveGroup.mutate(chat.id, {
+                  onSuccess: () => {
+                    toast.success(t("leftGroup"));
+                    onOpenChange(false);
+                    router.push(ROUTES.chat);
+                  },
+                })
+              }
+            />
+          </>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

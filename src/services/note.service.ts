@@ -6,6 +6,7 @@ import type {
   NoteDto,
   NoteLikeItemDto,
   NoteLikeToggleDto,
+  NoteReactionDto,
   NoteReplyDto,
   NoteReplyItemDto,
   NoteReplySentDto,
@@ -26,6 +27,13 @@ export const noteService = {
   /** Mine + the people I follow, active only — the server drops expired ones. */
   getNotes: () => http.get<NoteDto[]>("/notes"),
 
+  /**
+   * One note by id — the only place this fits: a note-related notification
+   * carries `noteId`, not the note itself, and the note may have expired from
+   * `/notes` (the rail) by the time it's tapped.
+   */
+  getById: (id: number) => http.get<NoteDto>(`/notes/${id}`),
+
   create: (dto: CreateNoteDto) => http.post<NoteDto>("/notes", dto),
 
   update: (id: number, dto: UpdateNoteDto) => http.put<NoteDto>(`/notes/${id}`, dto),
@@ -40,6 +48,10 @@ export const noteService = {
     http.get<NoteLikeItemDto[]>(`/notes/${id}/likes`, params),
 
   reply: (id: number, dto: NoteReplyDto) => http.post<NoteReplySentDto>(`/notes/${id}/reply`, dto),
+
+  /** Emoji-only reaction — same "lands in the author's chat" shape as a reply. */
+  reaction: (id: number, dto: NoteReactionDto) =>
+    http.post<NoteReplySentDto>(`/notes/${id}/reaction`, dto),
 
   /** Author-only. */
   getReplies: (id: number, params: CursorParams) =>

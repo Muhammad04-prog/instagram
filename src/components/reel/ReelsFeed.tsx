@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { ReelsIcon } from "@/components/icons";
 import { ReelCard } from "@/components/reel/ReelCard";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -30,6 +31,19 @@ export function ReelsFeed() {
     else videos.current.delete(postId);
   }, []);
 
+  // Flip every mounted <video>'s `.muted` synchronously, in the same task as
+  // the click / keypress that requested it — some browsers only allow
+  // unmuting playing media inside the original user-gesture call stack, so
+  // waiting for the `muted` prop to flow back down through a render + effect
+  // is one tick too late and the video stays silent.
+  const toggleMuted = useCallback(() => {
+    setMuted((value) => {
+      const next = !value;
+      for (const video of videos.current.values()) video.muted = next;
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const node = sentinel.current;
     if (!node || !hasNextPage) return;
@@ -45,6 +59,14 @@ export function ReelsFeed() {
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
+  const scrollNext = useCallback(() => {
+    containerRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+  }, []);
+
+  const scrollPrev = useCallback(() => {
+    containerRef.current?.scrollBy({ top: -window.innerHeight, behavior: "smooth" });
+  }, []);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const container = containerRef.current;
@@ -58,7 +80,7 @@ export function ReelsFeed() {
         });
       }
 
-      if (event.key === "m" || event.key === "M") setMuted((value) => !value);
+      if (event.key === "m" || event.key === "M") toggleMuted();
 
       if (event.key === " ") {
         event.preventDefault();
@@ -75,7 +97,7 @@ export function ReelsFeed() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [toggleMuted]);
 
   if (isPending) {
     return (
@@ -100,21 +122,41 @@ export function ReelsFeed() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="h-dvh snap-y snap-mandatory scrollbar-none overflow-y-scroll overscroll-contain"
-    >
-      {reels.map((post) => (
-        <ReelCard
-          key={post.id}
-          post={post}
-          muted={muted}
-          onToggleMute={() => setMuted((value) => !value)}
-          registerVideo={registerVideo}
-        />
-      ))}
-      <div ref={sentinel} className="h-4" />
-      {isFetchingNextPage ? <Loader /> : null}
+    <div className="bg-ig-bg relative h-dvh">
+      <div
+        ref={containerRef}
+        className="h-dvh snap-y snap-mandatory scrollbar-none overflow-y-scroll overscroll-contain"
+      >
+        {reels.map((post) => (
+          <ReelCard
+            key={post.id}
+            post={post}
+            muted={muted}
+            onToggleMute={toggleMuted}
+            registerVideo={registerVideo}
+          />
+        ))}
+        <div ref={sentinel} className="h-4" />
+        {isFetchingNextPage ? <Loader /> : null}
+      </div>
+
+      {/* Navigation Arrows (Desktop) */}
+      <div className="fixed top-1/2 right-8 z-50 hidden -translate-y-1/2 flex-col gap-4 md:flex">
+        <button
+          onClick={scrollPrev}
+          className="bg-ig-elevated text-ig-text flex size-12 items-center justify-center rounded-full shadow-sm transition hover:brightness-95 dark:hover:brightness-110"
+          aria-label="Previous Reel"
+        >
+          <ChevronUp className="size-6" />
+        </button>
+        <button
+          onClick={scrollNext}
+          className="bg-ig-elevated text-ig-text flex size-12 items-center justify-center rounded-full shadow-sm transition hover:brightness-95 dark:hover:brightness-110"
+          aria-label="Next Reel"
+        >
+          <ChevronDown className="size-6" />
+        </button>
+      </div>
     </div>
   );
 }

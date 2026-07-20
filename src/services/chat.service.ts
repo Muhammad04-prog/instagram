@@ -1,14 +1,20 @@
 import { http } from "@/lib/axios";
 import type { CursorParams, Page } from "@/lib/cursor";
 import type {
+  AddParticipantsDto,
   BulkDeleteDto,
   CallStartedDto,
+  CallStateDto,
   ChatCreatedDto,
   ChatDetailDto,
   ChatListItemDto,
   CreateChatDto,
+  CreateGroupChatDto,
+  DeletedCountDto,
   DeletedDto,
   EditMessageDto,
+  GroupCreatedDto,
+  IceServersDto,
   MessageDto,
   MessageReactionDto,
   MessageRequestItemDto,
@@ -18,6 +24,8 @@ import type {
   ReactionDto,
   ReportChatDto,
   ThemeDto,
+  UpdateGroupTitleDto,
+  VanishDto,
 } from "@/types/api.types";
 
 /** `POST /chats/{id}/messages` — multipart when there is a file, JSON otherwise. */
@@ -54,10 +62,8 @@ export const chatService = {
     http.get<Page<MessageDto>>(`/chats/${id}/messages`, params),
 
   send: (id: number, input: SendMessageInput) => {
-    if (!input.file) return http.post<MessageDto>(`/chats/${id}/messages`, input);
-
     const form = new FormData();
-    form.append("file", input.file);
+    if (input.file) form.append("file", input.file);
     if (input.text) form.append("text", input.text);
     if (input.replyToId !== undefined) form.append("replyToId", String(input.replyToId));
     if (input.sharedPostId !== undefined) form.append("sharedPostId", String(input.sharedPostId));
@@ -92,8 +98,24 @@ export const chatService = {
 
   report: (id: number, dto: ReportChatDto) => http.post<OkDto>(`/chats/${id}/report`, dto),
 
-  /** WebRTC signalling rides the socket; this only opens the call. */
-  startCall: (id: number) => http.post<CallStartedDto>(`/chats/${id}/call`),
+  /**
+   * Opens a call record on the backend (RINGING). Actual media is PeerJS
+   * end-to-end (see `usePeerCall`) — this only makes the call show up in
+   * `/chats/{id}/calls` history and gives `answerCall`/`declineCall`/`endCall`
+   * something to key off.
+   */
+  startCall: (id: number, type: "AUDIO" | "VIDEO") =>
+    http.post<CallStartedDto>(`/chats/${id}/call`, undefined, { type }),
+
+  /** STUN/TURN servers for the browser's RTCPeerConnection — same config PeerJS is fed. */
+  getIceServers: () => http.get<IceServersDto>("/chats/calls/ice-servers"),
+
+  answerCall: (callId: string) => http.post<CallStateDto>(`/chats/calls/${callId}/answer`),
+
+  /** Callee rejects, or the caller hangs up before it was picked up (server derives MISSED). */
+  declineCall: (callId: string) => http.post<CallStateDto>(`/chats/calls/${callId}/decline`),
+
+  endCall: (callId: string) => http.post<CallStateDto>(`/chats/calls/${callId}/end`),
 
   /** Message requests — chats opened by people you do not follow (img22). */
   getRequests: (params: CursorParams) =>
@@ -103,4 +125,36 @@ export const chatService = {
   acceptRequest: (id: string) => http.post<OkDto>(`/chats/requests/${id}/accept`),
 
   declineRequest: (id: string) => http.post<OkDto>(`/chats/requests/${id}/decline`),
+
+  /** Creator becomes admin. Min 2 other people (otherwise it's an ordinary 1-on-1), max 32 total. */
+  createGroup: (dto: CreateGroupChatDto) => http.post<GroupCreatedDto>("/chats/group", dto),
+
+  /** Any participant may rename — same as IG. */
+  updateGroupTitle: (id: number, dto: UpdateGroupTitleDto) =>
+    http.put<OkDto>(`/chats/${id}/title`, dto),
+
+  /** Any participant may add — same as IG. */
+  addParticipants: (id: number, dto: AddParticipantsDto) =>
+    http.post<OkDto>(`/chats/${id}/participants`, dto),
+
+  /** Admin (creator) only — can't remove yourself this way, that's `leaveGroup`. */
+  removeParticipant: (id: number, userId: string) =>
+    http.delete<OkDto>(`/chats/${id}/participants/${userId}`),
+
+  /** Any participant. Admin leaving hands the role to the longest-standing member left. */
+  leaveGroup: (id: number) => http.post<OkDto>(`/chats/${id}/leave`),
+
+  /** While on, new messages disappear for both sides when the chat is `close`d. */
+  setVanish: (id: number, dto: VanishDto) => http.put<OkDto>(`/chats/${id}/vanish`, dto),
+
+  /** Burns any vanishing messages already seen — call when leaving the chat screen. */
+  closeChat: (id: number) => http.post<DeletedCountDto>(`/chats/${id}/close`),
+
+  /**
+   * Opens a "view once" attachment — the response carries the real media this
+   * one time; after this, `viewOnceOpened` is true and it's gone for everyone
+   * but the sender.
+   */
+  openViewOnceMessage: (messageId: number) =>
+    http.post<MessageDto>(`/chats/messages/${messageId}/open`),
 };

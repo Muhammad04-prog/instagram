@@ -2,14 +2,20 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { type ApiError } from "@/lib/axios";
 import { PAGE_SIZE } from "@/lib/constants";
 import { cursorParams, MAX_LIMIT, nextCursor } from "@/lib/cursor";
 import { queryKeys } from "@/lib/query-keys";
 import { storyService, type CreateStoriesInput } from "@/services/story.service";
-import type { StoryDto } from "@/types/api.types";
+import { useOwnStoriesSeenStore } from "@/store/ownStoriesSeen.store";
+import type {
+  AnswerStickerDto,
+  CreateAddYoursDto,
+  CreateStickerDto,
+  StoryDto,
+} from "@/types/api.types";
 
 /** The rail, grouped by author. `allViewed` drives the grey ring — server-side truth now. */
 export function useStories() {
@@ -144,18 +150,139 @@ export function useLikeStory(userId: string) {
  * The server owns "have I seen this?" now (`StoryDto.isViewed`,
  * `StoryRailItemDto.allViewed`), so the localStorage ring-state store from
  * Phase 6 is gone — the grey ring is finally correct in any browser.
+ *
+ * Three caches carry viewed-state and all three have to move, or the ring stays
+ * gradient after watching: `rail()` (`allViewed`, the ring itself), `mine()` and
+ * `byUser()` (`StoryDto.isViewed`).
+ *
+ * The two story lists are patched in place instead of invalidated: refetching
+ * `byUser` while the viewer is open swaps the array under the running slide.
+ *
+ * ⚠️ My **own** stories are also recorded locally. The server accepts the view
+ * and then ignores it — `isViewed` and `allViewed` both stay `false` forever for
+ * the author — so without the local note my ring would go grey until the next
+ * refetch and then flip back to gradient. See `ownStoriesSeen.store`.
+ *
+ * ⚠️ The returned function is memoised. Callers use it as an effect dependency;
+ * a fresh closure per render re-ran that effect, which wrote to the store, which
+ * re-rendered — "Maximum update depth exceeded" on opening one's own story.
  */
 export function useMarkStorySeen() {
   const queryClient = useQueryClient();
   const sent = useRef(new Set<number>());
+  const markOwnSeen = useOwnStoriesSeenStore((state) => state.markSeen);
 
-  return (storyId: number) => {
-    if (sent.current.has(storyId)) return;
-    sent.current.add(storyId);
+  return useCallback(
+    (storyId: number, isMine = false) => {
+      if (isMine) markOwnSeen(storyId);
+      if (sent.current.has(storyId)) return;
+      sent.current.add(storyId);
 
-    void storyService
-      .view(storyId)
-      .then(() => queryClient.invalidateQueries({ queryKey: queryKeys.stories.rail() }))
-      .catch(() => sent.current.delete(storyId));
-  };
+      const markViewed = (stories: StoryDto[] | undefined) =>
+        stories?.map((story) => (story.id === storyId ? { ...story, isViewed: true } : story));
+
+      void storyService
+        .view(storyId)
+        .then(() => {
+          queryClient.setQueryData<StoryDto[]>(queryKeys.stories.mine(), markViewed);
+          queryClient.setQueriesData<StoryDto[]>(
+            { queryKey: [...queryKeys.stories.all, "user"] },
+            markViewed,
+          );
+          return queryClient.invalidateQueries({ queryKey: queryKeys.stories.rail() });
+        })
+        .catch(() => sent.current.delete(storyId));
+    },
+    [markOwnSeen, queryClient],
+  );
+}
+
+/** Author-only analytics; the server 403s anyone else. */
+export function useStoryInsights(storyId: number, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.stories.insights(storyId),
+    queryFn: () => storyService.getInsights(storyId),
+    enabled: enabled && Number.isFinite(storyId),
+  });
+}
+
+/** Turns my own story into the first link of an "Add Yours" chain. */
+export function useCreateAddYours() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ storyId, dto }: { storyId: number; dto: CreateAddYoursDto }) =>
+      storyService.createAddYours(storyId, dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.stories.all }),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/**
+ * The prompt + every response story so far.
+ *
+ * `AddYoursFeedDto` is its own shape (`{ prompt, items, nextCursor?, hasMore }`),
+ * not a plain `Page<StoryDto>` — the prompt rides along on every page, so this
+ * paginates by hand rather than through the generic cursor helpers.
+ */
+export function useAddYoursFeed(promptId: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.stories.addYours(promptId), "feed"] as const,
+    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
+      storyService.getAddYoursFeed(promptId, cursorParams(pageParam, PAGE_SIZE)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: enabled && Boolean(promptId),
+  });
+}
+
+/**
+ * Stickers on a story — fetched per-slide (not part of `StoryDto` itself),
+ * `myAnswer` tells the viewer whether they've already answered.
+ */
+export function useStoryStickers(storyId: number, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.stories.stickers(storyId),
+    queryFn: () => storyService.getStickers(storyId),
+    enabled: enabled && Number.isFinite(storyId),
+  });
+}
+
+/** Takes the story id at call time — `StoryUploadDialog` only learns it once upload succeeds. */
+export function useCreateSticker() {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ storyId, dto }: { storyId: number; dto: CreateStickerDto }) =>
+      storyService.createSticker(storyId, dto),
+    onSuccess: (_result, { storyId }) =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.stories.stickers(storyId) }),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Answering again replaces the previous answer — an optimistic re-fetch is enough. */
+export function useAnswerSticker(storyId: number) {
+  const queryClient = useQueryClient();
+  const t = useTranslations("errors");
+
+  return useMutation({
+    mutationFn: ({ stickerId, dto }: { stickerId: string; dto: AnswerStickerDto }) =>
+      storyService.answerSticker(storyId, stickerId, dto),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.stories.stickers(storyId) }),
+    onError: (error: ApiError) => toast.error(error.message || t("network")),
+  });
+}
+
+/** Author-only tally — only fetched once the results sheet is opened. */
+export function useStickerResults(storyId: number, stickerId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.stories.stickerResults(storyId, stickerId),
+    queryFn: () => storyService.getStickerResults(storyId, stickerId),
+    enabled: enabled && Number.isFinite(storyId) && Boolean(stickerId),
+  });
 }

@@ -14,10 +14,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToggleBlock } from "@/hooks/useFollow";
 import { useApiError } from "@/hooks/useApiError";
+import { useRestrictedAccounts, useToggleRestricted } from "@/hooks/useSettings";
 import { userService } from "@/services/user.service";
 import { cn } from "@/lib/utils";
 
-/** The "…" menu on someone else's profile: block / unblock and report. */
+/**
+ * The "…" menu on someone else's profile: block / unblock, restrict /
+ * unrestrict, and report.
+ *
+ * Restrict has no field on `OtherProfileDto` (unlike `isBlocked`), so
+ * membership comes from the same short, unpaginated list Settings →
+ * Restricted accounts reads — this is the "go to their profile to restrict
+ * them" flow that screen's own copy already promised.
+ */
 export function ProfileActionsMenu({
   userId,
   userName,
@@ -33,9 +42,13 @@ export function ProfileActionsMenu({
   const tCommon = useTranslations("common");
   const toMessage = useApiError();
   const [confirmBlock, setConfirmBlock] = useState(false);
+  const [confirmRestrict, setConfirmRestrict] = useState(false);
   const [confirmReport, setConfirmReport] = useState(false);
 
   const block = useToggleBlock();
+  const { data: restrictedAccounts } = useRestrictedAccounts();
+  const isRestricted = restrictedAccounts?.some((account) => account.id === userId) ?? false;
+  const restrict = useToggleRestricted();
 
   // `reason` is free text (3–500 chars), not an enum — so send a real sentence,
   // localised, rather than a magic code the backend would just store verbatim.
@@ -70,6 +83,15 @@ export function ProfileActionsMenu({
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
+              setConfirmRestrict(true);
+            }}
+          >
+            {isRestricted ? t("unrestrict") : t("restrict")}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
             variant="destructive"
             onSelect={(event) => {
               event.preventDefault();
@@ -90,6 +112,17 @@ export function ProfileActionsMenu({
         description={isBlocked ? t("unblockWarning") : t("blockWarning")}
         confirmLabel={isBlocked ? t("unblock") : t("block")}
         onConfirm={() => block.mutate({ userId, block: !isBlocked })}
+      />
+
+      <ConfirmDialog
+        open={confirmRestrict}
+        onOpenChange={setConfirmRestrict}
+        title={
+          isRestricted ? t("unrestrictConfirm", { userName }) : t("restrictConfirm", { userName })
+        }
+        description={isRestricted ? t("unrestrictWarning") : t("restrictWarning")}
+        confirmLabel={isRestricted ? t("unrestrict") : t("restrict")}
+        onConfirm={() => restrict.mutate({ userId, restrict: !isRestricted })}
       />
 
       <ConfirmDialog

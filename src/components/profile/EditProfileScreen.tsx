@@ -12,8 +12,8 @@ export function EditProfileScreen() {
   const { data: profile, isPending, isError, refetch } = useMyProfile();
 
   return (
-    <div className="mx-auto max-w-[640px] py-8">
-      <h1 className="text-ig-text mb-8 text-xl font-bold">{t("editProfile")}</h1>
+    <div className="w-full">
+      <h1 className="text-ig-text mb-8 text-2xl font-bold">{t("editProfile")}</h1>
 
       {isPending ? (
         <div className="space-y-8">

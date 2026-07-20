@@ -21,7 +21,9 @@
       "post": {
         "description": "email ОБЯЗАТЕЛЕН (на него уходит код сброса пароля), phone — опционален. Возвращает сразу пару токенов — юзер попадает в ленту без отдельного логина.",
         "operationId": "AuthController_register",
-        "parameters": [],
+        "parameters": [
+          { "name": "user-agent", "required": true, "in": "header", "schema": { "type": "string" } }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -44,8 +46,11 @@
     },
     "/api/auth/login": {
       "post": {
+        "description": "Если у аккаунта включена 2FA — вместо токенов вернётся { twoFactorRequired: true, ticket }; второй шаг — POST /auth/2fa/verify с тикетом и кодом.",
         "operationId": "AuthController_login",
-        "parameters": [],
+        "parameters": [
+          { "name": "user-agent", "required": true, "in": "header", "schema": { "type": "string" } }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -248,6 +253,167 @@
           }
         },
         "summary": "Свободен ли userName (live-валидация формы регистрации)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/2fa/setup": {
+      "post": {
+        "description": "Ещё НЕ включает 2FA: сначала подтвердите кодом через /2fa/enable.",
+        "operationId": "AuthController_setup2fa",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TwoFactorSetupDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Начать настройку 2FA — вернуть секрет и otpauth-URI для QR",
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/2fa/enable": {
+      "post": {
+        "description": "Резервные коды показываются ОДИН раз — сохраните их.",
+        "operationId": "AuthController_enable2fa",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/Enable2faDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/BackupCodesDto" } }
+            }
+          },
+          "401": { "description": "Неверный код" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Подтвердить код → включить 2FA и получить резервные коды",
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/2fa/disable": {
+      "post": {
+        "operationId": "AuthController_disable2fa",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/Disable2faDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MessageDto" } }
+            }
+          },
+          "401": { "description": "Неверный код" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Отключить 2FA (нужен действующий код или резервный)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/2fa/verify": {
+      "post": {
+        "operationId": "AuthController_verify2fa",
+        "parameters": [
+          { "name": "user-agent", "required": true, "in": "header", "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/Verify2faDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TokensDto" } }
+            }
+          },
+          "401": { "description": "Тикет/код неверен или истёк" }
+        },
+        "summary": "Второй шаг логина: тикет + код → пара токенов",
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/sessions": {
+      "get": {
+        "description": "Передайте текущий refresh-токен в ?rt=…, чтобы пометить свою сессию (current).",
+        "operationId": "AuthController_sessions",
+        "parameters": [
+          { "name": "rt", "required": false, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SessionDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Активные сессии (устройства)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/sessions/{id}": {
+      "delete": {
+        "operationId": "AuthController_revokeSession",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MessageDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Завершить конкретную сессию (её refresh перестаёт работать)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/auth/sessions/logout-all": {
+      "post": {
+        "operationId": "AuthController_logoutAll",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/LogoutAllDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LogoutAllResultDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Выйти со всех устройств, кроме текущего",
         "tags": ["auth"]
       }
     },
@@ -710,7 +876,8 @@
     },
     "/api/profile/me/reposts": {
       "get": {
-        "operationId": "ProfileController_reposts",
+        "description": "Посты, которые я репостнул кнопкой «двойная стрелка» (POST /posts/{id}/repost).",
+        "operationId": "ProfileController_myReposts",
         "parameters": [
           {
             "name": "cursor",
@@ -824,6 +991,34 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Ваши действия",
+        "tags": ["profile"]
+      }
+    },
+    "/api/profile/me/insights": {
+      "get": {
+        "description": "period=7d|30d|90d. Прирост подписчиков, просмотры профиля, охват, вовлечённость.",
+        "operationId": "ProfileController_insights",
+        "parameters": [
+          {
+            "name": "period",
+            "required": false,
+            "in": "query",
+            "description": "Период аналитики",
+            "schema": { "default": "7d", "type": "string", "enum": ["7d", "30d", "90d"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProfileInsightsDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Аналитика аккаунта за период (только себе)",
         "tags": ["profile"]
       }
     },
@@ -1038,6 +1233,48 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Reels пользователя (закрытый аккаунт → 403)",
+        "tags": ["profile"]
+      }
+    },
+    "/api/profile/{userId}/reposts": {
+      "get": {
+        "operationId": "ProfileController_reposts",
+        "parameters": [
+          { "name": "userId", "required": true, "in": "path", "schema": { "type": "string" } },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PostBriefDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Репосты пользователя (закрытый аккаунт → 403)",
         "tags": ["profile"]
       }
     },
@@ -1632,6 +1869,46 @@
         "tags": ["music"]
       }
     },
+    "/api/music/{id}/reels": {
+      "get": {
+        "description": "Reels (видео-посты), использующие данный трек. Закрытые аккаунты и блок исключены.",
+        "operationId": "MusicController_reels",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "«Use this audio» — все reels с этим треком",
+        "tags": ["music"]
+      }
+    },
     "/api/music/{id}": {
       "get": {
         "operationId": "MusicController_byId",
@@ -1685,85 +1962,6 @@
         "security": [{ "bearer": [] }],
         "summary": "Убрать трек из сохранённых",
         "tags": ["music"]
-      }
-    },
-    "/api/spotify/search": {
-      "get": {
-        "description": "Ищет ТОЛЬКО в Spotify. Пока у владельца Spotify-приложения нет Premium, отвечает 503. Для поиска любой песни мира используйте /music/online — он работает без подписок.",
-        "operationId": "SpotifyController_search",
-        "parameters": [
-          {
-            "name": "q",
-            "required": true,
-            "in": "query",
-            "description": "Название трека / исполнитель",
-            "schema": { "example": "shape of you", "type": "string" }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 50,
-              "default": 10,
-              "allOf": [{ "$ref": "#/components/schemas/Object" }]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/SpotifyTrackDto" }
-                }
-              }
-            }
-          }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Поиск треков в Spotify (устарел — см. GET /music/online)",
-        "tags": ["spotify"]
-      }
-    },
-    "/api/spotify/tracks/{spotifyId}/save": {
-      "post": {
-        "description": "Импортирует трек в вашу музыку (дедуп по provider+externalId) и помечает сохранённым. Дальше он доступен как обычный трек: в /profile/me/saved-music, в постах и историях.",
-        "operationId": "SpotifyController_save",
-        "parameters": [
-          { "name": "spotifyId", "required": true, "in": "path", "schema": { "type": "string" } }
-        ],
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/MusicDto" } }
-            }
-          }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Сохранить трек из Spotify",
-        "tags": ["spotify"]
-      },
-      "delete": {
-        "operationId": "SpotifyController_unsave",
-        "parameters": [
-          { "name": "spotifyId", "required": true, "in": "path", "schema": { "type": "string" } }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/SaveMusicDto" } }
-            }
-          }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Убрать трек из сохранённых",
-        "tags": ["spotify"]
       }
     },
     "/api/posts": {
@@ -1855,7 +2053,7 @@
     },
     "/api/posts/feed": {
       "get": {
-        "description": "userId берётся ИЗ JWT (не из query!). Курсорная пагинация. Цель — < 300 мс: один запрос с include, без N+1.",
+        "description": "userId берётся ИЗ JWT (не из query!). При FEED_RANKED=true лента ранжируется (близость к автору + свежесть + вовлечённость − уже просмотренное); иначе — хронология. В ответе: items (страница), suggested (рекомендации не-подписок), allCaughtUp («Вы всё посмотрели»). Курсор — смещение в ранжированном списке.",
         "operationId": "PostsController_feed",
         "parameters": [
           {
@@ -1881,14 +2079,12 @@
           "200": {
             "description": "",
             "content": {
-              "application/json": {
-                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } }
-              }
+              "application/json": { "schema": { "$ref": "#/components/schemas/FeedDto" } }
             }
           }
         },
         "security": [{ "bearer": [] }],
-        "summary": "Лента подписок",
+        "summary": "Лента подписок (ранжированная)",
         "tags": ["posts"]
       }
     },
@@ -1972,6 +2168,52 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Мои публикации",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/drafts": {
+      "get": {
+        "description": "status=DRAFT или SCHEDULED для фильтра; без него — оба.",
+        "operationId": "PostsController_drafts",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Фильтр: только DRAFT или только SCHEDULED. Без него — оба.",
+            "schema": { "type": "string", "enum": ["DRAFT", "SCHEDULED"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Мои черновики и запланированные (не видны в лентах/профиле)",
         "tags": ["posts"]
       }
     },
@@ -2084,6 +2326,84 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/tags/pending": {
+      "get": {
+        "description": "Публикации, где меня отметили, но я ещё не принял. Принять → «Фото с вами».",
+        "operationId": "PostsController_pendingTags",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Мои неподтверждённые отметки (ревью)",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/collabs/pending": {
+      "get": {
+        "description": "Посты, куда меня позвали соавтором и я ещё не принял/отклонил.",
+        "operationId": "PostsController_pendingCollabs",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Мои приглашения в соавторы (ожидают ответа)",
+        "tags": ["posts"]
+      }
+    },
     "/api/posts/{id}": {
       "get": {
         "operationId": "PostsController_byId",
@@ -2181,6 +2501,75 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/{id}/pin": {
+      "patch": {
+        "operationId": "PostsController_pin",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/PostDto" } }
+            }
+          },
+          "403": { "description": "Это не ваша публикация" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Закрепить / открепить публикацию (max 3)",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/privacy": {
+      "patch": {
+        "operationId": "PostsController_togglePrivacy",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePostPrivacyDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/PostDto" } }
+            }
+          },
+          "403": { "description": "Это не ваша публикация" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Изменить настройки отображения лайков и комментариев",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/publish": {
+      "put": {
+        "description": "Снимает отложенную задачу (если была) и публикует немедленно.",
+        "operationId": "PostsController_publish",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/PostDto" } }
+            }
+          },
+          "403": { "description": "Это не ваша публикация" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Опубликовать черновик/запланированный пост сейчас",
+        "tags": ["posts"]
+      }
+    },
     "/api/posts/{id}/like": {
       "post": {
         "operationId": "PostsController_like",
@@ -2242,11 +2631,62 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/{id}/remixes": {
+      "get": {
+        "description": "Reels других авторов, у которых remixOf = этот reel. Закрытые/блок исключены.",
+        "operationId": "PostsController_remixes",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Ремиксы этого reel (снятые «рядом» с ним)",
+        "tags": ["posts"]
+      }
+    },
     "/api/posts/{id}/view": {
       "post": {
+        "description": "source (feed/explore/profile/hashtag/reels) пишется при первом просмотре — для insights.",
         "operationId": "PostsController_view",
         "parameters": [
-          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } },
+          {
+            "name": "source",
+            "required": false,
+            "in": "query",
+            "description": "Источник просмотра (для insights автора). По умолчанию не пишется.",
+            "schema": {
+              "type": "string",
+              "enum": ["feed", "explore", "profile", "hashtag", "reels", "direct"]
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -2258,6 +2698,27 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Просмотр (считается 1 раз на пользователя)",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/insights": {
+      "get": {
+        "description": "Охват, лайки/комменты/сохранения/шеры, engagement-rate, подписчики vs нет, источники.",
+        "operationId": "PostsController_insights",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/PostInsightsDto" } }
+            }
+          },
+          "403": { "description": "Это не ваша публикация" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Аналитика поста (только автору)",
         "tags": ["posts"]
       }
     },
@@ -2286,6 +2747,27 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/{id}/repost": {
+      "post": {
+        "description": "Пост попадает во вкладку «Репосты» моего профиля; повторный вызов снимает репост. Это НЕ «поделиться» — для отправки в чат/историю используйте POST /posts/{id}/share.",
+        "operationId": "PostsController_repost",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RepostToggleDto" } }
+            }
+          },
+          "400": { "description": "Нельзя репостить собственную публикацию" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Репост (двойная стрелка): вкл/выкл",
+        "tags": ["posts"]
+      }
+    },
     "/api/posts/{id}/share": {
       "post": {
         "operationId": "PostsController_share",
@@ -2311,6 +2793,77 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/{id}/collaborators": {
+      "post": {
+        "description": "Соавторы получают PENDING-приглашение; приняв, видят пост в своём профиле.",
+        "operationId": "PostsController_inviteCollaborators",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InviteCollaboratorsDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/PostDto" } }
+            }
+          },
+          "403": { "description": "Это не ваша публикация" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Пригласить соавторов (только автор)",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/collaborators/accept": {
+      "post": {
+        "operationId": "PostsController_acceptCollab",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CollaboratorActionDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Принять приглашение в соавторы",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/collaborators/decline": {
+      "post": {
+        "operationId": "PostsController_declineCollab",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CollaboratorActionDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Отклонить приглашение в соавторы",
+        "tags": ["posts"]
+      }
+    },
     "/api/posts/{id}/report": {
       "post": {
         "operationId": "PostsController_report",
@@ -2326,6 +2879,46 @@
         "responses": { "200": { "description": "Жалоба принята" } },
         "security": [{ "bearer": [] }],
         "summary": "Пожаловаться на публикацию",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/tag/accept": {
+      "post": {
+        "description": "Меня отметили → подтверждаю → пост появляется в моём «Фото с вами».",
+        "operationId": "PostsController_acceptTag",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TagActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Принять отметку на публикации",
+        "tags": ["posts"]
+      }
+    },
+    "/api/posts/{id}/tag/decline": {
+      "post": {
+        "description": "Скрываю отметку: пост НЕ показывается в «Фото с вами».",
+        "operationId": "PostsController_declineTag",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TagActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Отклонить/убрать отметку на публикации",
         "tags": ["posts"]
       }
     },
@@ -2395,6 +2988,203 @@
         "tags": ["posts"]
       }
     },
+    "/api/posts/{postId}/comments/{id}/pin": {
+      "patch": {
+        "operationId": "PostsController_pinComment",
+        "parameters": [
+          { "name": "postId", "required": true, "in": "path", "schema": { "type": "number" } },
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/CommentDto" } }
+            }
+          },
+          "403": { "description": "Только автор публикации может закреплять комментарии" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Закрепить / открепить комментарий к публикации (только автор поста)",
+        "tags": ["posts"]
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "operationId": "SettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SettingsDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Мои настройки (уведомления, приватность взаимодействий, язык)",
+        "tags": ["settings"]
+      },
+      "put": {
+        "description": "Push/email, кто может отмечать/упоминать/писать/комментировать, GIF в комментариях, репосты историй, скрытые слова, язык. Любое подмножество полей.",
+        "operationId": "SettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/UpdateSettingsDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SettingsDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Изменить настройки",
+        "tags": ["settings"]
+      }
+    },
+    "/api/settings/restricted": {
+      "get": {
+        "operationId": "SettingsController_restricted",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/UserBriefDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Аккаунты с ограничениями",
+        "tags": ["settings"]
+      }
+    },
+    "/api/settings/restricted/{userId}": {
+      "post": {
+        "operationId": "SettingsController_restrict",
+        "parameters": [
+          { "name": "userId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RestrictActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Ограничить аккаунт",
+        "tags": ["settings"]
+      },
+      "delete": {
+        "operationId": "SettingsController_unrestrict",
+        "parameters": [
+          { "name": "userId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RestrictActionDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Снять ограничение",
+        "tags": ["settings"]
+      }
+    },
+    "/api/spotify/search": {
+      "get": {
+        "description": "Ищет песню в доступном каталоге: сначала Deezer (работает без подписок), Spotify подключается сам, когда у владельца приложения появится Premium. Поле spotifyId — составной id (PROVIDER:externalId), шлите его в save/unsave как есть.",
+        "operationId": "SpotifyController_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "Название трека / исполнитель",
+            "schema": { "example": "shape of you", "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SpotifyTrackDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Поиск музыки (Deezer + Spotify)",
+        "tags": ["spotify"]
+      }
+    },
+    "/api/spotify/tracks/{spotifyId}/save": {
+      "post": {
+        "description": "Импортирует трек в вашу музыку (дедуп по provider+externalId) и помечает сохранённым. Дальше он доступен как обычный трек: в /profile/me/saved-music, в постах и историях.",
+        "operationId": "SpotifyController_save",
+        "parameters": [
+          { "name": "spotifyId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MusicDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Сохранить трек из Spotify",
+        "tags": ["spotify"]
+      },
+      "delete": {
+        "operationId": "SpotifyController_unsave",
+        "parameters": [
+          { "name": "spotifyId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SaveMusicDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Убрать трек из сохранённых",
+        "tags": ["spotify"]
+      }
+    },
     "/api/stories": {
       "post": {
         "description": "multipart. Поле «media» — файлы (фото/видео). Плюс musicId, musicStartSec, overlays (JSON), filter, closeFriendsOnly, fromPostId (репост поста в историю). Каждая история живёт 24ч.",
@@ -2416,6 +3206,7 @@
                   },
                   "filter": { "type": "string", "example": "clarendon" },
                   "closeFriendsOnly": { "type": "boolean", "example": false },
+                  "saveToArchive": { "type": "boolean", "example": true },
                   "fromPostId": { "type": "number", "example": 12 }
                 }
               }
@@ -2514,6 +3305,44 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Истории пользователя",
+        "tags": ["stories"]
+      }
+    },
+    "/api/stories/add-yours/{promptId}": {
+      "get": {
+        "description": "Кто ответил на промпт. Автор промпта — первым. Закрытые/блок/close-friends фильтруются.",
+        "operationId": "StoriesController_addYoursFeed",
+        "parameters": [
+          { "name": "promptId", "required": true, "in": "path", "schema": { "type": "string" } },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AddYoursFeedDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Лента цепочки «Add Yours» (промпт + истории-ответы)",
         "tags": ["stories"]
       }
     },
@@ -2634,6 +3463,53 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Ответ на историю → сообщением в чат",
+        "tags": ["stories"]
+      }
+    },
+    "/api/stories/{id}/add-yours": {
+      "post": {
+        "description": "Запускает цепочку-эстафету. Сама история становится первым звеном.",
+        "operationId": "StoriesController_createAddYours",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateAddYoursDto" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AddYoursPromptDto" } }
+            }
+          },
+          "403": { "description": "Это не ваша история" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Создать промпт «Add Yours» на своей истории («Добавь своё…»)",
+        "tags": ["stories"]
+      }
+    },
+    "/api/stories/{id}/insights": {
+      "get": {
+        "operationId": "StoriesController_insights",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/StoryInsightsDto" } }
+            }
+          },
+          "403": { "description": "Аналитика видна только автору" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Аналитика истории (только автору): просмотры, лайки, реакции, ответы",
         "tags": ["stories"]
       }
     },
@@ -2771,6 +3647,103 @@
         "security": [{ "bearer": [] }],
         "summary": "Удалить актуальное (истории остаются)",
         "tags": ["highlights"]
+      }
+    },
+    "/api/stories/{id}/stickers": {
+      "post": {
+        "description": "POLL/QUIZ/QUESTION/SLIDER/COUNTDOWN/LINK. LINK — только для verified.",
+        "operationId": "StoryStickersController_create",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateStickerDto" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/StickerDto" } }
+            }
+          },
+          "403": { "description": "Это не ваша история / LINK без галочки" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Добавить интерактивный стикер на СВОЮ историю",
+        "tags": ["stories"]
+      },
+      "get": {
+        "operationId": "StoryStickersController_list",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/StickerDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Стикеры истории (для зрителя; правильный ответ QUIZ скрыт до ответа)",
+        "tags": ["stories"]
+      }
+    },
+    "/api/stories/{id}/stickers/{stickerId}/answer": {
+      "post": {
+        "description": "POLL/QUIZ → optionIndex, QUESTION → text, SLIDER → sliderValue. Повтор меняет ответ.",
+        "operationId": "StoryStickersController_answer",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } },
+          { "name": "stickerId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/AnswerStickerDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AnswerResultDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Ответить на стикер",
+        "tags": ["stories"]
+      }
+    },
+    "/api/stories/{id}/stickers/{stickerId}/results": {
+      "get": {
+        "operationId": "StoryStickersController_results",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } },
+          { "name": "stickerId", "required": true, "in": "path", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/StickerResultsDto" } }
+            }
+          },
+          "403": { "description": "Итоги видит только автор истории" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Итоги стикера (только автору истории)",
+        "tags": ["stories"]
       }
     },
     "/api/notes": {
@@ -2944,6 +3917,32 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Ответить на заметку → сообщение в чат",
+        "tags": ["notes"]
+      }
+    },
+    "/api/notes/{id}/reaction": {
+      "post": {
+        "description": "Как реакция на историю: эмодзи уходит сообщением автору. Нельзя на свою заметку.",
+        "operationId": "NotesController_reaction",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/NoteReactionDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/NoteReplySentDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Эмодзи-реакция на заметку → в личку автору",
         "tags": ["notes"]
       }
     },
@@ -3658,6 +4657,72 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Заглушить/включить уведомления чата",
+        "tags": ["chats"]
+      }
+    },
+    "/api/chats/{id}/vanish": {
+      "put": {
+        "description": "Пока включён, новые сообщения исчезают у обоих при закрытии чата (POST /:id/close).",
+        "operationId": "ChatController_setVanish",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VanishDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/OkDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Vanish mode — режим исчезающих сообщений",
+        "tags": ["chats"]
+      }
+    },
+    "/api/chats/{id}/close": {
+      "post": {
+        "description": "Vanishing-сообщения, которые вы уже видели, удаляются у всех участников.",
+        "operationId": "ChatController_closeChat",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DeletedCountDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Закрыть чат (уйти с экрана) — сжечь увиденные исчезающие сообщения",
+        "tags": ["chats"]
+      }
+    },
+    "/api/chats/messages/{id}/open": {
+      "post": {
+        "description": "Возвращает media один раз; после открытия оно скрывается для всех, кроме автора.",
+        "operationId": "ChatController_openViewOnce",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MessageDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Открыть медиа «просмотр один раз»",
         "tags": ["chats"]
       }
     },
@@ -4804,6 +5869,43 @@
         "summary": "Статистика эфира",
         "tags": ["live"]
       }
+    },
+    "/api/feed": {
+      "get": {
+        "description": "Возвращает посты от подписок с алгоритмическим ранжированием (близость + свежесть + вовлечённость).",
+        "operationId": "FeedController_getFeed",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Курсор последнего элемента предыдущей страницы",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [{ "$ref": "#/components/schemas/Object" }]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/FeedDto" } }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Получить ленту публикаций (ранжированную)",
+        "tags": ["feed"]
+      }
     }
   },
   "info": {
@@ -4813,7 +5915,12 @@
     "contact": {}
   },
   "tags": [],
-  "servers": [],
+  "servers": [
+    {
+      "url": "https://backend-instagram-a4k6.onrender.com",
+      "description": "Текущий сервер (APP_URL)"
+    }
+  ],
   "components": {
     "securitySchemes": {
       "access-token": { "scheme": "bearer", "bearerFormat": "JWT", "type": "http", "in": "header" }
@@ -5006,6 +6113,21 @@
             "example": false,
             "description": "Прочитано собеседником"
           },
+          "vanishing": {
+            "type": "boolean",
+            "example": false,
+            "description": "Отправлено в vanish mode (исчезнет при закрытии чата)"
+          },
+          "viewOnce": {
+            "type": "boolean",
+            "example": false,
+            "description": "Медиа «просмотр один раз»"
+          },
+          "viewOnceOpened": {
+            "type": "boolean",
+            "example": false,
+            "description": "view-once медиа уже открыто (media скрыто)"
+          },
           "sentAt": { "format": "date-time", "type": "string" }
         },
         "required": [
@@ -5016,6 +6138,9 @@
           "reactions",
           "isDeleted",
           "isRead",
+          "vanishing",
+          "viewOnce",
+          "viewOnceOpened",
           "sentAt"
         ]
       },
@@ -5103,6 +6228,108 @@
           }
         },
         "required": ["userName", "available"]
+      },
+      "TwoFactorSetupDto": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "example": "JBSWY3DPEHPK3PXP",
+            "description": "base32-секрет для ручного ввода"
+          },
+          "otpauthUri": {
+            "type": "string",
+            "example": "otpauth://totp/Instagram:eraj?secret=...&issuer=Instagram",
+            "description": "URI для QR-кода"
+          }
+        },
+        "required": ["secret", "otpauthUri"]
+      },
+      "Enable2faDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "123456",
+            "description": "6-значный код из приложения-аутентификатора"
+          }
+        },
+        "required": ["code"]
+      },
+      "BackupCodesDto": {
+        "type": "object",
+        "properties": {
+          "backupCodes": {
+            "example": ["ab12-cd34", "ef56-7890"],
+            "description": "Показываются ОДИН раз",
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["backupCodes"]
+      },
+      "Disable2faDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "123456",
+            "description": "6-значный код из приложения-аутентификатора"
+          }
+        },
+        "required": ["code"]
+      },
+      "Verify2faDto": {
+        "type": "object",
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "description": "Тикет, выданный при логине (twoFactorRequired)"
+          },
+          "code": {
+            "type": "string",
+            "example": "123456",
+            "description": "Код из приложения ИЛИ резервный код (ab12-cd34)"
+          }
+        },
+        "required": ["ticket", "code"]
+      },
+      "SessionDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "id сессии (для DELETE /auth/sessions/:id)" },
+          "userAgent": { "type": "string", "nullable": true, "example": "Mozilla/5.0 …" },
+          "ip": { "type": "string", "nullable": true, "example": "203.0.113.7" },
+          "current": {
+            "type": "boolean",
+            "example": false,
+            "description": "Это текущая сессия (её refresh прислали)"
+          },
+          "createdAt": { "format": "date-time", "type": "string" },
+          "expiresAt": { "format": "date-time", "type": "string" }
+        },
+        "required": ["id", "current", "createdAt", "expiresAt"]
+      },
+      "LogoutAllDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Текущий refresh-токен — эта сессия НЕ будет отозвана"
+          }
+        },
+        "required": ["refreshToken"]
+      },
+      "LogoutAllResultDto": {
+        "type": "object",
+        "properties": {
+          "revoked": {
+            "type": "number",
+            "example": 3,
+            "description": "Сколько сессий отозвано (кроме текущей)"
+          }
+        },
+        "required": ["revoked"]
       },
       "UploadedMediaDto": {
         "type": "object",
@@ -5355,11 +6582,17 @@
             "nullable": true,
             "description": "Первое медиа — обложка в сетке"
           },
-          "likesCount": { "type": "number", "example": 24 },
+          "likesCount": { "type": "number", "nullable": true, "example": 24 },
           "commentsCount": { "type": "number", "example": 3 },
+          "pinnedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
           "createdAt": { "format": "date-time", "type": "string" }
         },
-        "required": ["id", "isReel", "likesCount", "commentsCount", "createdAt"]
+        "required": ["id", "isReel", "commentsCount", "createdAt"]
       },
       "MusicBriefDto": {
         "type": "object",
@@ -5395,9 +6628,57 @@
         },
         "required": ["id", "type", "at"]
       },
+      "ProfileInsightsDto": {
+        "type": "object",
+        "properties": {
+          "period": { "type": "string", "example": "7d" },
+          "days": { "type": "number", "example": 7, "description": "Дней в периоде" },
+          "followersGained": {
+            "type": "number",
+            "example": 34,
+            "description": "Новых подписчиков за период"
+          },
+          "profileViews": {
+            "type": "number",
+            "example": 512,
+            "description": "Просмотров профиля за период"
+          },
+          "postsPublished": {
+            "type": "number",
+            "example": 6,
+            "description": "Опубликовано постов за период"
+          },
+          "accountsReached": {
+            "type": "number",
+            "example": 1240,
+            "description": "Уникальных аккаунтов, посмотревших мои посты"
+          },
+          "accountsEngaged": {
+            "type": "number",
+            "example": 320,
+            "description": "Уникальных аккаунтов, взаимодействовавших (лайк/коммент/сохр/шер)"
+          }
+        },
+        "required": [
+          "period",
+          "days",
+          "followersGained",
+          "profileViews",
+          "postsPublished",
+          "accountsReached",
+          "accountsEngaged"
+        ]
+      },
       "UpdateProfileDto": {
         "type": "object",
         "properties": {
+          "userName": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 30,
+            "example": "oo1_gm",
+            "description": "Новый username. Если занят — 409; регистр не важен (Oo1 == oo1)."
+          },
           "about": { "type": "string", "maxLength": 150, "example": "Фотограф из Душанбе" },
           "website": { "type": "string", "format": "uri", "example": "https://eraj.dev" },
           "gender": {
@@ -5719,55 +7000,16 @@
           "isSaved"
         ]
       },
-      "SaveMusicDto": {
+      "RemixRefDto": {
         "type": "object",
         "properties": {
-          "saved": {
-            "type": "boolean",
-            "example": true,
-            "description": "true — сохранён, false — убран из сохранённых"
-          },
-          "message": { "type": "string", "example": "Трек сохранён" }
-        },
-        "required": ["saved", "message"]
-      },
-      "SpotifyTrackDto": {
-        "type": "object",
-        "properties": {
-          "spotifyId": {
-            "type": "string",
-            "example": "7qiZfU4dY1lWllzX7mPBI3",
-            "description": "id трека в Spotify"
-          },
-          "title": { "type": "string", "example": "Shape of You" },
-          "artist": { "type": "string", "example": "Ed Sheeran" },
-          "albumCover": {
-            "type": "string",
-            "nullable": true,
-            "example": "https://i.scdn.co/image/ab67616d..."
-          },
-          "previewUrl": {
-            "type": "string",
-            "nullable": true,
-            "example": "https://p.scdn.co/mp3-preview/...",
-            "description": "30-секундный отрывок (у части треков отсутствует → null)"
-          },
-          "spotifyUrl": {
-            "type": "string",
-            "example": "https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3"
-          },
-          "durationSec": {
-            "type": "number",
-            "example": 233,
-            "description": "Длительность в секундах"
-          },
-          "isSaved": {
-            "type": "boolean",
-            "example": false,
-            "description": "Уже сохранён мной (импортирован в мою музыку)"
+          "id": { "type": "number", "example": 42 },
+          "author": {
+            "description": "Автор оригинального reel",
+            "allOf": [{ "$ref": "#/components/schemas/UserBriefDto" }]
           }
         },
-        "required": ["spotifyId", "title", "artist", "spotifyUrl", "durationSec", "isSaved"]
+        "required": ["id", "author"]
       },
       "PostMediaDto": {
         "type": "object",
@@ -5834,6 +7076,22 @@
           "caption": { "type": "string", "nullable": true, "maxLength": 2200 },
           "isReel": { "type": "boolean", "example": false },
           "isArchived": { "type": "boolean", "example": false },
+          "remixOf": {
+            "nullable": true,
+            "description": "Оригинальный reel, если это ремикс. Фронт рисует «Remix of @author».",
+            "type": "object",
+            "allOf": [{ "$ref": "#/components/schemas/RemixRefDto" }]
+          },
+          "status": {
+            "enum": ["DRAFT", "SCHEDULED", "PUBLISHED"],
+            "type": "string",
+            "description": "DRAFT/SCHEDULED/PUBLISHED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Когда опубликуется (SCHEDULED)"
+          },
           "author": {
             "description": "Автор — НИКОГДА не null",
             "allOf": [{ "$ref": "#/components/schemas/UserBriefDto" }]
@@ -5854,20 +7112,44 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/UserBriefDto" }
           },
+          "collaborators": {
+            "description": "Соавторы (принявшие приглашение) — пост в профиле у каждого",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UserBriefDto" }
+          },
           "hashtags": {
             "example": ["travel", "sunset"],
             "type": "array",
             "items": { "type": "string" }
           },
-          "likesCount": { "type": "number", "example": 24 },
+          "likesCount": { "type": "number", "nullable": true, "example": 24 },
           "commentsCount": { "type": "number", "example": 3 },
           "viewsCount": { "type": "number", "example": 120 },
+          "repostsCount": { "type": "number", "example": 7 },
           "isLiked": { "type": "boolean", "example": false, "description": "Лайкнул ли Я" },
           "isFavorited": {
             "type": "boolean",
             "example": false,
             "description": "В избранном ли у меня"
           },
+          "isReposted": {
+            "type": "boolean",
+            "example": false,
+            "description": "Репостнул ли Я (кнопка «двойная стрелка»)"
+          },
+          "isSeen": {
+            "type": "boolean",
+            "example": false,
+            "description": "Смотрел ли Я этот пост (для ранжированной ленты — просмотренные уходят вниз)"
+          },
+          "pinnedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "hideLikeCount": { "type": "boolean", "example": false },
+          "commentsDisabled": { "type": "boolean", "example": false },
           "createdAt": { "format": "date-time", "type": "string" }
         },
         "required": [
@@ -5877,14 +7159,53 @@
           "author",
           "media",
           "taggedUsers",
+          "collaborators",
           "hashtags",
-          "likesCount",
           "commentsCount",
           "viewsCount",
+          "repostsCount",
           "isLiked",
           "isFavorited",
+          "isReposted",
+          "hideLikeCount",
+          "commentsDisabled",
           "createdAt"
         ]
+      },
+      "SaveMusicDto": {
+        "type": "object",
+        "properties": {
+          "saved": {
+            "type": "boolean",
+            "example": true,
+            "description": "true — сохранён, false — убран из сохранённых"
+          },
+          "message": { "type": "string", "example": "Трек сохранён" }
+        },
+        "required": ["saved", "message"]
+      },
+      "FeedDto": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/PostDto" } },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Курсор следующей страницы"
+          },
+          "hasMore": { "type": "boolean", "example": true },
+          "allCaughtUp": {
+            "type": "boolean",
+            "example": false,
+            "description": "«Вы всё посмотрели» — непросмотренного нет"
+          },
+          "suggested": {
+            "description": "Рекомендованные посты (не-подписки), в конце ленты",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PostDto" }
+          }
+        },
+        "required": ["items", "hasMore", "allCaughtUp", "suggested"]
       },
       "DeletedDto": {
         "type": "object",
@@ -5933,6 +7254,12 @@
             "example": true,
             "description": "Могу ли я удалить: свой комментарий или комментарий под своим постом"
           },
+          "pinnedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
           "createdAt": { "format": "date-time", "type": "string" }
         },
         "required": [
@@ -5958,6 +7285,13 @@
         "properties": { "isArchived": { "type": "boolean", "example": true } },
         "required": ["isArchived"]
       },
+      "UpdatePostPrivacyDto": {
+        "type": "object",
+        "properties": {
+          "hideLikeCount": { "type": "boolean", "example": false },
+          "commentsDisabled": { "type": "boolean", "example": false }
+        }
+      },
       "LikeToggleDto": {
         "type": "object",
         "properties": {
@@ -5978,10 +7312,75 @@
         },
         "required": ["viewsCount", "counted"]
       },
+      "SourceBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "source": { "type": "string", "example": "explore" },
+          "count": { "type": "number", "example": 128 }
+        },
+        "required": ["source", "count"]
+      },
+      "PostInsightsDto": {
+        "type": "object",
+        "properties": {
+          "reach": {
+            "type": "number",
+            "example": 340,
+            "description": "Охват — сколько уникальных аккаунтов посмотрело"
+          },
+          "likes": { "type": "number", "example": 52 },
+          "comments": { "type": "number", "example": 8 },
+          "saves": { "type": "number", "example": 12, "description": "Сохранения" },
+          "shares": { "type": "number", "example": 5 },
+          "engagementRate": {
+            "type": "number",
+            "example": 0.226,
+            "description": "(likes+comments+saves+shares)/reach"
+          },
+          "fromFollowers": {
+            "type": "number",
+            "example": 210,
+            "description": "Просмотры от подписчиков автора"
+          },
+          "fromNonFollowers": {
+            "type": "number",
+            "example": 130,
+            "description": "Просмотры не от подписчиков"
+          },
+          "sources": {
+            "description": "Топ-источники трафика",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SourceBreakdownDto" }
+          }
+        },
+        "required": [
+          "reach",
+          "likes",
+          "comments",
+          "saves",
+          "shares",
+          "engagementRate",
+          "fromFollowers",
+          "fromNonFollowers",
+          "sources"
+        ]
+      },
       "FavoriteToggleDto": {
         "type": "object",
         "properties": { "favorited": { "type": "boolean", "example": true } },
         "required": ["favorited"]
+      },
+      "RepostToggleDto": {
+        "type": "object",
+        "properties": {
+          "reposted": {
+            "type": "boolean",
+            "example": true,
+            "description": "true — репостнул, false — репост снят"
+          },
+          "repostsCount": { "type": "number", "example": 7 }
+        },
+        "required": ["reposted", "repostsCount"]
       },
       "ShareDto": {
         "type": "object",
@@ -6015,10 +7414,164 @@
         },
         "required": ["link", "message"]
       },
+      "InviteCollaboratorsDto": {
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "description": "id соавторов (приглашение, статус PENDING)",
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          }
+        },
+        "required": ["userIds"]
+      },
+      "CollaboratorActionDto": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["ACCEPTED", "DECLINED"], "example": "ACCEPTED" }
+        },
+        "required": ["status"]
+      },
       "ReportPostDto": {
         "type": "object",
         "properties": { "reason": { "type": "string", "maxLength": 500, "example": "Спам" } },
         "required": ["reason"]
+      },
+      "TagActionDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": ["PENDING", "ACCEPTED", "DECLINED"],
+            "type": "string",
+            "example": "ACCEPTED",
+            "description": "Итог: ACCEPTED → пост в «Фото с вами», DECLINED → скрыт"
+          }
+        },
+        "required": ["status"]
+      },
+      "SettingsDto": {
+        "type": "object",
+        "properties": {
+          "pushEnabled": { "type": "boolean", "example": true },
+          "emailEnabled": { "type": "boolean", "example": true },
+          "whoCanTag": { "enum": ["EVERYONE", "FOLLOWING", "NOBODY"], "type": "string" },
+          "whoCanMention": { "enum": ["EVERYONE", "FOLLOWING", "NOBODY"], "type": "string" },
+          "whoCanMessage": { "enum": ["EVERYONE", "FOLLOWING", "NOBODY"], "type": "string" },
+          "whoCanComment": { "enum": ["EVERYONE", "FOLLOWERS", "MUTUAL", "OFF"], "type": "string" },
+          "allowGifComments": { "type": "boolean", "example": true },
+          "allowStoryReshare": { "type": "boolean", "example": true },
+          "hiddenWords": { "example": ["спам"], "type": "array", "items": { "type": "string" } },
+          "language": { "type": "string", "example": "ru" }
+        },
+        "required": [
+          "pushEnabled",
+          "emailEnabled",
+          "whoCanTag",
+          "whoCanMention",
+          "whoCanMessage",
+          "whoCanComment",
+          "allowGifComments",
+          "allowStoryReshare",
+          "hiddenWords",
+          "language"
+        ]
+      },
+      "UpdateSettingsDto": {
+        "type": "object",
+        "properties": {
+          "pushEnabled": { "type": "boolean", "example": true, "description": "Push-уведомления" },
+          "emailEnabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "Уведомления по email"
+          },
+          "whoCanTag": {
+            "enum": ["EVERYONE", "FOLLOWING", "NOBODY"],
+            "type": "string",
+            "description": "Кто может отмечать меня"
+          },
+          "whoCanMention": {
+            "enum": ["EVERYONE", "FOLLOWING", "NOBODY"],
+            "type": "string",
+            "description": "Кто может @упоминать меня"
+          },
+          "whoCanMessage": {
+            "enum": ["EVERYONE", "FOLLOWING", "NOBODY"],
+            "type": "string",
+            "description": "Кто может писать мне (иначе — в запросы)"
+          },
+          "whoCanComment": {
+            "enum": ["EVERYONE", "FOLLOWERS", "MUTUAL", "OFF"],
+            "type": "string",
+            "description": "Кто может комментировать мои публикации"
+          },
+          "allowGifComments": {
+            "type": "boolean",
+            "example": true,
+            "description": "Разрешить GIF в комментариях"
+          },
+          "allowStoryReshare": {
+            "type": "boolean",
+            "example": true,
+            "description": "Разрешить репосты моих историй"
+          },
+          "hiddenWords": {
+            "maxItems": 200,
+            "description": "Скрытые слова: комментарии с этими словами отклоняются",
+            "example": ["спам", "реклама"],
+            "type": "array",
+            "items": { "type": "string", "maxLength": 50 }
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 10,
+            "example": "ru",
+            "description": "Язык интерфейса (код)"
+          }
+        }
+      },
+      "RestrictActionDto": {
+        "type": "object",
+        "properties": { "restricted": { "type": "boolean", "example": true } },
+        "required": ["restricted"]
+      },
+      "SpotifyTrackDto": {
+        "type": "object",
+        "properties": {
+          "spotifyId": {
+            "type": "string",
+            "example": "7qiZfU4dY1lWllzX7mPBI3",
+            "description": "id трека в Spotify"
+          },
+          "title": { "type": "string", "example": "Shape of You" },
+          "artist": { "type": "string", "example": "Ed Sheeran" },
+          "albumCover": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://i.scdn.co/image/ab67616d..."
+          },
+          "previewUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://p.scdn.co/mp3-preview/...",
+            "description": "30-секундный отрывок (у части треков отсутствует → null)"
+          },
+          "spotifyUrl": {
+            "type": "string",
+            "example": "https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3"
+          },
+          "durationSec": {
+            "type": "number",
+            "example": 233,
+            "description": "Длительность в секундах"
+          },
+          "isSaved": {
+            "type": "boolean",
+            "example": false,
+            "description": "Уже сохранён мной (импортирован в мою музыку)"
+          }
+        },
+        "required": ["spotifyId", "title", "artist", "spotifyUrl", "durationSec", "isSaved"]
       },
       "StoryDto": {
         "type": "object",
@@ -6045,10 +7598,20 @@
           },
           "filter": { "type": "string", "nullable": true },
           "closeFriendsOnly": { "type": "boolean", "example": false },
+          "saveToArchive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Сохранится ли в архив после истечения 24ч"
+          },
           "fromPostId": {
             "type": "number",
             "nullable": true,
             "description": "id поста, если история — репост"
+          },
+          "addYoursPromptId": {
+            "type": "string",
+            "nullable": true,
+            "description": "id промпта «Add Yours», если история — часть цепочки"
           },
           "isViewed": {
             "type": "boolean",
@@ -6066,6 +7629,7 @@
           "mediaType",
           "duration",
           "closeFriendsOnly",
+          "saveToArchive",
           "isViewed",
           "isLiked",
           "likesCount",
@@ -6096,6 +7660,44 @@
           }
         },
         "required": ["author", "count", "allViewed", "hasCloseFriends", "latestAt"]
+      },
+      "AddYoursPromptDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "b3f1c2e4-..." },
+          "text": { "type": "string", "example": "Покажи свой завтрак 🍳" },
+          "emoji": { "type": "string", "nullable": true, "example": "🍳" },
+          "creator": {
+            "description": "Кто запустил цепочку",
+            "allOf": [{ "$ref": "#/components/schemas/UserBriefDto" }]
+          },
+          "originStoryId": {
+            "type": "number",
+            "example": 42,
+            "description": "id истории, где создан промпт"
+          },
+          "responsesCount": {
+            "type": "number",
+            "example": 7,
+            "description": "Сколько историй уже ответило"
+          },
+          "createdAt": { "format": "date-time", "type": "string" }
+        },
+        "required": ["id", "text", "creator", "originStoryId", "responsesCount", "createdAt"]
+      },
+      "AddYoursFeedDto": {
+        "type": "object",
+        "properties": {
+          "prompt": { "$ref": "#/components/schemas/AddYoursPromptDto" },
+          "items": {
+            "description": "Истории-ответы (автор промпта — первым)",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StoryDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true },
+          "hasMore": { "type": "boolean", "example": false }
+        },
+        "required": ["prompt", "items", "hasMore"]
       },
       "StoryLikeToggleDto": {
         "type": "object",
@@ -6139,6 +7741,37 @@
           "text": { "type": "string", "maxLength": 500, "example": "Классная история!" }
         },
         "required": ["text"]
+      },
+      "CreateAddYoursDto": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "maxLength": 80, "example": "Покажи свой завтрак 🍳" },
+          "emoji": {
+            "type": "string",
+            "example": "🍳",
+            "description": "Необязательный эмодзи стикера"
+          }
+        },
+        "required": ["text"]
+      },
+      "StoryInsightsDto": {
+        "type": "object",
+        "properties": {
+          "views": {
+            "type": "number",
+            "example": 210,
+            "description": "Просмотры (уникальные зрители)"
+          },
+          "likes": { "type": "number", "example": 18 },
+          "reactions": { "type": "number", "example": 7, "description": "Эмодзи-реакции" },
+          "replies": { "type": "number", "example": 4, "description": "Ответы на историю" },
+          "engagementRate": {
+            "type": "number",
+            "example": 0.138,
+            "description": "(likes+reactions+replies)/views"
+          }
+        },
+        "required": ["views", "likes", "reactions", "replies", "engagementRate"]
       },
       "StoryViewerDto": {
         "type": "object",
@@ -6221,6 +7854,106 @@
           "coverUrl": { "type": "string" }
         }
       },
+      "CreateStickerDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": ["POLL", "QUIZ", "QUESTION", "SLIDER", "COUNTDOWN", "LINK"],
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Параметры по типу. POLL {question, options[]}; QUIZ {question, options[], correctIndex}; QUESTION {prompt}; SLIDER {question, emoji}; COUNTDOWN {title, endsAt}; LINK {url, label}.",
+            "example": { "question": "Заходишь?", "options": ["Да", "Нет"] }
+          },
+          "geometry": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Положение {x,y,scale,rotate}"
+          }
+        },
+        "required": ["type", "config"]
+      },
+      "StickerDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": {
+            "enum": ["POLL", "QUIZ", "QUESTION", "SLIDER", "COUNTDOWN", "LINK"],
+            "type": "string"
+          },
+          "config": { "type": "object", "additionalProperties": true },
+          "geometry": { "type": "object", "additionalProperties": true, "nullable": true },
+          "myAnswer": {
+            "type": "object",
+            "properties": {
+              "optionIndex": { "type": "number", "nullable": true },
+              "text": { "type": "string", "nullable": true },
+              "sliderValue": { "type": "number", "nullable": true }
+            },
+            "required": []
+          }
+        },
+        "required": ["id", "type", "config"]
+      },
+      "AnswerStickerDto": {
+        "type": "object",
+        "properties": {
+          "optionIndex": {
+            "type": "number",
+            "minimum": 0,
+            "description": "POLL/QUIZ — индекс варианта",
+            "example": 0
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "QUESTION — свободный текст"
+          },
+          "sliderValue": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "SLIDER — значение 0..1",
+            "example": 0.75
+          }
+        }
+      },
+      "AnswerResultDto": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "example": true },
+          "correctIndex": {
+            "type": "number",
+            "description": "QUIZ — правильный вариант (раскрывается после ответа)"
+          }
+        },
+        "required": ["ok"]
+      },
+      "StickerResultsDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": ["POLL", "QUIZ", "QUESTION", "SLIDER", "COUNTDOWN", "LINK"],
+            "type": "string"
+          },
+          "total": { "type": "number", "example": 12, "description": "Всего ответов" },
+          "options": {
+            "description": "POLL/QUIZ — по вариантам: {index, count, percent}",
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "correctPercent": { "type": "number", "description": "QUIZ — доля правильных, %" },
+          "average": { "type": "number", "description": "SLIDER — среднее значение 0..1" },
+          "responses": {
+            "description": "QUESTION — ответы: {user, text}",
+            "type": "array",
+            "items": { "type": "object" }
+          }
+        },
+        "required": ["type", "total"]
+      },
       "NoteMusicDto": {
         "type": "object",
         "properties": {
@@ -6272,6 +8005,7 @@
             "allOf": [{ "$ref": "#/components/schemas/NoteMusicDto" }]
           },
           "bgColor": { "type": "string", "nullable": true, "example": "#FFB6C1" },
+          "textColor": { "type": "string", "nullable": true, "example": "#222222" },
           "audience": {
             "enum": ["FOLLOWERS", "CLOSE_FRIENDS"],
             "type": "string",
@@ -6317,6 +8051,12 @@
             "example": "#FFB6C1",
             "description": "Цвет фона заметки (hex)"
           },
+          "textColor": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#222222",
+            "description": "Цвет текста заметки (hex)"
+          },
           "audience": {
             "enum": ["FOLLOWERS", "CLOSE_FRIENDS"],
             "type": "string",
@@ -6331,7 +8071,8 @@
         "properties": {
           "text": { "type": "string", "maxLength": 60, "example": "Новый текст" },
           "musicId": { "type": "number", "example": 36 },
-          "bgColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "example": "#87CEEB" }
+          "bgColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "example": "#87CEEB" },
+          "textColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "example": "#222222" }
         }
       },
       "NoteLikeToggleDto": {
@@ -6367,6 +8108,17 @@
           }
         },
         "required": ["sent", "chatId", "messageId"]
+      },
+      "NoteReactionDto": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string",
+            "example": "❤️",
+            "description": "Эмодзи-реакция на заметку (уходит в личку автору, как в историях)"
+          }
+        },
+        "required": ["emoji"]
       },
       "NoteReplyItemDto": {
         "type": "object",
@@ -6806,6 +8558,17 @@
         "properties": { "muted": { "type": "boolean", "example": true } },
         "required": ["muted"]
       },
+      "VanishDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "true — включить режим исчезновения"
+          }
+        },
+        "required": ["enabled"]
+      },
       "ReportChatDto": {
         "type": "object",
         "properties": { "reason": { "type": "string", "maxLength": 500, "example": "Спам" } },
@@ -6841,6 +8604,7 @@
               "LIKE_NOTE",
               "REPLY_NOTE",
               "SHARE_POST",
+              "REPOST_POST",
               "SAVE_POST",
               "TAG_POST",
               "PROFILE_VIEW",
@@ -6849,7 +8613,8 @@
               "LIVE_STARTED",
               "LIVE_JOIN_REQUEST",
               "LIVE_JOIN_ACCEPTED",
-              "LIVE_JOIN_DECLINED"
+              "LIVE_JOIN_DECLINED",
+              "STORY_STICKER_RESPONSE"
             ],
             "type": "string",
             "example": "LIKE_POST"
@@ -7036,9 +8801,19 @@
             "description": "Дней до конца триала/периода"
           },
           "trialEndsAt": { "type": "string", "nullable": true, "format": "date-time" },
-          "currentPeriodEnd": { "type": "string", "nullable": true, "format": "date-time" }
+          "currentPeriodEnd": { "type": "string", "nullable": true, "format": "date-time" },
+          "priceUsd": {
+            "type": "number",
+            "example": 10,
+            "description": "Цена подписки в $/мес (после 7 дней бесплатного триала)"
+          },
+          "trialDays": {
+            "type": "number",
+            "example": 7,
+            "description": "Сколько дней бесплатного триала даётся"
+          }
         },
-        "required": ["isVerified", "trialUsed"]
+        "required": ["isVerified", "trialUsed", "priceUsd", "trialDays"]
       },
       "AdminUserDto": {
         "type": "object",
